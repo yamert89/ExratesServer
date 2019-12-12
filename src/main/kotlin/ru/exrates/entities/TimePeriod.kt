@@ -1,47 +1,24 @@
-package ru.exrates.entities;
+package ru.exrates.entities
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import ru.exrates.repos.DurationConverter;
-import ru.exrates.utils.JsonSerializers;
+import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import ru.exrates.repos.DurationConverter
+import ru.exrates.utils.JsonSerializers.TimePeriodSerializer
+import java.time.Duration
+import javax.persistence.*
 
-import javax.persistence.*;
-import java.time.Duration;
-
-
-@Entity @Table(name = "change_periods")
-@NoArgsConstructor
-@JsonSerialize(using = JsonSerializers.TimePeriodSerializer.class)
-public class TimePeriod {
-    @Id
-    @GeneratedValue
-    @Getter
-    private Integer id;
-
-    @Getter @Setter
-    @Column(nullable = false) @Convert(converter = DurationConverter.class)
-    @JsonIgnore
-    private Duration period;
-
-    @Getter @Setter
+@Entity
+@Table(name = "change_periods")
+@JsonSerialize(using = TimePeriodSerializer::class)
+data class TimePeriod(
+    @JsonIgnore @Convert(converter = DurationConverter::class) @Column(nullable = false)
+    private val period: Duration,
     @Column(nullable = false, unique = true)
-    private String name;
+    private val name: String,
+    @Id @GeneratedValue var id: Int = 0) {
 
-    public TimePeriod(Duration period, String name) {
-        this.period = period;
-        this.name = name;
+    override fun toString() =  "TimePeriod{ id = $id, period = $period, name = $name}"
 
-    }
-
-    @Override
-    public String toString() {
-        return "TimePeriod{" +
-                "id=" + id +
-                ", period=" + period +
-                ", name='" + name + '\'' +
-                '}';
-    }
 }
+
+enum class LimitType{REQUEST, WEIGHT}

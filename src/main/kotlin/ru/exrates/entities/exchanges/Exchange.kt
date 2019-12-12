@@ -1,13 +1,12 @@
-package ru.exrates.entities.exchanges;
+package ru.exrates.entities.exchanges
 
-import org.springframework.stereotype.Component;
-import ru.exrates.entities.Currency;
-import ru.exrates.entities.CurrencyPair;
+import org.springframework.stereotype.Component
+import ru.exrates.entities.Currency
+import ru.exrates.entities.CurrencyPair
 
 @Component
-public interface Exchange {
-    void insertPair(CurrencyPair pair);
-    CurrencyPair getPair(Currency c1, Currency c2);
-    CurrencyPair getPair(String pairName);
-
+interface Exchange {
+    fun insertPair(pair: CurrencyPair)
+    fun getPair(c1: Currency, c2: Currency): CurrencyPair
+    fun getPair(pairName: String): CurrencyPair
 }

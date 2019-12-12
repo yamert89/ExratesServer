@@ -2,8 +2,6 @@ package ru.exrates.entities.exchanges;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import lombok.Getter;
-import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.annotations.SortComparator;
@@ -15,9 +13,6 @@ import reactor.core.publisher.Mono;
 import ru.exrates.entities.CurrencyPair;
 import ru.exrates.entities.TimePeriod;
 import ru.exrates.entities.exchanges.secondary.*;
-import ru.exrates.entities.exchanges.secondary.exceptions.BanException;
-import ru.exrates.entities.exchanges.secondary.exceptions.ErrorCodeException;
-import ru.exrates.entities.exchanges.secondary.exceptions.LimitExceededException;
 import ru.exrates.utils.JsonSerializers;
 
 import javax.annotation.PostConstruct;
@@ -31,22 +26,22 @@ import java.util.*;
 public abstract class BasicExchange implements Exchange {
 
     @Id @GeneratedValue
-    @Getter
+
     private Integer id;
-    @Getter @Setter
+
     boolean temporary = true;
     private final static Logger logger = LogManager.getLogger(BasicExchange.class);
 
     static String URL_ENDPOINT, URL_CURRENT_AVG_PRICE, URL_INFO, URL_PRICE_CHANGE, URL_PING, URL_ORDER;
 
     @ManyToMany(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
-    @Getter
+
     //@JsonIgnore //TODO delete
     @JsonSerialize(using = JsonSerializers.TimePeriodListSerializer.class)
     List<TimePeriod> changePeriods;
 
     @OneToMany(orphanRemoval = true, cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
-    @Getter
+
     Set<Limit> limits;
 
     int limitCode, banCode, sleepValueSeconds = 30;

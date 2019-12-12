@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Primary
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.transaction.annotation.EnableTransactionManagement
 import org.springframework.web.client.RestTemplate
+import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.exchanges.BinanceExchange
 
 @Configuration
