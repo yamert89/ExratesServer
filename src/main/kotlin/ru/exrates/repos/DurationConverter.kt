@@ -1,16 +1,12 @@
-package ru.exrates.repos;
+package ru.exrates.repos
 
-import javax.persistence.AttributeConverter;
-import java.time.Duration;
+import java.time.Duration
+import javax.persistence.AttributeConverter
 
-public class DurationConverter implements AttributeConverter<Duration, Long> {
-    @Override
-    public Long convertToDatabaseColumn(Duration attribute) {
-        return attribute.toMillis();
-    }
+class DurationConverter : AttributeConverter<Duration, Long> {
+    override fun convertToDatabaseColumn(attribute: Duration) = attribute.toMillis()
 
-    @Override
-    public Duration convertToEntityAttribute(Long dbData) {
-        return Duration.ofMillis(dbData);
+    override fun convertToEntityAttribute(dbData: Long): Duration {
+        return Duration.ofMillis(dbData)
     }
 }
