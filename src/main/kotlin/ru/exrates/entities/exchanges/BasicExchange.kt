@@ -6,26 +6,39 @@ import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.hibernate.annotations.SortComparator
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
+import org.springframework.web.reactive.function.client.ClientResponse
+import org.springframework.web.reactive.function.client.WebClient
+import reactor.core.publisher.Mono
 import ru.exrates.configs.Properties
 import ru.exrates.entities.Currency
 import ru.exrates.entities.CurrencyPair
+import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
+import ru.exrates.entities.exchanges.secondary.BanException
+import ru.exrates.entities.exchanges.secondary.ErrorCodeException
 import ru.exrates.entities.exchanges.secondary.Limit
+import ru.exrates.entities.exchanges.secondary.LimitExceededException
 import ru.exrates.utils.JsonSerializers.TimePeriodListSerializer
 import java.time.Duration
+import java.time.Instant
 import java.util.*
+import javax.annotation.PostConstruct
 
 import javax.persistence.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
+import kotlin.jvm.Transient
+import kotlin.reflect.KClass
 
 @Entity @Inheritance(strategy = InheritanceType.SINGLE_TABLE) @DiscriminatorColumn(name = "EXCHANGE_TYPE")
 @JsonIgnoreProperties("id", "limits", "limitcode", "banCode", "sleepValueSeconds", "updatePeriod", "temporary")
-class BasicExchange(private val logger: Logger = LogManager.getLogger(BasicExchange::class)) : Exchange{
+abstract class BasicExchange(private val logger: Logger = LogManager.getLogger(BasicExchange::class)) : Exchange{
 
     var temporary = true
     var limitCode: Int = 0
     var banCode: Int = 0
+    var sleepValueSeconds = 30L
     @Autowired
     lateinit var props: Properties
 
@@ -42,29 +55,98 @@ class BasicExchange(private val logger: Logger = LogManager.getLogger(BasicExcha
     lateinit var name: String
 
     @OneToMany(cascade = [CascadeType.PERSIST], fetch = FetchType.EAGER)
-    @SortComparator(CurrencyPair)
-
+    @SortComparator(CurrencyPair.SortComparator::class)
+    val pairs: SortedSet<CurrencyPair> = TreeSet()
 
     @ManyToMany(cascade = [CascadeType.PERSIST], fetch = FetchType.EAGER)
     @JsonSerialize(using = TimePeriodListSerializer::class)
-    val changePeriods: List<TimePeriod> = ArrayList()
+    val changePeriods: MutableList<TimePeriod> = ArrayList()
 
     @OneToMany(orphanRemoval = true, cascade = [CascadeType.PERSIST], fetch = FetchType.EAGER)
     val limits: Set<Limit> = HashSet()
 
     var updatePeriod: Duration = Duration.ofMillis(props.timerPeriod())
 
+    @Transient
+    lateinit var webClient: WebClient
+
+    @PostConstruct
+    open fun init(){
+        logger.debug("Postconstruct $name")
+        val task = object : TimerTask() {
+            override fun run() {
+                try {
+                    task()
+                }catch (e: java.lang.RuntimeException) {
+                    logger.error(e)
+                    logger.error(e.message)
+                }
+            }
+
+        }
+        Timer().schedule(task, 10000, props.timerPeriod())
+    }
+
+    open fun task(){
+        logger.debug("$name task started...")
+        synchronized(pairs){
+            for (p in pairs){
+                try {
+                    currentPrice(p, updatePeriod)
+                    priceChange(p, updatePeriod)
+                }catch (e: LimitExceededException){
+                    logger.error(e.message)
+                    sleepValueSeconds *= 2
+                    Thread.sleep(sleepValueSeconds)
+                    task()
+                    return
+                }catch (e: ErrorCodeException){ logger.error(e.message)}
+                catch (e: BanException){
+                    logger.error(e.message)
+                    throw RuntimeException("You are banned from $name")
+                }
+            }
+        }
+    }
+
+    open fun dataElasped(pair: CurrencyPair, timeout: Duration, idx: Int): Boolean{
+        logger.debug("Pair $pair was updated on field $idx ${Instant.ofEpochMilli(pair.updateTimes[idx])} | now is ${Instant.now()}")
+        return Instant.now().isAfter(Instant.ofEpochMilli(pair.updateTimes[idx] + timeout.toMillis()))
+    }
+
+    open fun <T: Any> request(uri: String, clazz: KClass<T>) : T{
+        return webClient.get().uri(uri).retrieve().onStatus(HttpStatus::is4xxClientError) { resp ->
+            val ex = when(resp.statusCode().value()){
+                banCode -> BanException()
+                limitCode -> LimitExceededException(LimitType.WEIGHT)
+                //null -> NullPointerException()
+                else -> IllegalStateException("Unexpected value: ${resp.statusCode().value()}")
+            }
+            Mono.error(ex) }
+            .bodyToMono(clazz.java).block()!! //todo null compile notif?
+    }
+
 
 
     override fun insertPair(pair: CurrencyPair) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        pairs.add(pair)
+        if(pairs.size > props.maxSize()) pairs.remove(pairs.first())
     }
 
-    override fun getPair(c1: Currency, c2: Currency): CurrencyPair {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun getPair(c1: Currency, c2: Currency): CurrencyPair? {
+        var pair: CurrencyPair? = null
+        pairs.spliterator().forEachRemaining { if(it.symbol == c1.symbol + c2.symbol) pair = it }
+        return pair
     }
 
-    override fun getPair(pairName: String): CurrencyPair {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun getPair(pairName: String): CurrencyPair? {
+        var pair: CurrencyPair? = null
+        pairs.spliterator().forEachRemaining {  if(it.symbol == pairName) pair = it}
+        return pair
     }
+
+    abstract fun currentPrice(pair: CurrencyPair, timeout: Duration)
+
+    abstract fun priceChange(pair: CurrencyPair, timeout: Duration)
+
 }

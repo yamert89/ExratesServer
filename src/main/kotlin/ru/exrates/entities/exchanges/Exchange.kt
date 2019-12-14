@@ -7,6 +7,6 @@ import ru.exrates.entities.CurrencyPair
 @Component
 interface Exchange {
     fun insertPair(pair: CurrencyPair)
-    fun getPair(c1: Currency, c2: Currency): CurrencyPair
-    fun getPair(pairName: String): CurrencyPair
+    fun getPair(c1: Currency, c2: Currency): CurrencyPair?
+    fun getPair(pairName: String): CurrencyPair?
 }

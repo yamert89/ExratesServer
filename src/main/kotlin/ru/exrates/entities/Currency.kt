@@ -7,11 +7,12 @@ import java.time.Instant
 import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
 import javax.persistence.*
+import kotlin.Comparator
 import kotlin.collections.HashMap
 
 data class Currency(val name: String, val symbol: String)
 
-data class CurrencyPair(var lastUse: Instant = Instant.now()) : Comparable<CurrencyPair>{
+data class CurrencyPair(var lastUse: Instant = Instant.now()){
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Int = 0
 
@@ -65,12 +66,6 @@ data class CurrencyPair(var lastUse: Instant = Instant.now()) : Comparable<Curre
         priceChange.remove(period)
     }
 
-    override fun compareTo(other: CurrencyPair): Int{
-        if (symbol == other.symbol) return 0
-        if (lastUse.toEpochMilli() == other.lastUse.toEpochMilli()) return symbol.compareTo(other.symbol)
-        return if (lastUse.isAfter(other.lastUse)) 1 else -1
-    }
-
     override fun equals(other: Any?): Boolean {
         if(this === other) return true
         if(other == null || this::class != other::class) return false
@@ -79,6 +74,16 @@ data class CurrencyPair(var lastUse: Instant = Instant.now()) : Comparable<Curre
     }
 
     override fun hashCode() = Objects.hash(symbol, 142)
+
+    class SortComparator: Comparator<CurrencyPair>{
+        override fun compare(o1: CurrencyPair?, o2: CurrencyPair?): Int {
+            if (o1 == null || o2 == null) throw NullPointerException("Comparing null element")
+            if (o1.symbol == o2.symbol) return 0
+            if (o1.lastUse.toEpochMilli() == o2.lastUse.toEpochMilli()) return o1.symbol.compareTo(o2.symbol)
+            return if (o1.lastUse.isAfter(o2.lastUse)) 1 else -1
+        }
+
+    }
 }
 
 

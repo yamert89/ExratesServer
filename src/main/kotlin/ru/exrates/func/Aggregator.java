@@ -8,7 +8,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.stereotype.Component;
 import ru.exrates.entities.CurrencyPair;
-import ru.exrates.entities.exchanges.BasicExchange;
 import ru.exrates.entities.exchanges.BinanceExchange;
 import ru.exrates.entities.exchanges.Exchange;
 import ru.exrates.entities.exchanges.secondary.Limit;
