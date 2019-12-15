@@ -1,6 +1,7 @@
 package ru.exrates.entities.exchanges.secondary
 
 import org.apache.logging.log4j.Logger
+import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
 import org.springframework.http.HttpStatus
 import org.springframework.web.reactive.function.client.WebClient
@@ -9,7 +10,6 @@ import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.BasicExchange
-import ru.exrates.entities.exchanges.BinanceExchange
 import java.net.ConnectException
 import java.time.Duration
 import javax.annotation.PostConstruct
@@ -80,10 +80,6 @@ class BinanceExchange(private val logger: Logger): BasicExchange(logger) {
 
     private fun stringResponse(uri: String) = super.request(uri, String::class)
 
-
-
-
-
     override fun currentPrice(pair: CurrencyPair, timeout: Duration) {
         if(!dataElasped(pair, timeout, 0)){
             logger.debug("current price $pair.symbol req skipped")
@@ -96,9 +92,30 @@ class BinanceExchange(private val logger: Logger): BasicExchange(logger) {
         logger.debug("Price updated on ${pair.symbol} pair | = $price")
     }
 
-
-
     override fun priceChange(pair: CurrencyPair, timeout: Duration) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        if(!dataElasped(pair, timeout, 1)) {
+            logger.debug("price change $pair req skipped")
+            return
+        }
+        val symbol = "?symbol=" + pair.symbol
+        val period = "&internal="
+        changePeriods.forEach {
+            val uri = URL_ENDPOINT + URL_PRICE_CHANGE + symbol + period + it.name + "&limit=1"
+            val entity = JSONArray(stringResponse(uri))
+            val array = entity.getJSONArray(0)
+            val changeVol = (array.getDouble(2) + array.getDouble(3)) / 2
+            pair.putInPriceChange(it, changeVol)
+            logger.debug("Change period updated on ${pair.symbol} pair, interval = $it.name | change = $changeVol")
+        }
     }
 }
+
+/*public void priceChange (CurrencyPair pair, Duration timeout, Map<String, String> uriVariables) //todo limit > 1 logic
+            throws JSONException, LimitExceededException, ErrorCodeException, BanException{
+        if (!dataElapsed(pair, timeout, 1)) return;
+        for (TimePeriod per : changePeriods) {
+            var entity = new JSONArray(stringResponse(URL_PRICE_CHANGE));
+            var array = entity.getJSONArray(0);
+            pair.putInPriceChange(per, (array.getDouble(2) + array.getDouble(3)) / 2);
+        }
+    }*/

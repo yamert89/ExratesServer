@@ -12,7 +12,7 @@ class Limit(
     @Column(length = 20) @Enumerated(value = EnumType.STRING)
     private val type: LimitType,
     @Convert(converter = DurationConverter::class) @Column(name = "_interval")
-    private val interval: Duration,
+    val interval: Duration,
     var limitValue: Int,
     @Id @GeneratedValue
     private val id: Int = 0

@@ -1,0 +1,14 @@
+{
+  "properties": [
+    {
+      "name": "app.pairs.size",
+      "type": "java.lang.String",
+      "description": "Description for app.pairs.size."
+    },
+    {
+      "name": "app.timer",
+      "type": "java.lang.String",
+      "description": "Description for app.timer."
+    }
+  ]
+}

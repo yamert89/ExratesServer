@@ -14,7 +14,7 @@ data class TimePeriod(
     @JsonIgnore @Convert(converter = DurationConverter::class) @Column(nullable = false)
     private val period: Duration,
     @Column(nullable = false, unique = true)
-    private val name: String,
+    val name: String,
     @Id @GeneratedValue var id: Int = 0) {
 
     override fun toString() =  "TimePeriod{ id = $id, period = $period, name = $name}"
