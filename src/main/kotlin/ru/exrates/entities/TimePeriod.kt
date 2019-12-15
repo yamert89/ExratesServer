@@ -11,8 +11,7 @@ import javax.persistence.*
 @Table(name = "change_periods")
 @JsonSerialize(using = TimePeriodSerializer::class)
 data class TimePeriod(
-    @JsonIgnore @Convert(converter = DurationConverter::class) @Column(nullable = false)
-    private val period: Duration,
+    @JsonIgnore @Convert(converter = DurationConverter::class) @Column(nullable = false) val period: Duration,
     @Column(nullable = false, unique = true)
     val name: String,
     @Id @GeneratedValue var id: Int = 0) {

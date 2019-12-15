@@ -1,5 +1,6 @@
 package ru.exrates.func
 
+import com.sun.xml.fastinfoset.util.StringArray
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
@@ -14,6 +15,7 @@ import ru.exrates.entities.exchanges.BasicExchange
 import ru.exrates.entities.exchanges.secondary.BinanceExchange
 import ru.exrates.repos.ExchangeService
 import java.util.*
+import java.util.function.Supplier
 import javax.annotation.PostConstruct
 import kotlin.collections.HashMap
 import kotlin.reflect.KClass
@@ -21,16 +23,20 @@ import kotlin.reflect.KClass
 @Component
 class Aggregator(
     val logger: Logger = LogManager.getLogger(Aggregator::class),
-    val exchanges: Map<String, BasicExchange> = HashMap(),
-    val exchangeNames: Map<String, KClass<out BasicExchange>> = HashMap(),
+    val exchanges: MutableMap<String, BasicExchange> = HashMap(),
+    val exchangeNames: MutableMap<String, KClass<out BasicExchange>> = HashMap(),
     @Autowired
     val exchangeService: ExchangeService,
-    val applicationContext: ApplicationContext,
+    val applicationContext: ApplicationContext, //todo del
     @Autowired
     val genericApplicationContext: GenericApplicationContext,
     @Autowired
     val props: Properties
 ) {
+
+    init {
+        exchangeNames["binanceExchange"] = BinanceExchange::class
+    }
 
     @PostConstruct
     fun init(){
@@ -54,13 +60,74 @@ class Aggregator(
                 }
             }
 
-            val finalExchange = exchange
-            val clazz = it.value
-            genericApplicationContext.registerBean(clazz.java, {finalExchange}, {def: BeanDefinition -> def.isPrimary = true})
+            val finalExchange = exchange!!
+            val clazz: KClass<BasicExchange> = it.value as KClass<BasicExchange>
+            genericApplicationContext.registerBean(
+                clazz.java, {finalExchange},
+                arrayOf(BeanDefinitionCustomizer { def: BeanDefinition -> def.isPrimary = true }))
+
+            exchange = genericApplicationContext.getBean(it.value.java)
+            exchanges[it.key] = exchange
+             val task = object: TimerTask(){
+                 override fun run() {
+                     save()
+                 }
+             }
+            Timer().schedule(task, 300000, props.savingTimer())
+
         }
     }
 
-    fun calculatePairsSize(exchange: BasicExchange): Int{
+    //fun getExchange(exName: String) = exchanges[exName] //todo needs update?
+
+    fun getExchange(exName: String, pairsN: StringArray, period: String): BasicExchange?{
+        val exch = exchanges[exName]
+        if(exch == null){
+            logger.error("Exchange $exName not found")
+            return null
+        }
+        val pairs = exch.pairs
+        val temp = CurrencyPair()
+        pairsN.array.forEach {
+            temp.symbol = it
+
+            if( !pairs.contains(temp)) exch.insertPair(exchangeService.findPair(it, exch)
+                ?: throw NullPointerException("Pair $it not found in ${exch.name}"))
+
+        }
+
+        val reqPairs = HashSet(pairs)
+        //todo - limit request pairs
+        val timePeriod = exch.changePeriods.filter { it.name == period }[0]
+        reqPairs.forEach {
+            exch.currentPrice(it, timePeriod.period)
+            exch.priceChange(it, timePeriod.period) //todo needs try catch?
+        }
+        return exch
+
+    }
+
+    fun getCurStat(curName1: String, curName2: String) = getCurStat(curName1 + curName2)
+
+    fun getCurStat(pName: String): Map<String, CurrencyPair> {
+        val curs : MutableMap<String, CurrencyPair> = HashMap()
+        exchanges.forEach {
+            val p = it.value.getPair(pName)
+            if(p != null){
+                curs[it.key] = p
+                it.value.insertPair(p)
+            } else {
+                val pair = exchangeService.findPair(pName, it.value)
+                if (pair != null){ //todo optional
+                    curs[it.key] = pair
+                    it.value.insertPair(pair)
+                }
+            }
+        }
+        return curs
+    }
+
+    fun calculatePairsSize(exchange: BasicExchange): Int{ //todo check for seconds limit
         var counter = 0
         val tLimits = LinkedList<Int>()
         if(props.isPersistenceStrategy()) return  props.maxSize()
@@ -73,6 +140,8 @@ class Aggregator(
         tLimits.forEach { counter += it }
         return counter / tLimits.size
     }
+
+    fun save()  = exchanges.forEach { (_, exch) -> exchangeService.update(exch) }
 
 
 }

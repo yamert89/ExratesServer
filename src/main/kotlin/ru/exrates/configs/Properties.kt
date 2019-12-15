@@ -19,7 +19,7 @@ class Properties {
 
     fun timerPeriod() = timerPeriod.toLong()
     fun maxSize() = maxSize.toInt()
-    fun savingTimer() = savingTimer.toInt()
+    fun savingTimer() = savingTimer.toLong()
     fun isPersistenceStrategy() = persistenceSize.toBoolean()
 }
 
