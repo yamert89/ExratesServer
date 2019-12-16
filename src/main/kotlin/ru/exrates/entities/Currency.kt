@@ -1,5 +1,6 @@
 package ru.exrates.entities
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import ru.exrates.entities.exchanges.BasicExchange
 import ru.exrates.utils.TimePeriodListSerializer
@@ -7,11 +8,11 @@ import java.time.Instant
 import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
 import javax.persistence.*
-import kotlin.Comparator
 import kotlin.collections.HashMap
 
 data class Currency(val name: String, val symbol: String)
-
+@Entity
+@JsonIgnoreProperties("id", "exchange", "lastUse")
 data class CurrencyPair(var lastUse: Instant = Instant.now()){
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Int = 0
