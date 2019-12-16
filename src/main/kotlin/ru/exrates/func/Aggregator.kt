@@ -12,10 +12,9 @@ import org.springframework.stereotype.Component
 import ru.exrates.configs.Properties
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.exchanges.BasicExchange
-import ru.exrates.entities.exchanges.secondary.BinanceExchange
+import ru.exrates.entities.exchanges.BinanceExchange
 import ru.exrates.repos.ExchangeService
 import java.util.*
-import java.util.function.Supplier
 import javax.annotation.PostConstruct
 import kotlin.collections.HashMap
 import kotlin.reflect.KClass
@@ -78,7 +77,7 @@ class Aggregator(
         }
     }
 
-    //fun getExchange(exName: String) = exchanges[exName] //todo needs update?
+    fun getExchange(exName: String) = exchanges[exName] //todo needs update?
 
     fun getExchange(exName: String, pairsN: StringArray, period: String): BasicExchange?{
         val exch = exchanges[exName]

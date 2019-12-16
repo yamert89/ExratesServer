@@ -1,5 +1,6 @@
-package ru.exrates.entities.exchanges.secondary
+package ru.exrates.entities.exchanges
 
+import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
@@ -9,7 +10,7 @@ import reactor.core.publisher.Mono
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
-import ru.exrates.entities.exchanges.BasicExchange
+import ru.exrates.entities.exchanges.secondary.Limit
 import java.net.ConnectException
 import java.time.Duration
 import javax.annotation.PostConstruct
@@ -17,7 +18,7 @@ import javax.persistence.DiscriminatorValue
 import javax.persistence.Entity
 
 @Entity @DiscriminatorValue("binance")
-class BinanceExchange(private val logger: Logger): BasicExchange(logger) {
+class BinanceExchange(private val logger: Logger = LogManager.getLogger(BinanceExchange::class)): BasicExchange(logger) {
     init {
         URL_ENDPOINT = "https://api.binance.com"
         URL_CURRENT_AVG_PRICE = "/api/v3/avgPrice" //todo /api/v3/ticker/price ?
@@ -51,7 +52,14 @@ class BinanceExchange(private val logger: Logger): BasicExchange(logger) {
         )
         val entity = JSONObject(stringResponse(URL_ENDPOINT + URL_INFO))
         val array = entity.getJSONArray("rateLimits")
-        limits.plus(Limit("MINUTE", LimitType.WEIGHT, Duration.ofMinutes(1), 1200))
+        limits.plus(
+            Limit(
+                "MINUTE",
+                LimitType.WEIGHT,
+                Duration.ofMinutes(1),
+                1200
+            )
+        )
         for(i in 0..array.length()){
             val ob = array.getJSONObject(i)
             limits.forEach {

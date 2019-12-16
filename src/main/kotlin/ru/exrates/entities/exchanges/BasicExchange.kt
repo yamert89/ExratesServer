@@ -19,7 +19,7 @@ import ru.exrates.entities.exchanges.secondary.BanException
 import ru.exrates.entities.exchanges.secondary.ErrorCodeException
 import ru.exrates.entities.exchanges.secondary.Limit
 import ru.exrates.entities.exchanges.secondary.LimitExceededException
-import ru.exrates.utils.JsonSerializers.TimePeriodListSerializer
+import ru.exrates.utils.TimePeriodListSerializer
 import java.time.Duration
 import java.time.Instant
 import java.util.*

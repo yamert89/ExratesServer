@@ -2,7 +2,7 @@ package ru.exrates.entities
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import ru.exrates.entities.exchanges.BasicExchange
-import ru.exrates.utils.JsonSerializers
+import ru.exrates.utils.TimePeriodListSerializer
 import java.time.Instant
 import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
@@ -25,7 +25,7 @@ data class CurrencyPair(var lastUse: Instant = Instant.now()){
         }
 
     @ElementCollection(fetch = FetchType.EAGER) @MapKeyColumn(name = "PERIOD") @Column(name = "VALUE")
-    @JsonSerialize(keyUsing = JsonSerializers.TimePeriodListSerializer::class)
+    @JsonSerialize(keyUsing = TimePeriodListSerializer::class)
     private val priceChange: MutableMap<TimePeriod, Double> = HashMap()
 
     @ElementCollection(fetch = FetchType.EAGER)

@@ -1,7 +1,9 @@
 package ru.exrates
 
 import org.springframework.boot.SpringApplication
+import org.springframework.boot.autoconfigure.SpringBootApplication
 
+@SpringBootApplication
 object ExRatesApplication {
     @JvmStatic
     fun main(args: Array<String>) {

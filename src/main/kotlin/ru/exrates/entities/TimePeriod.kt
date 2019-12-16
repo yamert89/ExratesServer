@@ -3,7 +3,7 @@ package ru.exrates.entities
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import ru.exrates.repos.DurationConverter
-import ru.exrates.utils.JsonSerializers.TimePeriodSerializer
+import ru.exrates.utils.TimePeriodSerializer
 import java.time.Duration
 import javax.persistence.*
 
