@@ -79,7 +79,7 @@ class Aggregator(
 
     fun getExchange(exName: String) = exchanges[exName] //todo needs update?
 
-    fun getExchange(exName: String, pairsN: StringArray, period: String): BasicExchange?{
+    fun getExchange(exName: String, pairsN: Array<String>, period: String): BasicExchange?{
         val exch = exchanges[exName]
         if(exch == null){
             logger.error("Exchange $exName not found")
@@ -87,7 +87,7 @@ class Aggregator(
         }
         val pairs = exch.pairs
         val temp = CurrencyPair()
-        pairsN.array.forEach {
+        pairsN.forEach {
             temp.symbol = it
 
             if( !pairs.contains(temp)) exch.insertPair(exchangeService.findPair(it, exch)

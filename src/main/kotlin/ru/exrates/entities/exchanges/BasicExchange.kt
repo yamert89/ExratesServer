@@ -32,14 +32,15 @@ import kotlin.jvm.Transient
 import kotlin.reflect.KClass
 
 @Entity @Inheritance(strategy = InheritanceType.SINGLE_TABLE) @DiscriminatorColumn(name = "EXCHANGE_TYPE")
-@JsonIgnoreProperties("id", "limits", "limitcode", "banCode", "sleepValueSeconds", "updatePeriod", "temporary")
-abstract class BasicExchange(private val logger: Logger = LogManager.getLogger(BasicExchange::class)) : Exchange{
+@JsonIgnoreProperties("id", "limits", "limitcode", "banCode", "sleepValueSeconds", "updatePeriod", "temporary", "webClient")
+abstract class BasicExchange(@javax.persistence.Transient protected val logger: Logger = LogManager.getLogger(BasicExchange::class)) : Exchange{
 
     var temporary = true
     var limitCode: Int = 0
     var banCode: Int = 0
     var sleepValueSeconds = 30L
     @Autowired
+    @javax.persistence.Transient
     lateinit var props: Properties
 
 
@@ -65,14 +66,15 @@ abstract class BasicExchange(private val logger: Logger = LogManager.getLogger(B
     @OneToMany(orphanRemoval = true, cascade = [CascadeType.PERSIST], fetch = FetchType.EAGER)
     val limits: Set<Limit> = HashSet()
 
-    var updatePeriod: Duration = Duration.ofMillis(props.timerPeriod())
+    lateinit var updatePeriod: Duration
 
     @Transient
     lateinit var webClient: WebClient
 
     @PostConstruct
-    open fun init(){
+    fun init(){
         logger.debug("Postconstruct $name")
+        updatePeriod = Duration.ofMillis(props.timerPeriod())
         val task = object : TimerTask() {
             override fun run() {
                 try {
@@ -87,7 +89,7 @@ abstract class BasicExchange(private val logger: Logger = LogManager.getLogger(B
         Timer().schedule(task, 10000, props.timerPeriod())
     }
 
-    open fun task(){
+    fun task(){
         logger.debug("$name task started...")
         synchronized(pairs){
             for (p in pairs){
@@ -109,12 +111,13 @@ abstract class BasicExchange(private val logger: Logger = LogManager.getLogger(B
         }
     }
 
-    open fun dataElasped(pair: CurrencyPair, timeout: Duration, idx: Int): Boolean{
+    fun dataElasped(pair: CurrencyPair, timeout: Duration, idx: Int): Boolean{
         logger.debug("Pair $pair was updated on field $idx ${Instant.ofEpochMilli(pair.updateTimes[idx])} | now is ${Instant.now()}")
         return Instant.now().isAfter(Instant.ofEpochMilli(pair.updateTimes[idx] + timeout.toMillis()))
     }
 
-    open fun <T: Any> request(uri: String, clazz: KClass<T>) : T{
+    fun <T: Any> request(uri: String, clazz: KClass<T>) : T{
+        logger.debug("Try request to : $uri")
         return webClient.get().uri(uri).retrieve().onStatus(HttpStatus::is4xxClientError) { resp ->
             val ex = when(resp.statusCode().value()){
                 banCode -> BanException()
@@ -123,7 +126,7 @@ abstract class BasicExchange(private val logger: Logger = LogManager.getLogger(B
                 else -> IllegalStateException("Unexpected value: ${resp.statusCode().value()}")
             }
             Mono.error(ex) }
-            .bodyToMono(clazz.java).block()!! //todo null compile notif?
+            .bodyToMono(clazz.java).block()!! //todo 1 - null compile notif? // 2 - todo operate exception
     }
 
 

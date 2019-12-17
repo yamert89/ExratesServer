@@ -10,14 +10,28 @@ import javax.persistence.*
 @Entity
 @Table(name = "change_periods")
 @JsonSerialize(using = TimePeriodSerializer::class)
-data class TimePeriod(
-    @JsonIgnore @Convert(converter = DurationConverter::class) @Column(nullable = false) val period: Duration,
+class TimePeriod(){
+    @JsonIgnore @Convert(converter = DurationConverter::class) @Column(nullable = false)
+    lateinit var period: Duration
+
     @Column(nullable = false, unique = true)
-    val name: String,
-    @Id @GeneratedValue var id: Int = 0) {
+    lateinit var name: String
+
+    @Id @GeneratedValue 
+    var id: Int = 0
+
+    constructor(period: Duration, name: String) : this(){
+        this.period = period
+        this.name = name
+    }
 
     override fun toString() =  "TimePeriod{ id = $id, period = $period, name = $name}"
-
 }
+
+
+
+
+
+
 
 enum class LimitType{REQUEST, WEIGHT}

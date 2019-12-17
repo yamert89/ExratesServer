@@ -24,6 +24,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.projectreactor:reactor-spring:1.0.1.RELEASE")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     runtimeOnly("mysql:mysql-connector-java")
     runtimeOnly("org.postgresql:postgresql:42.2.8")
     testImplementation("org.springframework.boot:spring-boot-starter-test")

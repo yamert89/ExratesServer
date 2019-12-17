@@ -1,9 +1,11 @@
 package ru.exrates.entities
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import ru.exrates.entities.exchanges.BasicExchange
 import ru.exrates.utils.TimePeriodListSerializer
+import ru.exrates.utils.TimePeriodSerializer
 import java.time.Instant
 import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
@@ -19,6 +21,7 @@ data class CurrencyPair(var lastUse: Instant = Instant.now()){
 
     @Column(unique = true)
     lateinit var symbol: String
+
     var price: Double = 0.0
         set(value) {
             updateTimes[0] = Instant.now().toEpochMilli()
@@ -26,7 +29,7 @@ data class CurrencyPair(var lastUse: Instant = Instant.now()){
         }
 
     @ElementCollection(fetch = FetchType.EAGER) @MapKeyColumn(name = "PERIOD") @Column(name = "VALUE")
-    @JsonSerialize(keyUsing = TimePeriodListSerializer::class)
+    @JsonSerialize(keyUsing = TimePeriodSerializer::class)
     private val priceChange: MutableMap<TimePeriod, Double> = HashMap()
 
     @ElementCollection(fetch = FetchType.EAGER)
@@ -52,6 +55,7 @@ data class CurrencyPair(var lastUse: Instant = Instant.now()){
         this.exchange = exchange
     }
 
+    @JsonIgnore
     fun getUnmodPriceChange(): Map<TimePeriod, Double> {
         lastUse = Instant.now()
         return priceChange.toMap()

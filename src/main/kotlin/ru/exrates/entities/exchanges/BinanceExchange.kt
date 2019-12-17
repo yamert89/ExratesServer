@@ -18,18 +18,17 @@ import javax.persistence.DiscriminatorValue
 import javax.persistence.Entity
 
 @Entity @DiscriminatorValue("binance")
-class BinanceExchange(private val logger: Logger = LogManager.getLogger(BinanceExchange::class)): BasicExchange(logger) {
-    init {
+class BinanceExchange(): BasicExchange() {
+
+    @PostConstruct
+    override fun init() {
         URL_ENDPOINT = "https://api.binance.com"
         URL_CURRENT_AVG_PRICE = "/api/v3/avgPrice" //todo /api/v3/ticker/price ?
         URL_INFO = "/api/v1/exchangeInfo"
         URL_PRICE_CHANGE = "/api/v1/klines"
         URL_PING = "/api/v1/ping"
         URL_ORDER = "/api/v3/depth"
-    }
 
-    @PostConstruct
-    override fun init() {
         limitCode = 429
         banCode = 418
         webClient = WebClient.create(URL_ENDPOINT)
@@ -60,7 +59,7 @@ class BinanceExchange(private val logger: Logger = LogManager.getLogger(BinanceE
                 1200
             )
         )
-        for(i in 0..array.length()){
+        for(i in 0 until array.length()){
             val ob = array.getJSONObject(i)
             limits.forEach {
                 val name = ob.getString("interval")
@@ -68,7 +67,7 @@ class BinanceExchange(private val logger: Logger = LogManager.getLogger(BinanceE
             }
         }
         val symbols = entity.getJSONArray("symbols")
-        for(i in 0..symbols.length()){
+        for(i in 0 until symbols.length()){
             pairs.plus(CurrencyPair(symbols.getJSONObject(i).getString("symbol"), this))
         }
 
@@ -106,7 +105,7 @@ class BinanceExchange(private val logger: Logger = LogManager.getLogger(BinanceE
             return
         }
         val symbol = "?symbol=" + pair.symbol
-        val period = "&internal="
+        val period = "&interval="
         changePeriods.forEach {
             val uri = URL_ENDPOINT + URL_PRICE_CHANGE + symbol + period + it.name + "&limit=1"
             val entity = JSONArray(stringResponse(uri))

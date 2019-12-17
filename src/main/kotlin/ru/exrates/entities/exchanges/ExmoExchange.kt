@@ -4,7 +4,7 @@ import org.apache.logging.log4j.Logger
 import ru.exrates.entities.CurrencyPair
 import java.time.Duration
 
-class ExmoExchange(private val logger: Logger) : BasicExchange(logger){
+class ExmoExchange() : BasicExchange(){
     init {
         URL_ENDPOINT = "https://api.exmo.com/v1"
         URL_INFO = "/pair_settings/"
