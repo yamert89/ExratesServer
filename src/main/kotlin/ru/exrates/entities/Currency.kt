@@ -89,6 +89,10 @@ data class CurrencyPair(var lastUse: Instant = Instant.now()){
         }
 
     }
+
+    override fun toString(): String {
+        return "$symbol, lastuse: $lastUse"
+    }
 }
 
 

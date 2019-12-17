@@ -13,7 +13,7 @@ import ru.exrates.entities.exchanges.BinanceExchange
 @Configuration
 @EnableJpaRepositories(basePackages = ["ru.exrates.repos"])
 @EnableTransactionManagement
-open class App {
+class App {
 
     @Bean
     @Lazy
@@ -22,14 +22,14 @@ open class App {
     }
 
     @Bean
-    //@Primary
+    @Primary
     @ConfigurationProperties("app.datasource.first")
     open fun firstDataSourceProperties(): DataSourceProperties {
         return DataSourceProperties()
     }
 
     @Bean
-    @Primary
+    //@Primary
     @ConfigurationProperties("app.datasource.second")
     open fun secondDataSourceProperties(): DataSourceProperties {
         return DataSourceProperties()

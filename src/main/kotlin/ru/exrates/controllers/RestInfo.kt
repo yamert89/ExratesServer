@@ -64,8 +64,85 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
 
     Response:
     {
-    {"limitCode":429,"props":{"persistenceStrategy":true},"URL_ENDPOINT":"https://api.binance.com","URL_CURRENT_AVG_PRICE":"/api/v3/avgPrice","URL_INFO":"/api/v1/exchangeInfo","URL_PRICE_CHANGE":"/api/v1/klines","URL_PING":"/api/v1/ping","URL_ORDER":"/api/v3/depth","name":"binanceExchange","pairs":[{"symbol":"BTCUSDT","price":6738.87880221,"priceChange":{"\"3d\"":6813.605,"\"1h\"":6730.0,"\"1d\"":6813.605,"\"12h\"":6812.92,"\"6h\"":6812.92,"\"8h\"":6813.605,"\"4h\"":6812.92,"\"5m\"":6745.049999999999,"\"30m\"":6730.0,"\"1M\"":7217.5,"\"3m\"":6739.844999999999,"\"15m\"":6716.764999999999,"\"1w\"":6917.5},"priceHistory":[],"updateTimes":[1576592788162,1576592795760,0]},{"symbol":"ETCBTC","price":5.3036E-4,"priceChange":{"\"3d\"":5.3315E-4,"\"1h\"":5.288000000000001E-4,"\"1d\"":5.3115E-4,"\"12h\"":5.298E-4,"\"6h\"":5.298E-4,"\"8h\"":5.31E-4,"\"4h\"":5.298E-4,"\"5m\"":5.308E-4,"\"30m\"":5.288000000000001E-4,"\"1M\"":5.2155E-4,"\"3m\"":5.304999999999999E-4,"\"15m\"":5.286E-4,"\"1w\"":5.3315E-4},"priceHistory":[],"updateTimes":[1576592796213,1576592801870,0]}],"changePeriods":["3m","5m","15m","30m","1h","4h","6h","8h","12h","1d","3d","1w","1M"],"url_INFO":"/api/v1/exchangeInfo","url_PING":"/api/v1/ping","url_ORDER":"/api/v3/depth","url_ENDPOINT":"https://api.binance.com","url_CURRENT_AVG_PRICE":"/api/v3/avgPrice","url_PRICE_CHANGE":"/api/v1/klines"}
-0
+  "limitCode": 429,
+  "name": "binanceExchange",
+  "pairs": [
+    {
+      "symbol": "VENBTC",
+      "price": 1.3928E-4,
+      "priceChange": {
+        "\"3d\"": 1.35645E-4,
+        "\"4h\"": 1.35645E-4,
+        "\"1h\"": 1.35645E-4,
+        "\"5m\"": 1.35625E-4,
+        "\"30m\"": 1.35645E-4,
+        "\"15m\"": 1.35645E-4,
+        "\"1d\"": 1.35645E-4,
+        "\"1M\"": 1.35645E-4,
+        "\"6h\"": 1.35645E-4,
+        "\"12h\"": 1.35645E-4,
+        "\"1w\"": 1.35645E-4,
+        "\"8h\"": 1.35645E-4,
+        "\"3m\"": 1.3559E-4
+      },
+      "priceHistory": [],
+      "updateTimes": [
+        1576605044157,
+        1576605048739,
+        0
+      ]
+    },
+    {
+      "symbol": "YOYOBNB",
+      "price": 7.62E-4,
+      "priceChange": {
+        "\"3d\"": 7.8E-4,
+        "\"4h\"": 7.62E-4,
+        "\"1h\"": 7.62E-4,
+        "\"5m\"": 7.62E-4,
+        "\"30m\"": 7.62E-4,
+        "\"15m\"": 7.62E-4,
+        "\"1d\"": 7.8E-4,
+        "\"1M\"": 8.515E-4,
+        "\"6h\"": 7.685E-4,
+        "\"12h\"": 7.685E-4,
+        "\"1w\"": 7.79E-4,
+        "\"8h\"": 7.62E-4,
+        "\"3m\"": 7.62E-4
+      },
+      "priceHistory": [],
+      "updateTimes": [
+        1576605036127,
+        1576605043358,
+        0
+      ]
+    }
+  ],
+  "changePeriods": [
+    "3m",
+    "5m",
+    "15m",
+    "30m",
+    "1h",
+    "4h",
+    "6h",
+    "8h",
+    "12h",
+    "1d",
+    "3d",
+    "1w",
+    "1M"
+  ],
+  "url_INFO": "/api/v1/exchangeInfo",
+  "url_ORDER": "/api/v3/depth",
+  "url_PING": "/api/v1/ping",
+  "url_ENDPOINT": "https://api.binance.com",
+  "url_CURRENT_AVG_PRICE": "/api/v3/avgPrice",
+  "url_PRICE_CHANGE": "/api/v1/klines"
+}
+
+
+
 
 
     */

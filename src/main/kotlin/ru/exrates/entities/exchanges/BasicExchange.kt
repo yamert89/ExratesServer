@@ -1,5 +1,6 @@
 package ru.exrates.entities.exchanges
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import org.apache.logging.log4j.LogManager
@@ -32,17 +33,9 @@ import kotlin.jvm.Transient
 import kotlin.reflect.KClass
 
 @Entity @Inheritance(strategy = InheritanceType.SINGLE_TABLE) @DiscriminatorColumn(name = "EXCHANGE_TYPE")
-@JsonIgnoreProperties("id", "limits", "limitcode", "banCode", "sleepValueSeconds", "updatePeriod", "temporary", "webClient")
+@JsonIgnoreProperties("id", "limits", "limitcode", "banCode", "sleepValueSeconds", "updatePeriod", "temporary",
+    "webClient", "props", "URL_ENDPOINT", "URL_CURRENT_AVG_PRICE", "URL_INFO", "URL_PRICE_CHANGE", "URL_PING", "URL_ORDER")
 abstract class BasicExchange(@javax.persistence.Transient protected val logger: Logger = LogManager.getLogger(BasicExchange::class)) : Exchange{
-
-    var temporary = true
-    var limitCode: Int = 0
-    var banCode: Int = 0
-    var sleepValueSeconds = 30L
-    @Autowired
-    @javax.persistence.Transient
-    lateinit var props: Properties
-
 
     lateinit var URL_ENDPOINT: String
     lateinit var URL_CURRENT_AVG_PRICE: String
@@ -50,6 +43,14 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
     lateinit var URL_PRICE_CHANGE: String
     lateinit var URL_PING: String
     lateinit var URL_ORDER: String
+    var temporary = true
+    var limitCode: Int = 0
+    var banCode: Int = 0
+    var sleepValueSeconds = 30L
+
+    @Autowired
+    @javax.persistence.Transient
+    lateinit var props: Properties
 
     @Id @GeneratedValue
     var id: Int = 0
@@ -73,7 +74,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
 
     @PostConstruct
     fun init(){
-        logger.debug("Postconstruct $name")
+        logger.debug("Postconstruct super $name")
         updatePeriod = Duration.ofMillis(props.timerPeriod())
         val task = object : TimerTask() {
             override fun run() {
@@ -90,7 +91,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
     }
 
     fun task(){
-        logger.debug("$name task started...")
+        logger.debug("$name task started with ${pairs.size} pairs")
         synchronized(pairs){
             for (p in pairs){
                 try {
@@ -133,7 +134,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
 
     override fun insertPair(pair: CurrencyPair) {
         pairs.add(pair)
-        if(pairs.size > props.maxSize()) pairs.remove(pairs.first())
+        if(pairs.size > props.maxSize()) pairs.remove(pairs.last())
     }
 
     override fun getPair(c1: Currency, c2: Currency): CurrencyPair? {
@@ -148,8 +149,10 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
         return pair
     }
 
+
     abstract fun currentPrice(pair: CurrencyPair, timeout: Duration)
 
     abstract fun priceChange(pair: CurrencyPair, timeout: Duration)
+
 
 }

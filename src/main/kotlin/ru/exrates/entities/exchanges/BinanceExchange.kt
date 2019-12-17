@@ -1,7 +1,5 @@
 package ru.exrates.entities.exchanges
 
-import org.apache.logging.log4j.LogManager
-import org.apache.logging.log4j.Logger
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
 import org.springframework.http.HttpStatus
@@ -22,18 +20,26 @@ class BinanceExchange(): BasicExchange() {
 
     @PostConstruct
     override fun init() {
+        if (id == 0 && !temporary) return
         URL_ENDPOINT = "https://api.binance.com"
         URL_CURRENT_AVG_PRICE = "/api/v3/avgPrice" //todo /api/v3/ticker/price ?
         URL_INFO = "/api/v1/exchangeInfo"
         URL_PRICE_CHANGE = "/api/v1/klines"
         URL_PING = "/api/v1/ping"
         URL_ORDER = "/api/v3/depth"
-
         limitCode = 429
         banCode = 418
         webClient = WebClient.create(URL_ENDPOINT)
-        if(!temporary) return
+        if(!temporary) {
+            super.init()
+            return
+        }
+        logger.debug("Postconstuct concrete ${this::class.simpleName} id = $id" )
         name = "binanceExchange"
+
+
+
+
         changePeriods.addAll(listOf(
             TimePeriod(Duration.ofMinutes(3), "3m"),
             TimePeriod(Duration.ofMinutes(5), "5m"),
@@ -78,7 +84,11 @@ class BinanceExchange(): BasicExchange() {
     }
 
     override fun task() {
-        if(id == 0) return
+        if(id == 0) {
+            logger.debug("task aborted, id = 0")
+            return
+        }
+        logger.debug("task ping try...")
         webClient.get().uri(URL_ENDPOINT + URL_PING).retrieve().onStatus(HttpStatus::isError){
             Mono.error(ConnectException("Ping $URL_PING failed"))
         }.bodyToMono(String::class.java).block()
@@ -114,6 +124,10 @@ class BinanceExchange(): BasicExchange() {
             pair.putInPriceChange(it, changeVol)
             logger.debug("Change period updated on ${pair.symbol} pair, interval = $it.name | change = $changeVol")
         }
+    }
+
+    override fun toString(): String {
+        return this::class.simpleName + "  id=" + id
     }
 }
 

@@ -11,7 +11,7 @@ interface CurrencyRepository : JpaRepository<CurrencyPair, Int> {
 }
 
 @NoRepositoryBean interface ExchangeModRepo : JpaRepository<BasicExchange, Int> {
-    fun findByName(name: String): BasicExchange //todo noresulexception
+    fun findByName(name: String): BasicExchange? //todo noresulexception
 }
 
 @Repository interface ExchangeRepository : ExchangeModRepo

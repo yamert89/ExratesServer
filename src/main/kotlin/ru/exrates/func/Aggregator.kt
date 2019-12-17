@@ -61,6 +61,7 @@ class Aggregator(
 
             val finalExchange = exchange!!
             val clazz: KClass<BasicExchange> = it.value as KClass<BasicExchange>
+            //Arrays.stream(genericApplicationContext.beanDefinitionNames).forEach(System.out::println);
             genericApplicationContext.registerBean(
                 clazz.java, {finalExchange},
                 arrayOf(BeanDefinitionCustomizer { def: BeanDefinition -> def.isPrimary = true }))
@@ -73,6 +74,8 @@ class Aggregator(
                  }
              }
             Timer().schedule(task, 300000, props.savingTimer())
+            //Arrays.stream(genericApplicationContext.beanDefinitionNames).forEach(System.out::println);
+            //genericApplicationContext.removeBeanDefinition(it.key);
 
         }
     }
