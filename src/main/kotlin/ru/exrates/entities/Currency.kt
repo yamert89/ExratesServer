@@ -15,7 +15,7 @@ import kotlin.collections.HashMap
 data class Currency(val name: String, val symbol: String)
 @Entity
 @JsonIgnoreProperties("id", "exchange", "lastUse")
-data class CurrencyPair(var lastUse: Instant = Instant.now()){
+data class CurrencyPair(var lastUse: Instant = Instant.now()) : Comparable<CurrencyPair>{
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Int = 0
 
@@ -92,6 +92,10 @@ data class CurrencyPair(var lastUse: Instant = Instant.now()){
 
     override fun toString(): String {
         return "$symbol, lastuse: $lastUse"
+    }
+
+    override fun compareTo(other: CurrencyPair): Int {
+        return SortComparator().compare(this, other)
     }
 }
 

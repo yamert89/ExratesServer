@@ -74,11 +74,12 @@ class BinanceExchange(): BasicExchange() {
         }
         val symbols = entity.getJSONArray("symbols")
         for(i in 0 until symbols.length()){
-            pairs.plus(CurrencyPair(symbols.getJSONObject(i).getString("symbol"), this))
+            //pairs.plus(CurrencyPair(symbols.getJSONObject(i).getString("symbol"), this))
+            pairs.add(CurrencyPair(symbols.getJSONObject(i).getString("symbol"), this))
         }
 
         temporary = false
-        logger.debug("exchange " + name + "initialized with " + pairs.size + " pairs")
+        logger.debug("exchange " + name + " initialized with " + pairs.size + " pairs")
         //todo needs exceptions?
         super.init()
     }
