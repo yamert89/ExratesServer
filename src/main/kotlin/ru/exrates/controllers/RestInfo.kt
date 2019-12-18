@@ -8,8 +8,10 @@ import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.web.bind.annotation.*
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.exchanges.BasicExchange
+import ru.exrates.entities.exchanges.EmptyExchange
 import ru.exrates.func.Aggregator
 import ru.exrates.utils.ExchangePayload
+import javax.servlet.http.HttpServletResponse
 
 
 @RestController
@@ -23,7 +25,7 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
     */
 
     @PostMapping("/rest/exchange")
-    fun getExchange(@RequestBody exchangePayload: ExchangePayload): BasicExchange {
+    fun getExchange(@RequestBody exchangePayload: ExchangePayload, response: HttpServletResponse): BasicExchange {
         logger.debug("payload = $exchangePayload")
         val ex = if(exchangePayload.pairs.size > 0){
             with(exchangePayload){
@@ -31,7 +33,11 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
             }
         } else aggregator.getExchange(exchangePayload.exchange)
         logger.debug("Exchange response: ${objectMapper.writeValueAsString(ex)}")
-        return ex!! //todo if null req to client?
+        if (ex == null) {
+            response.status = 404 //todo if null req to client?
+            return EmptyExchange()
+        }
+        return ex
     }
 
     @GetMapping("/rest/pair", params = ["c1", "c2"])

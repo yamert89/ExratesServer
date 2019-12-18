@@ -1,5 +1,6 @@
 package ru.exrates.entities.exchanges
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
 import org.springframework.http.HttpStatus
@@ -87,7 +88,7 @@ class BinanceExchange(): BasicExchange() {
     override fun task() {
         if(id == 0) {
             logger.debug("task aborted, id = 0")
-            return
+            throw RuntimeException("interrupt task...")
         }
         logger.debug("task ping try...")
         webClient.get().uri(URL_ENDPOINT + URL_PING).retrieve().onStatus(HttpStatus::isError){

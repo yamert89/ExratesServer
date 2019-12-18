@@ -18,6 +18,7 @@ import java.util.*
 import javax.annotation.PostConstruct
 import kotlin.collections.HashMap
 import kotlin.reflect.KClass
+import kotlin.reflect.jvm.internal.impl.load.kotlin.JvmType
 
 @Component
 class Aggregator(
@@ -80,7 +81,15 @@ class Aggregator(
         }
     }
 
-    fun getExchange(exName: String) = exchanges[exName] //todo needs update?
+    fun getExchange(exName: String): BasicExchange{
+        var ex: BasicExchange? = exchanges[exName]
+        ex = ex?.clone() as BasicExchange
+        val pairs = TreeSet<CurrencyPair>(ex.pairs)
+        while (pairs.size > 1) pairs.pollLast() //todo limit count
+        ex.pairs.clear()
+        ex.pairs.addAll(pairs)
+        return ex.clone() as BasicExchange
+    }
 
     fun getExchange(exName: String, pairsN: Array<String>, period: String): BasicExchange?{
         val exch = exchanges[exName]
@@ -143,7 +152,11 @@ class Aggregator(
         return counter / tLimits.size
     }
 
-    fun save()  = exchanges.forEach { (_, exch) -> exchangeService.update(exch) }
+    fun save(){
+        logger.debug("Saving exchanges...")
+        exchanges.forEach { (_, exch) -> exchangeService.update(exch) }
+    }
+
 
 
 }

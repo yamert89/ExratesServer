@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.hibernate.annotations.SortComparator
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.jackson.JsonComponent
 import org.springframework.http.HttpStatus
 import org.springframework.web.reactive.function.client.ClientResponse
 import org.springframework.web.reactive.function.client.WebClient
@@ -33,9 +34,10 @@ import kotlin.jvm.Transient
 import kotlin.reflect.KClass
 
 @Entity @Inheritance(strategy = InheritanceType.SINGLE_TABLE) @DiscriminatorColumn(name = "EXCHANGE_TYPE")
-@JsonIgnoreProperties("id", "limits", "limitcode", "banCode", "sleepValueSeconds", "updatePeriod", "temporary",
-    "webClient", "props", "URL_ENDPOINT", "URL_CURRENT_AVG_PRICE", "URL_INFO", "URL_PRICE_CHANGE", "URL_PING", "URL_ORDER")
-abstract class BasicExchange(@javax.persistence.Transient protected val logger: Logger = LogManager.getLogger(BasicExchange::class)) : Exchange{
+@JsonIgnoreProperties("id", "limits", "limitCode", "banCode", "sleepValueSeconds", "updatePeriod", "temporary",
+    "webClient", "props", "URL_ENDPOINT", "URL_CURRENT_AVG_PRICE", "URL_INFO", "URL_PRICE_CHANGE", "URL_PING", "URL_ORDER",
+    "url_ENDPOINT", "url_CURRENT_AVG_PRICE", "url_INFO", "url_PRICE_CHANGE", "url_PING", "url_ORDER")
+abstract class BasicExchange(@javax.persistence.Transient protected val logger: Logger = LogManager.getLogger(BasicExchange::class)) : Exchange, Cloneable{
 
     lateinit var URL_ENDPOINT: String
     lateinit var URL_CURRENT_AVG_PRICE: String
@@ -80,9 +82,9 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
             override fun run() {
                 try {
                     task()
-                }catch (e: java.lang.RuntimeException) {
-                    logger.error(e)
-                    logger.error(e.message)
+                }catch (e: RuntimeException) {
+                    logger.debug(e.message)
+                    this.cancel()
                 }
             }
 
@@ -103,8 +105,8 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
                     Thread.sleep(sleepValueSeconds)
                     task()
                     return
-                }catch (e: ErrorCodeException){ logger.error(e.message)}
-                catch (e: BanException){
+                }catch (e: ErrorCodeException){ logger.error(e.message)
+                }catch (e: BanException){
                     logger.error(e.message)
                     throw RuntimeException("You are banned from $name")
                 }
@@ -147,6 +149,10 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
         var pair: CurrencyPair? = null
         pairs.spliterator().forEachRemaining {  if(it.symbol == pairName) pair = it}
         return pair
+    }
+
+    public override fun clone(): Any {
+        return super.clone()
     }
 
 
