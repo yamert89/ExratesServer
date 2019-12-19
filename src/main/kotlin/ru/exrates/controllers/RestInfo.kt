@@ -21,13 +21,14 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
 
     /*
        {"exchange" : "binanceExchange", "timeout": "3m", "pairs" : ["btcusd", "etcbtc"]}
+       {\"exchange\": \"binanceExchange\", \"timeout\" : 12, \"pairs\":[\"VENBTC\"]}
        //todo pairs - list of favorite pairs in bd for each user
     */
 
     @PostMapping("/rest/exchange")
     fun getExchange(@RequestBody exchangePayload: ExchangePayload, response: HttpServletResponse): BasicExchange {
         logger.debug("payload = $exchangePayload")
-        val ex = if(exchangePayload.pairs.size > 0){
+        val ex = if(exchangePayload.pairs.isNotEmpty()){
             with(exchangePayload){
                 aggregator.getExchange(exchange, pairs, timeout)
             }
