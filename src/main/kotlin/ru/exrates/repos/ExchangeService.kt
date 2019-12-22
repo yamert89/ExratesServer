@@ -45,4 +45,7 @@ class ExchangeService(private val logger: Logger = LogManager.getLogger(Exchange
 
     @Transactional
     fun findPair(symbol: String, exchange: BasicExchange) = currencyRepository.findBySymbolAndExchange(symbol, exchange)
+
+    @Transactional
+    fun getAllPairs() = currencyRepository.getAll().toSet().toList() //todo return set
 }

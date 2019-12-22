@@ -138,7 +138,19 @@ class Aggregator(
         return curs
     }
 
-    fun calculatePairsSize(exchange: BasicExchange): Int{ //todo check for seconds limit
+    fun getNamesExchangesAndCurrencies(): Map<String, List<String>> {
+        return mapOf(
+            "exchanges" to exchangeNames.keys.toList(),
+            "currencies" to exchangeService.getAllPairs()
+        )
+    }
+
+    fun save(){
+        logger.debug("Saving exchanges...")
+        exchanges.forEach { (_, exch) -> exchangeService.update(exch) }
+    }
+
+    private fun calculatePairsSize(exchange: BasicExchange): Int{ //todo check for seconds limit
         var counter = 0
         val tLimits = LinkedList<Int>()
         if(props.isPersistenceStrategy()) return  props.maxSize()
@@ -152,10 +164,7 @@ class Aggregator(
         return counter / tLimits.size
     }
 
-    fun save(){
-        logger.debug("Saving exchanges...")
-        exchanges.forEach { (_, exch) -> exchangeService.update(exch) }
-    }
+
 
 
 

@@ -53,6 +53,9 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
         return aggregator.getCurStat(pname)
     }
 
+    @GetMapping("/rest/lists")
+    fun lists() = aggregator.getNamesExchangesAndCurrencies()
+
     @GetMapping("/service/save")
     fun save() = aggregator.save()
 
