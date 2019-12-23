@@ -50,11 +50,18 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
     @GetMapping("/rest/pair", params = ["pname"])
     fun pair(@RequestParam pname: String): Map<String, CurrencyPair>{
         logger.debug("pname = $pname")
-        return aggregator.getCurStat(pname)
+        val res = aggregator.getCurStat(pname)
+        logger.debug("pair request: ${objectMapper.writeValueAsString(res)}")
+        return res
     }
 
     @GetMapping("/rest/lists")
-    fun lists() = aggregator.getNamesExchangesAndCurrencies()
+    fun lists() : Map<String, List<String>>{
+        val res = aggregator.getNamesExchangesAndCurrencies()
+        logger.debug("Lists response: ${objectMapper.writeValueAsString(res)}")
+        return res
+    }
+
 
     @GetMapping("/service/save")
     fun save() = aggregator.save()

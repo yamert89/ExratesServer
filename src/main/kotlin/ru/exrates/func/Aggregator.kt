@@ -126,7 +126,6 @@ class Aggregator(
             val p = it.value.getPair(pName)
             if(p != null){
                 curs[it.key] = p
-                it.value.insertPair(p)
             } else {
                 val pair = exchangeService.findPair(pName, it.value)
                 if (pair != null){ //todo optional

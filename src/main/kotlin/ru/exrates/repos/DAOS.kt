@@ -8,7 +8,7 @@ import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.exchanges.BasicExchange
 
 interface CurrencyRepository : JpaRepository<CurrencyPair, Int> {
-    fun findBySymbolAndExchange(symbol: String, exchange: BasicExchange) : CurrencyPair
+    fun findBySymbolAndExchange(symbol: String, exchange: BasicExchange) : CurrencyPair?
     @Query("select c.symbol from CurrencyPair c")
     fun getAll(): List<String>
 }
