@@ -28,7 +28,7 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
     @PostMapping("/rest/exchange")
     fun getExchange(@RequestBody exchangePayload: ExchangePayload, response: HttpServletResponse): BasicExchange {
         logger.debug("payload = $exchangePayload")
-        val ex = if(exchangePayload.pairs.isNotEmpty()){
+        val ex = if(exchangePayload.pairs.isNotEmpty() || exchangePayload.timeout.isNotEmpty()){
             with(exchangePayload){
                 aggregator.getExchange(exchange, pairs, timeout)
             }

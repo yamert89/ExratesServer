@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
+import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.BasicExchange
 import javax.persistence.NoResultException
 import javax.transaction.Transactional
@@ -38,7 +39,20 @@ class ExchangeService(private val logger: Logger = LogManager.getLogger(Exchange
     }
 
     @Transactional
-    fun persist(exchange: BasicExchange) = exchangeRepository.save(exchange)
+    fun persist(exchange: BasicExchange): BasicExchange {
+        val periods = exchangeRepository.getAllTimePeriods()
+        outer@ for (oldPeriod in periods) {
+            for (it in exchange.changePeriods) {
+                if(oldPeriod == it) {
+                    exchange.changePeriods.remove(it)
+                    exchange.changePeriods.add(oldPeriod)
+                    continue@outer
+                }
+            }
+        }
+
+        return exchangeRepository.save(exchange)
+    }
 
     @Transactional
     fun fillPairs(amount: Int) = currencyRepository.findAll(PageRequest.of(1, amount))
@@ -48,4 +62,6 @@ class ExchangeService(private val logger: Logger = LogManager.getLogger(Exchange
 
     @Transactional
     fun getAllPairs() = currencyRepository.getAll().toSet().toList() //todo return set
+
+
 }

@@ -19,7 +19,7 @@ data class CurrencyPair(var lastUse: Instant = Instant.now()) : Comparable<Curre
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Int = 0
 
-    @Column(unique = true)
+    @Column(/*unique = true*/) //todo check
     lateinit var symbol: String
 
     var price: Double = 0.0

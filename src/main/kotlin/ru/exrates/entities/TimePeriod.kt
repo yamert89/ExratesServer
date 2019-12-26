@@ -26,6 +26,16 @@ class TimePeriod(){
     }
 
     override fun toString() =  "TimePeriod{ id = $id, period = $period, name = $name}"
+
+    override fun hashCode(): Int {
+        return name.hashCode()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is TimePeriod) return false
+        return name == other.name
+    }
 }
 
 

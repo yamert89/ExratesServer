@@ -13,6 +13,7 @@ import ru.exrates.configs.Properties
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.exchanges.BasicExchange
 import ru.exrates.entities.exchanges.BinanceExchange
+import ru.exrates.entities.exchanges.ExmoExchange
 import ru.exrates.repos.ExchangeService
 import java.util.*
 import javax.annotation.PostConstruct
@@ -36,6 +37,7 @@ class Aggregator(
 
     init {
         exchangeNames["binanceExchange"] = BinanceExchange::class
+        exchangeNames["exmoExchange"] = ExmoExchange::class
     }
 
     @PostConstruct
@@ -88,7 +90,7 @@ class Aggregator(
         while (pairs.size > 1) pairs.pollLast() //todo limit count
         ex.pairs.clear()
         ex.pairs.addAll(pairs)
-        return ex.clone() as BasicExchange
+        return ex
     }
 
     fun getExchange(exName: String, pairsN: Array<String>, period: String): BasicExchange?{
