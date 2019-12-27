@@ -28,7 +28,7 @@ class TimePeriodListSerializer : JsonSerializer<List<TimePeriod>>() {
     }
 }
 
-class ExchangeSerializer(private val mapper: ObjectMapper = ObjectMapper()): JsonSerializer<BasicExchange>(){
+class ExchangeSerializer: JsonSerializer<BasicExchange>(){
     override fun serialize(value: BasicExchange?, gen: JsonGenerator?, serializers: SerializerProvider?) {
         gen!!.writeString(value!!.name)
     }

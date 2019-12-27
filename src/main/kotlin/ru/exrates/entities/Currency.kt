@@ -1,7 +1,10 @@
 package ru.exrates.entities
 
+import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import ru.exrates.entities.exchanges.BasicExchange
 import ru.exrates.utils.ExchangeSerializer
@@ -42,6 +45,7 @@ data class CurrencyPair(var lastUse: Instant = Instant.now()) : Comparable<Curre
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonSerialize(using = ExchangeSerializer::class)
+    @JsonProperty("exchangeName")
     lateinit var exchange: BasicExchange
     /*
       indexes:
