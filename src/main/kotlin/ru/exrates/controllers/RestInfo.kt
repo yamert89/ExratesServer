@@ -42,13 +42,13 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
     }
 
     @GetMapping("/rest/pair", params = ["c1", "c2"])
-    fun pair(@RequestParam c1: String, @RequestParam c2: String): Map<String, CurrencyPair>{
+    fun pair(@RequestParam c1: String, @RequestParam c2: String):List<CurrencyPair>{
         logger.debug("c1 = $c1, c2 = $c2")
         return aggregator.getCurStat(c1, c2)
     }
 
     @GetMapping("/rest/pair", params = ["pname"])
-    fun pair(@RequestParam pname: String): Map<String, CurrencyPair>{
+    fun pair(@RequestParam pname: String): List<CurrencyPair>{
         logger.debug("pname = $pname")
         val res = aggregator.getCurStat(pname)
         logger.debug("pair request: ${objectMapper.writeValueAsString(res)}")

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import ru.exrates.entities.exchanges.BasicExchange
+import ru.exrates.utils.ExchangeSerializer
 import ru.exrates.utils.TimePeriodListSerializer
 import ru.exrates.utils.TimePeriodSerializer
 import java.time.Instant
@@ -14,7 +15,7 @@ import kotlin.collections.HashMap
 
 data class Currency(val name: String, val symbol: String)
 @Entity
-@JsonIgnoreProperties("id", "exchange", "lastUse")
+@JsonIgnoreProperties("id", "lastUse")
 data class CurrencyPair(var lastUse: Instant = Instant.now()) : Comparable<CurrencyPair>{
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Int = 0
@@ -40,6 +41,7 @@ data class CurrencyPair(var lastUse: Instant = Instant.now()) : Comparable<Curre
         }
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JsonSerialize(using = ExchangeSerializer::class)
     lateinit var exchange: BasicExchange
     /*
       indexes:
