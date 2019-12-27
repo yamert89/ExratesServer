@@ -144,7 +144,7 @@ class Aggregator(
     fun getNamesExchangesAndCurrencies(): Map<String, List<String>> {
         return mapOf(
             "exchanges" to exchangeNames.keys.toList(),
-            "currencies" to exchangeService.getAllPairs()
+            "currencies" to exchangeService.getAllPairs().distinct()
         )
     }
 
