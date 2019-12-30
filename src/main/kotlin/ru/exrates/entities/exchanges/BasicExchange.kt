@@ -61,6 +61,11 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
     @OneToMany(cascade = [CascadeType.PERSIST], fetch = FetchType.EAGER)
     @SortComparator(CurrencyPair.SortComparator::class)
     val pairs: SortedSet<CurrencyPair> = TreeSet()
+        get(){
+            synchronized(field){
+                return field
+            }
+        }
 
     @ManyToMany(cascade = [CascadeType.PERSIST], fetch = FetchType.EAGER)
     @JsonSerialize(using = TimePeriodListSerializer::class)

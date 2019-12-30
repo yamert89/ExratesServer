@@ -25,6 +25,9 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
        //todo pairs - list of favorite pairs in bd for each user
     */
 
+    @GetMapping("/ping")
+    fun ping() = ""
+
     @PostMapping("/rest/exchange")
     fun getExchange(@RequestBody exchangePayload: ExchangePayload, response: HttpServletResponse): BasicExchange {
         logger.debug("payload = $exchangePayload")

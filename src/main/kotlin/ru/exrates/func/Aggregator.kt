@@ -125,16 +125,20 @@ class Aggregator(
     fun getCurStat(pName: String): List<CurrencyPair> {
         val curs = mutableListOf<CurrencyPair>()
         exchanges.forEach {
-            val p = it.value.getPair(pName)
+            val exchange = it.value
+            var p = exchange.getPair(pName)
             if(p != null){
-                p.exchange = it.value
+                p.exchange = exchange
                 curs.add(p)
             } else {
-                val pair = exchangeService.findPair(pName, it.value)
+                val pair = exchangeService.findPair(pName, exchange)
                 if (pair != null){ //todo optional
-                    pair.exchange = it.value
+                    pair.exchange = exchange
                     curs.add(pair)
-                    it.value.insertPair(pair)
+                    exchange.insertPair(pair)
+                   // p = exchange.getPair(pair.symbol)!!
+                    exchange.currentPrice(pair, exchange.updatePeriod)
+                    exchange.priceChange(pair, exchange.updatePeriod)
                 }
             }
         }
