@@ -22,7 +22,7 @@ class ExmoExchange() : BasicExchange(){
        URL_ORDER = ""
        URL_PING = ""
         props = Properties()
-        name = "ExcmoExchange"
+        name = "exmoExchange"
         webClient = WebClient.create()
 
 

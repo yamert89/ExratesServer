@@ -23,7 +23,9 @@ class TimePeriodSerializer(private val mapper: ObjectMapper = ObjectMapper()): J
 class TimePeriodListSerializer : JsonSerializer<List<TimePeriod>>() {
     override fun serialize(value: List<TimePeriod>?, gen: JsonGenerator?, serializers: SerializerProvider?) {
         gen?.writeStartArray()
-        value?.forEach { gen?.writeString(it.name) }
+        value?.forEach {
+            gen?.writeString(it.name)
+        }
         gen?.writeEndArray()
     }
 }
