@@ -25,6 +25,7 @@ import ru.exrates.utils.TimePeriodListSerializer
 import java.time.Duration
 import java.time.Instant
 import java.util.*
+import java.util.concurrent.ConcurrentSkipListSet
 import javax.annotation.PostConstruct
 
 import javax.persistence.*
@@ -60,12 +61,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
 
     @OneToMany(cascade = [CascadeType.PERSIST], fetch = FetchType.EAGER)
     @SortComparator(CurrencyPair.SortComparator::class)
-    val pairs: SortedSet<CurrencyPair> = TreeSet()
-        get(){
-            synchronized(field){
-                return field
-            }
-        }
+    val pairs: SortedSet<CurrencyPair> = ConcurrentSkipListSet()
 
     @ManyToMany(cascade = [CascadeType.PERSIST], fetch = FetchType.EAGER)
     @JsonSerialize(using = TimePeriodListSerializer::class)
