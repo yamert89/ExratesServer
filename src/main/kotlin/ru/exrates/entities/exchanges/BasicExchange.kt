@@ -75,6 +75,8 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
     @Transient
     lateinit var webClient: WebClient
 
+    lateinit var historyPeriods: Array<String>
+
     @PostConstruct
     fun init(){
         logger.debug("Postconstruct super $name")

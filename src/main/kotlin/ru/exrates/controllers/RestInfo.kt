@@ -66,6 +66,8 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
     }
 
 
+
+
     @GetMapping("/service/save")
     fun save() = aggregator.save()
 
