@@ -105,7 +105,7 @@ class BinanceExchange(): BasicExchange() {
             logger.debug("current price $pair.symbol req skipped")
             return
         }
-        val uri = URL_ENDPOINT + URL_CURRENT_AVG_PRICE + "?symbol=" + pair.symbol
+        val uri = "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?symbol=${pair.symbol}"
         val entity = JSONObject(stringResponse(uri))
         val price = entity.getString("price").toDouble()
         pair.price = price
@@ -120,13 +120,25 @@ class BinanceExchange(): BasicExchange() {
         val symbol = "?symbol=" + pair.symbol
         val period = "&interval="
         changePeriods.forEach {
-            val uri = URL_ENDPOINT + URL_PRICE_CHANGE + symbol + period + it.name + "&limit=1"
+            val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE$symbol$period${it.name}&limit=1"
             val entity = JSONArray(stringResponse(uri))
             val array = entity.getJSONArray(0)
             val changeVol = (array.getDouble(2) + array.getDouble(3)) / 2
             pair.putInPriceChange(it, changeVol)
             logger.debug("Change period updated on ${pair.symbol} pair, interval = $it.name | change = $changeVol")
         }
+    }
+
+    override fun priceHistory(pair: CurrencyPair, interval: String){
+        val symbol = "?symbol=" + pair.symbol
+        val period = "&interval=$interval"
+        val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE$symbol$period&limit=10" //todo limit ?
+        val entity = JSONArray(stringResponse(uri))
+        for (i in 0..entity.length()){
+            val array = entity.getJSONArray(i)
+            pair.priceHistory.add((array.getDouble(2) + array.getDouble(3)) / 2)
+        }
+
     }
 
     override fun toString(): String {

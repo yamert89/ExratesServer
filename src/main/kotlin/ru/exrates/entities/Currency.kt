@@ -14,7 +14,9 @@ import java.time.Instant
 import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
 import javax.persistence.*
+import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
+import kotlin.jvm.Transient
 
 data class Currency(val name: String, val symbol: String)
 @Entity
@@ -36,8 +38,9 @@ data class CurrencyPair(var lastUse: Instant = Instant.now()) : Comparable<Curre
     @JsonSerialize(keyUsing = TimePeriodSerializer::class)
     private val priceChange: MutableMap<TimePeriod, Double> = HashMap()
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    val priceHistory: Collection<Double> = ArrayBlockingQueue(20, true) //todo
+    //@ElementCollection(fetch = FetchType.EAGER)
+    @javax.persistence.Transient
+    val priceHistory: MutableList<Double> = ArrayList()
         get() {
             lastUse = Instant.now()
             return field

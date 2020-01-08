@@ -62,4 +62,8 @@ class ExmoExchange() : BasicExchange(){
 
     }
 
+    override fun priceHistory(pair: CurrencyPair, interval: String) {
+
+    }
+
 }
