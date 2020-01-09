@@ -24,7 +24,7 @@ class ExmoExchange() : BasicExchange(){
         props = Properties()
         name = "exmoExchange"
         webClient = WebClient.create()
-        historyPeriods = arrayOf("24h")
+        historyPeriods = listOf("24h")
 
 
     }

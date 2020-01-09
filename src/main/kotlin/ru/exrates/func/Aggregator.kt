@@ -140,10 +140,22 @@ class Aggregator(
                     exchange.currentPrice(pair, exchange.updatePeriod)
                     exchange.priceChange(pair, exchange.updatePeriod)
                     exchange.priceHistory(pair, histroryInterval)
+                    pair.historyPeriods = exchange.historyPeriods
                 }
             }
         }
         return curs
+    }
+
+    fun priceHistory(pName: String, exchName: String, historyInterval: String): List<Double>{
+        val exchange = exchanges[exchName] ?: throw NullPointerException("exchange $exchName not found")
+        var pair = exchange.getPair(pName)
+        if(pair == null){
+            pair = exchangeService.findPair(pName, exchange) ?: throw NullPointerException("pair $pair not found")
+            exchange.insertPair(pair)
+        }
+        exchange.priceHistory(pair, historyInterval)
+        return pair.priceHistory
     }
 
     fun getNamesExchangesAndCurrencies(): Map<String, List<String>> {

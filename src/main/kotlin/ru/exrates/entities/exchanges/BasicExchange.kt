@@ -75,7 +75,8 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
     @Transient
     lateinit var webClient: WebClient
 
-    lateinit var historyPeriods: Array<String>
+    @ElementCollection
+    lateinit var historyPeriods: List<String>
 
     @PostConstruct
     fun init(){

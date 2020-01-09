@@ -30,7 +30,7 @@ class BinanceExchange(): BasicExchange() {
         URL_ORDER = "/api/v3/depth"
         limitCode = 429
         banCode = 418
-        historyPeriods = arrayOf("3m", "5m", "15m", "30m", "1h", "4h", "6h", "8h", "12h", "1d", "3d", "1w", "1M")
+        historyPeriods = listOf("3m", "5m", "15m", "30m", "1h", "4h", "6h", "8h", "12h", "1d", "3d", "1w", "1M")
         webClient = WebClient.create(URL_ENDPOINT)
         if(!temporary) {
             super.init()
@@ -134,7 +134,7 @@ class BinanceExchange(): BasicExchange() {
         val period = "&interval=$interval"
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE$symbol$period&limit=10" //todo limit ?
         val entity = JSONArray(stringResponse(uri))
-        for (i in 0..entity.length()){
+        for (i in 0 until entity.length()){
             val array = entity.getJSONArray(i)
             pair.priceHistory.add((array.getDouble(2) + array.getDouble(3)) / 2)
         }

@@ -11,4 +11,8 @@ class EmptyExchange: BasicExchange() {
     override fun priceChange(pair: CurrencyPair, timeout: Duration) {
 
     }
+
+    override fun priceHistory(pair: CurrencyPair, interval: String) {
+
+    }
 }

@@ -29,14 +29,13 @@ class App {
     }
 
     @Bean
-    @Primary
+    //@Primary
     @ConfigurationProperties("app.datasource.first")
     open fun firstDataSourceProperties(): DataSourceProperties {
         return DataSourceProperties()
     }
 
-    @Bean
-    //@Primary
+    @Bean @Primary
     @ConfigurationProperties("app.datasource.second")
     open fun secondDataSourceProperties(): DataSourceProperties {
         return DataSourceProperties()

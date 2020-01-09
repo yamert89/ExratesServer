@@ -58,15 +58,16 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
         return res
     }
 
+    @GetMapping("/rest/pair/history")
+    fun history(@RequestParam pname: String, @RequestParam exchname: String, @RequestParam historyinterval: String) =
+        aggregator.priceHistory(pname, exchname, historyinterval)
+
     @GetMapping("/rest/lists")
     fun lists() : Map<String, List<String>>{
         val res = aggregator.getNamesExchangesAndCurrencies()
         logger.debug("Lists response: ${objectMapper.writeValueAsString(res)}")
         return res
     }
-
-
-
 
     @GetMapping("/service/save")
     fun save() = aggregator.save()

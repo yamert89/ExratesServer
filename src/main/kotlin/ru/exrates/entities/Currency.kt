@@ -19,6 +19,7 @@ import kotlin.collections.HashMap
 import kotlin.jvm.Transient
 
 data class Currency(val name: String, val symbol: String)
+
 @Entity
 @JsonIgnoreProperties("id", "lastUse")
 data class CurrencyPair(var lastUse: Instant = Instant.now()) : Comparable<CurrencyPair>{
@@ -57,6 +58,9 @@ data class CurrencyPair(var lastUse: Instant = Instant.now()) : Comparable<Curre
         2 - priceHistory
      */
     val updateTimes: LongArray = LongArray(3)
+
+    @javax.persistence.Transient
+    var historyPeriods : List<String>? = null
 
     constructor(cur1: Currency, cur2: Currency): this() {symbol = cur1.symbol + cur2.symbol}
     constructor(symbol: String, exchange: BasicExchange): this() {
