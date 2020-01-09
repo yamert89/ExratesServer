@@ -50,8 +50,8 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
         return aggregator.getCurStat(c1, c2)
     }*/
 
-    @GetMapping("/rest/pair", params = ["pname", "historyinterval"])
-    fun pair(@RequestParam pname: String, @RequestParam historyInterval: String): List<CurrencyPair>{
+    @GetMapping("/rest/pair"/*, params = ["pname", "historyinterval"]*/)
+    fun pair(@RequestParam pname: String, @RequestParam(required = false) historyInterval: String?): List<CurrencyPair>{
         logger.debug("pname = $pname")
         val res = aggregator.getCurStat(pname, historyInterval)
         logger.debug("pair request: ${objectMapper.writeValueAsString(res)}")
