@@ -13,6 +13,10 @@ interface CurrencyRepository : JpaRepository<CurrencyPair, Int> {
 
     @Query("select c.symbol from CurrencyPair c")
     fun getAll(): List<String>
+
+    @Query("select c.symbol from CurrencyPair c where c.exchange = ?1")
+    fun getCurrencyPairsNames(exchange: BasicExchange): List<String>
+
 }
 
 @NoRepositoryBean interface ExchangeModRepo : JpaRepository<BasicExchange, Int> {
@@ -20,6 +24,7 @@ interface CurrencyRepository : JpaRepository<CurrencyPair, Int> {
 
     @Query("select p from TimePeriod p")
     fun getAllTimePeriods(): List<TimePeriod>
+
 }
 
 @Repository interface ExchangeRepository : ExchangeModRepo

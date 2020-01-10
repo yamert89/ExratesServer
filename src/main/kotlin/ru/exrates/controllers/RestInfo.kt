@@ -59,8 +59,11 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
     }
 
     @GetMapping("/rest/pair/history")
-    fun history(@RequestParam pname: String, @RequestParam exchname: String, @RequestParam historyinterval: String) =
-        aggregator.priceHistory(pname, exchname, historyinterval)
+    fun history(@RequestParam pname: String, @RequestParam exchname: String, @RequestParam historyinterval: String): List<Double>{
+        logger.debug("price history request: $pname, $exchname, $historyinterval")
+        return aggregator.priceHistory(pname, exchname, historyinterval)
+    }
+
 
     @GetMapping("/rest/lists")
     fun lists() : Map<String, List<String>>{

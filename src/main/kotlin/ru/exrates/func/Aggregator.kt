@@ -142,6 +142,7 @@ class Aggregator(
                 }
             }
         }
+
         return curs
     }
 
@@ -149,19 +150,14 @@ class Aggregator(
         val exchange = exchanges[exchName] ?: throw NullPointerException("exchange $exchName not found")
         var pair = exchange.getPair(pName)
         if(pair == null){
-            pair = exchangeService.findPair(pName, exchange) ?: throw NullPointerException("pair $pair not found")
+            pair = exchangeService.findPair(pName, exchange) ?: throw NullPointerException("pair $pName not found")
             exchange.insertPair(pair)
         }
         exchange.priceHistory(pair, historyInterval)
         return pair.priceHistory
     }
 
-    fun getNamesExchangesAndCurrencies(): Map<String, List<String>> {
-        return mapOf(
-            "exchanges" to exchangeNames.keys.toList(),
-            "currencies" to exchangeService.getAllPairs().distinct()
-        )
-    }
+    fun getNamesExchangesAndCurrencies(): Map<String, List<String>> = exchangeService.getAllPairs(exchanges.values)
 
     fun save(){
         logger.debug("Saving exchanges...")

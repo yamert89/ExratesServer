@@ -60,7 +60,12 @@ class ExchangeService(private val logger: Logger = LogManager.getLogger(Exchange
     fun findPair(symbol: String, exchange: BasicExchange) = currencyRepository.findBySymbolAndExchange(symbol, exchange)
 
     @Transactional
-    fun getAllPairs() = currencyRepository.getAll().toSet().toList() //todo return set
+    //fun getAllPairs() = currencyRepository.getAll().toSet().toList()
+    fun getAllPairs(exchanges: Collection<BasicExchange>): Map<String, List<String>> {
+        val map = mutableMapOf<String, List<String>>()
+        exchanges.forEach {  map[it.name] = currencyRepository.getCurrencyPairsNames(it)}
+        return map
+    }
 
 
 }
