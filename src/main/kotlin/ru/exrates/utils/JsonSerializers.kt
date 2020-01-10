@@ -4,11 +4,8 @@ import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.databind.JsonSerializer
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializerProvider
-import com.fasterxml.jackson.databind.annotation.JsonSerialize
-import com.fasterxml.jackson.databind.ser.std.StdSerializer
 import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.BasicExchange
-import ru.exrates.entities.exchanges.Exchange
 import java.io.StringWriter
 
 class TimePeriodSerializer(private val mapper: ObjectMapper = ObjectMapper()): JsonSerializer<TimePeriod>() {

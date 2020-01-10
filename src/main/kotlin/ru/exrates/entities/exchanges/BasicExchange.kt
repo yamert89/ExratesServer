@@ -1,15 +1,12 @@
 package ru.exrates.entities.exchanges
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.hibernate.annotations.SortComparator
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.jackson.JsonComponent
 import org.springframework.http.HttpStatus
-import org.springframework.web.reactive.function.client.ClientResponse
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Mono
 import ru.exrates.configs.Properties
@@ -27,11 +24,9 @@ import java.time.Instant
 import java.util.*
 import java.util.concurrent.ConcurrentSkipListSet
 import javax.annotation.PostConstruct
-
 import javax.persistence.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
-import kotlin.jvm.Transient
 import kotlin.reflect.KClass
 
 @Entity @Inheritance(strategy = InheritanceType.SINGLE_TABLE) @DiscriminatorColumn(name = "EXCHANGE_TYPE")

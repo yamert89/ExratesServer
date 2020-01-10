@@ -1,6 +1,5 @@
 package ru.exrates.entities.exchanges
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
 import org.springframework.http.HttpStatus

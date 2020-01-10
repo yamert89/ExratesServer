@@ -1,6 +1,5 @@
 package ru.exrates.entities.exchanges
 
-import org.apache.logging.log4j.Logger
 import org.springframework.web.reactive.function.client.WebClient
 import ru.exrates.configs.Properties
 import ru.exrates.entities.CurrencyPair

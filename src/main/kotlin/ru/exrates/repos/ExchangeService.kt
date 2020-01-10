@@ -5,7 +5,6 @@ import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
-import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.BasicExchange
 import javax.persistence.NoResultException
 import javax.transaction.Transactional
