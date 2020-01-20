@@ -5,7 +5,7 @@ import javax.persistence.GeneratedValue
 import javax.persistence.Id
 
 @Entity
-class AuthorizedUser {
+class AuthorizedUser(val token: String) {
     @Id
     @GeneratedValue
     private var id: Long = 0

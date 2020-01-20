@@ -4,6 +4,8 @@ data class ExchangePayload(val exchange: String, val timeout: String, val pairs:
 
 }
 
+class ErrorBody(val message: String)
+
 
 
 

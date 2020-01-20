@@ -11,6 +11,7 @@ import ru.exrates.entities.exchanges.BasicExchange
 import ru.exrates.entities.exchanges.EmptyExchange
 import ru.exrates.func.Aggregator
 import ru.exrates.utils.ExchangePayload
+import java.security.Principal
 import javax.servlet.http.HttpServletResponse
 
 
@@ -29,7 +30,8 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
     fun ping() = ""
 
     @PostMapping("/rest/exchange")
-    fun getExchange(@RequestBody exchangePayload: ExchangePayload, response: HttpServletResponse): BasicExchange {
+    fun getExchange(@RequestBody exchangePayload: ExchangePayload, response: HttpServletResponse, principal: Principal): BasicExchange {
+        logger.debug("principal is ${principal.name}") //todo test
         logger.debug("payload = $exchangePayload")
         val ex = if(exchangePayload.pairs.isNotEmpty() || exchangePayload.timeout.isNotEmpty()){
             with(exchangePayload){
@@ -38,7 +40,9 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
         } else aggregator.getExchange(exchangePayload.exchange)
         logger.debug("Exchange response: ${objectMapper.writeValueAsString(ex)}")
         if (ex == null) {
-            response.status = 404 //todo if null req to client?
+            response.status = 404 //todo test
+            response.sendError(404, "Exchange not found")
+            //response.sendRedirect("/error?message=Exchange not found")
             return EmptyExchange()
         }
         return ex

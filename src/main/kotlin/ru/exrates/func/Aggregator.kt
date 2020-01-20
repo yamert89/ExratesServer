@@ -26,7 +26,6 @@ class Aggregator(
     val exchangeNames: MutableMap<String, KClass<out BasicExchange>> = HashMap(),
     @Autowired
     val exchangeService: ExchangeService,
-    val applicationContext: ApplicationContext, //todo del
     @Autowired
     val genericApplicationContext: GenericApplicationContext,
     @Autowired
