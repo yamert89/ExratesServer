@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 open class WebSecurity : WebSecurityConfigurerAdapter() {
     @Throws(Exception::class)
     override fun configure(auth: AuthenticationManagerBuilder) {
+        //auth.jdbcAuthentication().authoritiesByUsernameQuery()
         auth.inMemoryAuthentication().withUser("user").password("1").roles("ADMIN")
     }
 

@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.NoRepositoryBean
 import org.springframework.stereotype.Repository
+import ru.exrates.entities.AuthorizedUser
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.BasicExchange
@@ -28,3 +29,9 @@ interface CurrencyRepository : JpaRepository<CurrencyPair, Int> {
 }
 
 @Repository interface ExchangeRepository : ExchangeModRepo
+
+//@Repository //todo needs?
+interface UserRepository: JpaRepository<AuthorizedUser, Long> {
+    fun findByToken(token: String): AuthorizedUser?
+
+}
