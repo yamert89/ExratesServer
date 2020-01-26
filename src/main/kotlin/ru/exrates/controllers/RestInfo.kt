@@ -33,10 +33,10 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
     fun ping() = ""
 
     @PostMapping("/rest/exchange")
-    fun getExchange(@RequestBody exchangePayload: ExchangePayload, response: HttpServletResponse, principal: Principal, session: HttpSession): BasicExchange {
-        logger.debug("principal is ${principal.name}") //todo test
-        val secContext = session.getAttribute("SPRING_SECURITY_CONTEXT") as SecurityContext
-        val login = (secContext.authentication.principal as User).username
+    fun getExchange(@RequestBody exchangePayload: ExchangePayload, response: HttpServletResponse, principal: Principal?, session: HttpSession): BasicExchange {
+        logger.debug("principal is ${principal?.name}") //todo test
+        val secContext = session.getAttribute("SPRING_SECURITY_CONTEXT") as SecurityContext?
+        val login = (secContext?.authentication?.principal as User?)?.username
         logger.debug("session user name $login")
         logger.debug("payload = $exchangePayload")
         val ex = if(exchangePayload.pairs.isNotEmpty() || exchangePayload.timeout.isNotEmpty()){
