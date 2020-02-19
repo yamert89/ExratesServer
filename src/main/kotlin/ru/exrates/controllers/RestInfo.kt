@@ -71,7 +71,9 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
     @GetMapping("/rest/pair/history")
     fun history(@RequestParam pname: String, @RequestParam exchname: String, @RequestParam historyinterval: String): List<Double>{
         logger.debug("price history request: $pname, $exchname, $historyinterval")
-        return aggregator.priceHistory(pname, exchname, historyinterval)
+        val list = aggregator.priceHistory(pname, exchname, historyinterval)
+        logger.debug("price history response = ${objectMapper.writeValueAsString(list)}")
+        return list
     }
 
 

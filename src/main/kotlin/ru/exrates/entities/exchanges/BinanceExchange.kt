@@ -133,6 +133,7 @@ class BinanceExchange(): BasicExchange() {
         val period = "&interval=$interval"
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE$symbol$period&limit=10" //todo limit ?
         val entity = JSONArray(stringResponse(uri))
+        pair.priceHistory.clear()
         for (i in 0 until entity.length()){
             val array = entity.getJSONArray(i)
             pair.priceHistory.add((array.getDouble(2) + array.getDouble(3)) / 2)
