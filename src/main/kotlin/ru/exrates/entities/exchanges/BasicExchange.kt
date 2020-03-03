@@ -52,7 +52,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
 
     @Id @GeneratedValue
     var id: Int = 0
-    lateinit var name: String
+    var name: String = ""
 
     @OneToMany(cascade = [CascadeType.PERSIST], fetch = FetchType.EAGER)
     @SortComparator(CurrencyPair.SortComparator::class)

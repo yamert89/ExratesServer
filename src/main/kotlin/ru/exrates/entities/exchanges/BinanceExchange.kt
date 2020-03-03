@@ -9,11 +9,14 @@ import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.secondary.Limit
+import java.math.BigDecimal
+import java.math.MathContext
 import java.net.ConnectException
 import java.time.Duration
 import javax.annotation.PostConstruct
 import javax.persistence.DiscriminatorValue
 import javax.persistence.Entity
+import kotlin.math.round
 
 @Entity @DiscriminatorValue("binance")
 class BinanceExchange(): BasicExchange() {
@@ -122,8 +125,9 @@ class BinanceExchange(): BasicExchange() {
             val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE$symbol$period${it.name}&limit=1"
             val entity = JSONArray(stringResponse(uri))
             val array = entity.getJSONArray(0)
-            val changeVol = (array.getDouble(2) + array.getDouble(3)) / 2
-            pair.putInPriceChange(it, changeVol)
+            val oldVal = (array.getDouble(2) + array.getDouble(3)) / 2
+            val changeVol = if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1
+            pair.putInPriceChange(it, BigDecimal(changeVol, MathContext(2)).toDouble())
             logger.debug("Change period updated on ${pair.symbol} pair, interval = $it.name | change = $changeVol")
         }
     }

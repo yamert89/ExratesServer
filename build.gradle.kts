@@ -45,7 +45,7 @@ tasks {
         kotlinOptions.jvmTarget = "1.8"
     }
     bootJar{
-        archiveFileName.set("demo.jar")
+        archiveFileName.set("exratesServer.jar")
         launchScript()
     }
 
