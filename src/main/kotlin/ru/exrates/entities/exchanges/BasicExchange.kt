@@ -98,7 +98,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
                 try {
                     currentPrice(p, updatePeriod)
                     priceChange(p, updatePeriod)
-                    priceHistory(p, historyPeriods[0])
+                    priceHistory(p, historyPeriods[0], 10)
                 }catch (e: LimitExceededException){
                     logger.error(e.message)
                     sleepValueSeconds *= 2
@@ -160,7 +160,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
 
     abstract fun priceChange(pair: CurrencyPair, timeout: Duration)
 
-    abstract fun priceHistory(pair: CurrencyPair, interval: String)
+    abstract fun priceHistory(pair: CurrencyPair, interval: String, limit: Int)
 
 
 }

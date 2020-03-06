@@ -119,7 +119,7 @@ class Aggregator(
 
     //fun getCurStat(curName1: String, curName2: String) = getCurStat(curName1 + curName2)
 
-    fun getCurStat(pName: String, histroryInterval: String?): List<CurrencyPair> {
+    fun getCurStat(pName: String, histroryInterval: String?, limit: Int): List<CurrencyPair> {
         val curs = mutableListOf<CurrencyPair>()
         exchanges.forEach {
             val exchange = it.value
@@ -136,7 +136,7 @@ class Aggregator(
                    // p = exchange.getPair(pair.symbol)!!
                     exchange.currentPrice(pair, exchange.updatePeriod)
                     exchange.priceChange(pair, exchange.updatePeriod)
-                    exchange.priceHistory(pair, histroryInterval ?: exchange.historyPeriods[0])
+                    exchange.priceHistory(pair, histroryInterval ?: exchange.historyPeriods[0], limit)
                     pair.historyPeriods = exchange.historyPeriods
                 }
             }
@@ -145,14 +145,14 @@ class Aggregator(
         return curs
     }
 
-    fun priceHistory(pName: String, exchName: String, historyInterval: String): List<Double>{
+    fun priceHistory(pName: String, exchName: String, historyInterval: String, limit: Int): List<Double>{
         val exchange = exchanges[exchName] ?: throw NullPointerException("exchange $exchName not found")
         var pair = exchange.getPair(pName)
         if(pair == null){
             pair = exchangeService.findPair(pName, exchange) ?: throw NullPointerException("pair $pName not found")
             exchange.insertPair(pair)
         }
-        exchange.priceHistory(pair, historyInterval)
+        exchange.priceHistory(pair, historyInterval, limit)
         return pair.priceHistory
     }
 

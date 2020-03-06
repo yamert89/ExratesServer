@@ -132,10 +132,10 @@ class BinanceExchange(): BasicExchange() {
         }
     }
 
-    override fun priceHistory(pair: CurrencyPair, interval: String){
+    override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int){
         val symbol = "?symbol=" + pair.symbol
         val period = "&interval=$interval"
-        val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE$symbol$period&limit=10" //todo limit ?
+        val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE$symbol$period&limit=$limit"
         val entity = JSONArray(stringResponse(uri))
         pair.priceHistory.clear()
         for (i in 0 until entity.length()){

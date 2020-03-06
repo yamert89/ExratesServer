@@ -12,7 +12,7 @@ class EmptyExchange: BasicExchange() {
 
     }
 
-    override fun priceHistory(pair: CurrencyPair, interval: String) {
+    override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int) {
 
     }
 }
