@@ -38,13 +38,13 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
         val secContext = session.getAttribute("SPRING_SECURITY_CONTEXT") as SecurityContext?
         val login = (secContext?.authentication?.principal as User?)?.username
         logger.debug("session user name $login")
-        logger.debug("payload = $exchangePayload")
+        logger.debug("REQUEST ON /rest/exchange: $exchangePayload")
         val ex = if(exchangePayload.pairs.isNotEmpty() || exchangePayload.timeout.isNotEmpty()){
             with(exchangePayload){
                 aggregator.getExchange(exchange, pairs, timeout)
             }
         } else aggregator.getExchange(exchangePayload.exchange)
-        logger.debug("Exchange response: ${objectMapper.writeValueAsString(ex)}")
+        logger.debug("RESPONSE of /rest/exchange: ${objectMapper.writeValueAsString(ex)}")
         if (ex == null) {
             response.status = 404 //todo test
             response.sendError(404, "Exchange not found")
@@ -62,17 +62,17 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
 
     @GetMapping("/rest/pair"/*, params = ["pname", "historyinterval"]*/)
     fun pair(@RequestParam pname: String, @RequestParam(required = false) historyInterval: String?, @RequestParam limit: Int): List<CurrencyPair>{
-        logger.debug("pname = $pname")
+        logger.debug("REQUEST ON /rest/pair: pname = $pname, historyInterval = $historyInterval, limit = $limit")
         val res = aggregator.getCurStat(pname, historyInterval, limit)
-        logger.debug("pair request: ${objectMapper.writeValueAsString(res)}")
+        logger.debug("RESPONSE of /rest/pair: ${objectMapper.writeValueAsString(res)}")
         return res
     }
 
     @GetMapping("/rest/pair/history")
     fun history(@RequestParam pname: String, @RequestParam exchname: String, @RequestParam historyinterval: String, @RequestParam limit: Int): List<Double>{
-        logger.debug("price history request: $pname, $exchname, $historyinterval")
+        logger.debug("REQUEST ON /rest/pair/history: pname = $pname, exchname = $exchname, historyinterval = $historyinterval, limit = $limit")
         val list = aggregator.priceHistory(pname, exchname, historyinterval, limit)
-        logger.debug("price history response = ${objectMapper.writeValueAsString(list)}")
+        logger.debug("RESPONSE of /rest/pair/history: ${objectMapper.writeValueAsString(list)}")
         return list
     }
 

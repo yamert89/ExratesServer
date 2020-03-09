@@ -50,4 +50,5 @@ tasks {
     }
 
     bootJar.get().dependsOn.add("classes")
+
 }
