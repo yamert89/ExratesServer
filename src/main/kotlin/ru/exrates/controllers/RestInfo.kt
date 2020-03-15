@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.exchanges.BasicExchange
 import ru.exrates.entities.exchanges.EmptyExchange
+import ru.exrates.entities.exchanges.secondary.ExchangeNamesObject
 import ru.exrates.func.Aggregator
 import ru.exrates.utils.ExchangePayload
 import java.security.Principal
@@ -41,9 +42,9 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
         logger.debug("REQUEST ON /rest/exchange: $exchangePayload")
         val ex = if(exchangePayload.pairs.isNotEmpty() || exchangePayload.timeout.isNotEmpty()){
             with(exchangePayload){
-                aggregator.getExchange(exchange, pairs, timeout)
+                aggregator.getExchange(exId, pairs, timeout)
             }
-        } else aggregator.getExchange(exchangePayload.exchange)
+        } else aggregator.getExchange(exchangePayload.exId)
         logger.debug("RESPONSE of /rest/exchange: ${objectMapper.writeValueAsString(ex)}")
         if (ex == null) {
             response.status = 404 //todo test
@@ -69,16 +70,16 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
     }
 
     @GetMapping("/rest/pair/history")
-    fun history(@RequestParam pname: String, @RequestParam exchname: String, @RequestParam historyinterval: String, @RequestParam limit: Int): List<Double>{
-        logger.debug("REQUEST ON /rest/pair/history: pname = $pname, exchname = $exchname, historyinterval = $historyinterval, limit = $limit")
-        val list = aggregator.priceHistory(pname, exchname, historyinterval, limit)
+    fun history(@RequestParam pname: String, @RequestParam exId: Int, @RequestParam historyinterval: String, @RequestParam limit: Int): List<Double>{
+        logger.debug("REQUEST ON /rest/pair/history: pname = $pname, exchId = $exId, historyinterval = $historyinterval, limit = $limit")
+        val list = aggregator.priceHistory(pname, exId, historyinterval, limit)
         logger.debug("RESPONSE of /rest/pair/history: ${objectMapper.writeValueAsString(list)}")
         return list
     }
 
 
     @GetMapping("/rest/lists")
-    fun lists() : Map<String, List<String>>{
+    fun lists() : List<ExchangeNamesObject>{
         val res = aggregator.getNamesExchangesAndCurrencies()
         logger.debug("Lists response: ${objectMapper.writeValueAsString(res)}")
         return res

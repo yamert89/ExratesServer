@@ -1,6 +1,6 @@
 package ru.exrates.utils
 
-data class ExchangePayload(val exchange: String, val timeout: String, val pairs: Array<String>) {
+data class ExchangePayload(val exId: Int, val timeout: String, val pairs: Array<String>) {
 
 }
 

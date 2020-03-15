@@ -46,6 +46,10 @@ data class CurrencyPair(var lastUse: Instant = Instant.now()) : Comparable<Curre
     @JsonSerialize(using = ExchangeSerializer::class)
     @JsonProperty("exchangeName")
     lateinit var exchange: BasicExchange
+
+    var exId: Int = 0
+
+
     /*
       indexes:
         0 - price
@@ -61,6 +65,7 @@ data class CurrencyPair(var lastUse: Instant = Instant.now()) : Comparable<Curre
     constructor(symbol: String, exchange: BasicExchange): this() {
         this.symbol = symbol
         this.exchange = exchange
+        exId = exchange.exId
     }
 
     @JsonIgnore

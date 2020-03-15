@@ -80,8 +80,8 @@ class Aggregator(
         }
     }
 
-    fun getExchange(exName: String): BasicExchange{
-        var ex: BasicExchange? = exchanges[exName]
+    fun getExchange(exId: Int): BasicExchange{
+        var ex: BasicExchange? = getExById(exId)
         ex = ex?.clone() as BasicExchange
         val pairs = TreeSet<CurrencyPair>(ex.pairs)
         while (pairs.size > 1) pairs.pollLast() //todo limit count
@@ -90,10 +90,10 @@ class Aggregator(
         return ex
     }
 
-    fun getExchange(exName: String, pairsN: Array<String>, period: String): BasicExchange?{
-        val exch = exchanges[exName]
+    fun getExchange(exId: Int, pairsN: Array<String>, period: String): BasicExchange?{
+        val exch = getExById(exId)
         if(exch == null){
-            logger.error("Exchange $exName not found")
+            logger.error("Exchange $exId not found")
             return null
         }
         val pairs = exch.pairs
@@ -145,8 +145,8 @@ class Aggregator(
         return curs
     }
 
-    fun priceHistory(pName: String, exchName: String, historyInterval: String, limit: Int): List<Double>{
-        val exchange = exchanges[exchName] ?: throw NullPointerException("exchange $exchName not found")
+    fun priceHistory(pName: String, exId: Int, historyInterval: String, limit: Int): List<Double>{
+        val exchange: BasicExchange = getExById(exId) ?: throw NullPointerException("exchange $exId not found")
         var pair = exchange.getPair(pName)
         if(pair == null){
             pair = exchangeService.findPair(pName, exchange) ?: throw NullPointerException("pair $pName not found")
@@ -156,7 +156,7 @@ class Aggregator(
         return pair.priceHistory
     }
 
-    fun getNamesExchangesAndCurrencies(): Map<String, List<String>> = exchangeService.getAllPairs(exchanges.values)
+    fun getNamesExchangesAndCurrencies() = exchangeService.getAllPairs(exchanges.values)
 
     fun save(){
         logger.debug("Saving exchanges...")
@@ -176,6 +176,8 @@ class Aggregator(
         tLimits.forEach { counter += it }
         return counter / tLimits.size
     }
+
+    private fun getExById(id: Int) = exchanges.values.find { it.exId == id }
 
 
 

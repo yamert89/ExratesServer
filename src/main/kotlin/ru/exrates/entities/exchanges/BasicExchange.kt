@@ -41,6 +41,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
     lateinit var URL_PRICE_CHANGE: String
     lateinit var URL_PING: String
     lateinit var URL_ORDER: String
+    var exId: Int = 0
     var temporary = true
     var limitCode: Int = 0
     var banCode: Int = 0

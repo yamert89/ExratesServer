@@ -24,6 +24,7 @@ class BinanceExchange(): BasicExchange() {
     @PostConstruct
     override fun init() {
         if (id == 0 && !temporary) return
+        exId = 1
         URL_ENDPOINT = "https://api.binance.com"
         URL_CURRENT_AVG_PRICE = "/api/v3/avgPrice" //todo /api/v3/ticker/price ?
         URL_INFO = "/api/v1/exchangeInfo"

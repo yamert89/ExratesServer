@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import ru.exrates.entities.exchanges.BasicExchange
+import ru.exrates.entities.exchanges.secondary.ExchangeNamesObject
 import javax.persistence.NoResultException
 import javax.transaction.Transactional
 
@@ -61,10 +62,10 @@ class ExchangeService(private val logger: Logger = LogManager.getLogger(Exchange
 
     @Transactional
     //fun getAllPairs() = currencyRepository.getAll().toSet().toList()
-    fun getAllPairs(exchanges: Collection<BasicExchange>): Map<String, List<String>> {
-        val map = mutableMapOf<String, List<String>>()
-        exchanges.forEach {  map[it.name] = currencyRepository.getCurrencyPairsNames(it)}
-        return map
+    fun getAllPairs(exchanges: Collection<BasicExchange>): List<ExchangeNamesObject> {
+        val list = ArrayList<ExchangeNamesObject>()
+        exchanges.forEach {  list.add(ExchangeNamesObject(it.exId, it.name, currencyRepository.getCurrencyPairsNames(it))) }
+        return list
     }
 
 
