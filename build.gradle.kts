@@ -51,4 +51,14 @@ tasks {
 
     bootJar.get().dependsOn.add("classes")
 
+    register<Copy>("copy") {
+        dependsOn(bootJar)
+        val archieveName = "exratesServer.jar"
+        val buildD = "$projectDir/build/libs/"
+        val startFolder = file("C:\\Users\\Пендальф Синий\\Desktop\\exrates\\")
+        from(file("$buildD/$archieveName"))
+        into(startFolder)
+
+    }
+
 }
