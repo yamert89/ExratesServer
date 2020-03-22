@@ -94,6 +94,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
 
     fun task(){
         logger.debug("$name task started with ${pairs.size} pairs")
+        logger.debug("pairs in exchange: ${pairs.joinToString { it.symbol }}")
         synchronized(pairs){
             for (p in pairs){
                 try {
