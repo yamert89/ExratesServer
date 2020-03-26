@@ -59,7 +59,7 @@ class Aggregator(
                 }
             }
 
-            val finalExchange = exchange!!
+            val finalExchange = exchange
             val clazz: KClass<BasicExchange> = it.value as KClass<BasicExchange>
             //Arrays.stream(genericApplicationContext.beanDefinitionNames).forEach(System.out::println);
             genericApplicationContext.registerBean(
@@ -112,6 +112,7 @@ class Aggregator(
         reqPairs.forEach {
             exch.currentPrice(it, timePeriod.period)
             exch.priceChange(it, timePeriod.period) //todo needs try catch?
+            exch.priceHistory(it, period, 10)
         }
         return exch
 
