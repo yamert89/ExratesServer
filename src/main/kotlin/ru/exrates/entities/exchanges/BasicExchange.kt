@@ -57,7 +57,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
 
     @OneToMany(cascade = [CascadeType.PERSIST], fetch = FetchType.EAGER)
     @SortComparator(CurrencyPair.SortComparator::class)
-    val pairs: SortedSet<CurrencyPair> = ConcurrentSkipListSet()
+    val pairs: SortedSet<CurrencyPair> = ConcurrentSkipListSet() //FIXMe duplicate pairs in response
 
     @ManyToMany(cascade = [CascadeType.PERSIST], fetch = FetchType.EAGER)
     @JsonSerialize(using = TimePeriodListSerializer::class)
@@ -138,7 +138,10 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
 
     override fun insertPair(pair: CurrencyPair) {
         pairs.add(pair)
-        if(pairs.size > props.maxSize()) pairs.remove(pairs.last())
+        if(pairs.size > props.maxSize()) {
+            pairs.last().exchange = null
+            pairs.remove(pairs.last())
+        }
     }
 
     override fun getPair(c1: Currency, c2: Currency): CurrencyPair? {

@@ -46,6 +46,7 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
             }
         } else aggregator.getExchange(exchangePayload.exId)
         logger.debug("RESPONSE of /rest/exchange: ${objectMapper.writeValueAsString(ex)}")
+        logger.debug("pairs: ${ex?.pairs?.joinToString()}")
         if (ex == null) {
             response.status = 404 //todo test
             response.sendError(404, "Exchange not found")

@@ -45,7 +45,7 @@ data class CurrencyPair(var lastUse: Instant = Instant.now()) : Comparable<Curre
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonSerialize(using = ExchangeSerializer::class)
     @JsonProperty("exchangeName")
-    lateinit var exchange: BasicExchange
+    var exchange: BasicExchange? = null
 
     var exId: Int = 0
 

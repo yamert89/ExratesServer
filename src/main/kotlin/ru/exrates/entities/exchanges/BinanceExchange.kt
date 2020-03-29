@@ -105,19 +105,19 @@ class BinanceExchange(): BasicExchange() {
 
     override fun currentPrice(pair: CurrencyPair, timeout: Duration) {
         if(!dataElasped(pair, timeout, 0)){
-            logger.debug("current price $pair.symbol req skipped")
+            logger.trace("current price $pair.symbol req skipped")
             return
         }
         val uri = "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?symbol=${pair.symbol}"
         val entity = JSONObject(stringResponse(uri))
         val price = entity.getString("price").toDouble()
         pair.price = price
-        logger.debug("Price updated on ${pair.symbol} pair | = $price")
+        logger.trace("Price updated on ${pair.symbol} pair | = $price")
     }
 
     override fun priceChange(pair: CurrencyPair, timeout: Duration) {
         if(!dataElasped(pair, timeout, 1)) {
-            logger.debug("price change $pair req skipped")
+            logger.trace("price change $pair req skipped")
             return
         }
         val symbol = "?symbol=" + pair.symbol
@@ -129,7 +129,7 @@ class BinanceExchange(): BasicExchange() {
             val oldVal = (array.getDouble(2) + array.getDouble(3)) / 2
             val changeVol = if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1
             pair.putInPriceChange(it, BigDecimal(changeVol, MathContext(2)).toDouble())
-            logger.debug("Change period updated on ${pair.symbol} pair, interval = $it.name | change = $changeVol")
+            logger.trace("Change period updated on ${pair.symbol} pair, interval = $it.name | change = $changeVol")
         }
     }
 

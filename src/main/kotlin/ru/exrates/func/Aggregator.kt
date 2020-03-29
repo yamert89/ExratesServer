@@ -87,6 +87,7 @@ class Aggregator(
         while (pairs.size > 1) pairs.pollLast() //todo limit count
         ex.pairs.clear()
         ex.pairs.addAll(pairs)
+        logger.debug("pairs in exchange: ${pairs.joinToString()}")
         return ex
     }
 
@@ -114,6 +115,7 @@ class Aggregator(
             exch.priceChange(it, timePeriod.period) //todo needs try catch?
             exch.priceHistory(it, period, 10)
         }
+        logger.debug("pairs in exchange: ${exch.pairs.joinToString()}")
         return exch
 
     }
