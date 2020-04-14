@@ -12,11 +12,13 @@ import ru.exrates.configs.Properties
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.exchanges.BasicExchange
 import ru.exrates.entities.exchanges.BinanceExchange
+import ru.exrates.entities.exchanges.ExchangeDTO
 import ru.exrates.entities.exchanges.ExmoExchange
 import ru.exrates.repos.ExchangeService
 import java.util.*
 import javax.annotation.PostConstruct
 import kotlin.collections.HashMap
+import kotlin.collections.HashSet
 import kotlin.reflect.KClass
 
 @Component
@@ -80,18 +82,20 @@ class Aggregator(
         }
     }
 
-    fun getExchange(exId: Int): BasicExchange{
-        var ex: BasicExchange? = getExById(exId)
-        ex = ex?.clone() as BasicExchange
-        val pairs = TreeSet<CurrencyPair>(ex.pairs)
-        while (pairs.size > 1) pairs.pollLast() //todo limit count
-        ex.pairs.clear()
-        ex.pairs.addAll(pairs)
+    fun getExchange(exId: Int): ExchangeDTO{
+        logger.debug("exchanges: $exchanges")
+        val ex: BasicExchange? = getExById(exId)
+        val dto = ExchangeDTO(ex)
+        val pairs = TreeSet<CurrencyPair>()
+        val iterator = dto.pairs.iterator()
+        for (i in 0..3) pairs.add(iterator.next())  //todo top pairs
+        dto.pairs = pairs
         logger.debug("pairs in exchange: ${pairs.joinToString()}")
-        return ex
+        return dto
     }
 
-    fun getExchange(exId: Int, pairsN: Array<String>, period: String): BasicExchange?{
+    fun getExchange(exId: Int, pairsN: Array<String>, period: String): ExchangeDTO?{
+        logger.debug("exchanges: $exchanges")
         val exch = getExById(exId)
         if(exch == null){
             logger.error("Exchange $exId not found")
@@ -107,7 +111,7 @@ class Aggregator(
 
         }
 
-        val reqPairs = HashSet(pairs)
+        val reqPairs = HashSet(pairs.filter { pairsN.contains(it.symbol) })
         //todo - limit request pairs
         val timePeriod = exch.changePeriods.filter { it.name == period }[0]
         reqPairs.forEach {
@@ -115,8 +119,12 @@ class Aggregator(
             exch.priceChange(it, timePeriod.period) //todo needs try catch?
             exch.priceHistory(it, period, 10)
         }
+        val dto = ExchangeDTO(exch)
+        dto.pairs.removeIf { !pairsN.contains(it.symbol) }
+
         logger.debug("pairs in exchange: ${exch.pairs.joinToString()}")
-        return exch
+
+        return dto
 
     }
 

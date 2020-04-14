@@ -57,7 +57,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
 
     @OneToMany(cascade = [CascadeType.PERSIST], fetch = FetchType.EAGER)
     @SortComparator(CurrencyPair.SortComparator::class)
-    val pairs: SortedSet<CurrencyPair> = ConcurrentSkipListSet() //FIXMe duplicate pairs in response
+    val pairs: SortedSet<CurrencyPair> = TreeSet<CurrencyPair>() //FIXMe duplicate pairs in response
 
     @ManyToMany(cascade = [CascadeType.PERSIST], fetch = FetchType.EAGER)
     @JsonSerialize(using = TimePeriodListSerializer::class)
@@ -167,5 +167,15 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
 
     abstract fun priceHistory(pair: CurrencyPair, interval: String, limit: Int)
 
+
+}
+
+class ExchangeDTO(exchange: BasicExchange?){
+    val exId = exchange?.exId ?: 0
+    val name = exchange?.name ?: ""
+    @JsonSerialize(using = TimePeriodListSerializer::class)
+    val changePeriods = exchange?.changePeriods ?: listOf(TimePeriod())
+    val historyPeriods = exchange?.historyPeriods ?: emptyList()
+    var pairs: SortedSet<CurrencyPair> = exchange?.pairs ?: TreeSet<CurrencyPair>()
 
 }

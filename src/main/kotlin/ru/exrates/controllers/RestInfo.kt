@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.exchanges.BasicExchange
 import ru.exrates.entities.exchanges.EmptyExchange
+import ru.exrates.entities.exchanges.ExchangeDTO
 import ru.exrates.entities.exchanges.secondary.ExchangeNamesObject
 import ru.exrates.func.Aggregator
 import ru.exrates.utils.ExchangePayload
@@ -34,7 +35,7 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
     fun ping() = ""
 
     @PostMapping("/rest/exchange")
-    fun getExchange(@RequestBody exchangePayload: ExchangePayload, response: HttpServletResponse, principal: Principal?, session: HttpSession): BasicExchange {
+    fun getExchange(@RequestBody exchangePayload: ExchangePayload, response: HttpServletResponse, principal: Principal?, session: HttpSession): ExchangeDTO {
         logger.debug("principal is ${principal?.name}") //todo test
         val secContext = session.getAttribute("SPRING_SECURITY_CONTEXT") as SecurityContext?
         val login = (secContext?.authentication?.principal as User?)?.username
@@ -42,7 +43,8 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
         logger.debug("REQUEST ON /rest/exchange: $exchangePayload")
         val ex = if(exchangePayload.pairs.isNotEmpty() || exchangePayload.timeout.isNotEmpty()){
             with(exchangePayload){
-                aggregator.getExchange(exId, pairs, timeout)
+                val interval = if (timeout.isEmpty()) "1h" else timeout
+                aggregator.getExchange(exId, pairs, interval)
             }
         } else aggregator.getExchange(exchangePayload.exId)
         logger.debug("RESPONSE of /rest/exchange: ${objectMapper.writeValueAsString(ex)}")
@@ -51,7 +53,7 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
             response.status = 404 //todo test
             response.sendError(404, "Exchange not found")
             //response.sendRedirect("/error?message=Exchange not found")
-            return EmptyExchange()
+            return ExchangeDTO(null)
         }
         return ex
     }
