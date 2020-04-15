@@ -95,7 +95,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
     fun task(){
         logger.debug("$name task started with ${pairs.size} pairs")
         logger.debug("pairs in exchange: ${pairs.joinToString { it.symbol }}")
-        synchronized(pairs){
+        /*synchronized(pairs){*/
             for (p in pairs){
                 try {
                     currentPrice(p, updatePeriod)
@@ -113,7 +113,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
                     throw RuntimeException("You are banned from $name")
                 }
             }
-        }
+        /*}*/
     }
 
     fun dataElasped(pair: CurrencyPair, timeout: Duration, idx: Int): Boolean{
@@ -122,7 +122,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
     }
 
     fun <T: Any> request(uri: String, clazz: KClass<T>) : T{
-        logger.debug("Try request to : $uri")
+        logger.trace("Try request to : $uri")
         return webClient.get().uri(uri).retrieve().onStatus(HttpStatus::is4xxClientError) { resp ->
             val ex = when(resp.statusCode().value()){
                 banCode -> BanException()
@@ -176,6 +176,10 @@ class ExchangeDTO(exchange: BasicExchange?){
     @JsonSerialize(using = TimePeriodListSerializer::class)
     val changePeriods = exchange?.changePeriods ?: listOf(TimePeriod())
     val historyPeriods = exchange?.historyPeriods ?: emptyList()
-    var pairs: SortedSet<CurrencyPair> = exchange?.pairs ?: TreeSet<CurrencyPair>()
+    var pairs: SortedSet<CurrencyPair> = TreeSet<CurrencyPair>(exchange?.pairs ?: TreeSet<CurrencyPair>())
+
+    override fun toString(): String {
+        return "$name exId = $exId pairs: ${pairs.joinToString { it.symbol }}\n"
+    }
 
 }

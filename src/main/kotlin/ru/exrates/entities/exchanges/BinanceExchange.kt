@@ -147,7 +147,7 @@ class BinanceExchange(): BasicExchange() {
     }
 
     override fun toString(): String {
-        return this::class.simpleName + "  id=" + id
+        return "${this::class.simpleName} exId = $exId pairs: ${pairs.joinToString{it.symbol}}\n"
     }
 }
 

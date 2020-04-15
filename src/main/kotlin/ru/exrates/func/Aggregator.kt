@@ -83,7 +83,8 @@ class Aggregator(
     }
 
     fun getExchange(exId: Int): ExchangeDTO{
-        logger.debug("exchanges: $exchanges")
+        logger.debug("exchanges: ${exchanges.values}")
+        logger.debug("get exchange for exId $exId")
         val ex: BasicExchange? = getExById(exId)
         val dto = ExchangeDTO(ex)
         val pairs = TreeSet<CurrencyPair>()
@@ -95,7 +96,7 @@ class Aggregator(
     }
 
     fun getExchange(exId: Int, pairsN: Array<String>, period: String): ExchangeDTO?{
-        logger.debug("exchanges: $exchanges")
+        logger.debug("exchanges: ${exchanges.values}")
         val exch = getExById(exId)
         if(exch == null){
             logger.error("Exchange $exId not found")
@@ -105,8 +106,9 @@ class Aggregator(
         val temp = CurrencyPair()
         pairsN.forEach {
             temp.symbol = it
+            temp.exId = exch.exId
 
-            if( !pairs.contains(temp)) exch.insertPair(exchangeService.findPair(it, exch)
+            if( !pairs.containsPair(temp)) exch.insertPair(exchangeService.findPair(it, exch)
                 ?: throw NullPointerException("Pair $it not found in ${exch.name}"))
 
         }
@@ -131,6 +133,7 @@ class Aggregator(
     //fun getCurStat(curName1: String, curName2: String) = getCurStat(curName1 + curName2)
 
     fun getCurStat(pName: String, histroryInterval: String?, limit: Int): List<CurrencyPair> {
+        logger.debug("exchanges: ${exchanges.values}")
         val curs = mutableListOf<CurrencyPair>()
         exchanges.forEach {
             val exchange = it.value
@@ -157,6 +160,7 @@ class Aggregator(
     }
 
     fun priceHistory(pName: String, exId: Int, historyInterval: String, limit: Int): List<Double>{
+        logger.debug("exchanges: ${exchanges.values}")
         val exchange: BasicExchange = getExById(exId) ?: throw NullPointerException("exchange $exId not found")
         var pair = exchange.getPair(pName)
         if(pair == null){

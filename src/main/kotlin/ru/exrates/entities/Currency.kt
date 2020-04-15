@@ -4,7 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.Logger
 import ru.exrates.entities.exchanges.BasicExchange
+import ru.exrates.func.Aggregator
 import ru.exrates.utils.ExchangeSerializer
 import ru.exrates.utils.TimePeriodSerializer
 import java.time.Instant
@@ -12,16 +15,17 @@ import java.util.*
 import javax.persistence.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
+import kotlin.jvm.Transient
 
 data class Currency(val name: String, val symbol: String)
 
 @Entity
 @JsonIgnoreProperties("id", "lastUse")
-data class CurrencyPair(var lastUse: Instant = Instant.now()) : Comparable<CurrencyPair>{
+data class CurrencyPair(var lastUse: Instant = Instant.now(), @Transient @JsonIgnore val logger: Logger = LogManager.getLogger(CurrencyPair::class)) : Comparable<CurrencyPair>{
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Int = 0
 
-    @Column(/*unique = true*/) //todo check
+    @Column(/*unique = true*/)
     lateinit var symbol: String
 
     var price: Double = 0.0
@@ -39,6 +43,7 @@ data class CurrencyPair(var lastUse: Instant = Instant.now()) : Comparable<Curre
     val priceHistory: MutableList<Double> = ArrayList()
         get() {
             lastUse = Instant.now()
+            logger.trace("last use of $symbol updated")
             return field
         }
 
@@ -88,10 +93,14 @@ data class CurrencyPair(var lastUse: Instant = Instant.now()) : Comparable<Curre
         if(this === other) return true
         if(other == null || this::class != other::class) return false
         val pair = other as CurrencyPair
-        return symbol == pair.symbol
+        return symbol == pair.symbol && exId == other.exId
     }
 
-    override fun hashCode() = Objects.hash(symbol, 142)
+    override fun hashCode(): Int {
+        val hash = Objects.hash(symbol, exId, 142)
+        logger.trace("hash for $symbol = $hash")
+        return hash
+    }
 
     class SortComparator: Comparator<CurrencyPair>{
         override fun compare(o1: CurrencyPair?, o2: CurrencyPair?): Int {
@@ -104,7 +113,7 @@ data class CurrencyPair(var lastUse: Instant = Instant.now()) : Comparable<Curre
     }
 
     override fun toString(): String {
-        return "$symbol, lastuse: $lastUse"
+        return "$symbol, exId: $exId lastuse: $lastUse"
     }
 
     override fun compareTo(other: CurrencyPair): Int {
