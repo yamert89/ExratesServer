@@ -47,7 +47,7 @@ class ExmoExchange() : BasicExchange(){
         )
         )
 
-        pairs.add(CurrencyPair("VENBTC", this))
+        pairs.add(CurrencyPair("VEN", "BTC","VENBTC", this))
         super.init()
 
     }

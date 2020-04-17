@@ -80,7 +80,10 @@ class BinanceExchange(): BasicExchange() {
         val symbols = entity.getJSONArray("symbols")
         for(i in 0 until symbols.length()){
             //pairs.plus(CurrencyPair(symbols.getJSONObject(i).getString("symbol"), this))
-            pairs.add(CurrencyPair(symbols.getJSONObject(i).getString("symbol"), this))
+            val baseCur = symbols.getJSONObject(i).getString("baseAsset")
+            val quoteCur = symbols.getJSONObject(i).getString("quoteAsset")
+            val symbol = symbols.getJSONObject(i).getString("symbol")
+            pairs.add(CurrencyPair(baseCur, quoteCur, symbol, this))
         }
 
         temporary = false

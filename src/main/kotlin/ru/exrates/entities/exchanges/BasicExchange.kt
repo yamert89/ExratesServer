@@ -10,7 +10,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Mono
 import ru.exrates.configs.Properties
-import ru.exrates.entities.Currency
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
@@ -144,11 +143,11 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
         }
     }
 
-    override fun getPair(c1: Currency, c2: Currency): CurrencyPair? {
+    /*override fun getPair(c1: Currency, c2: Currency): CurrencyPair? {
         var pair: CurrencyPair? = null
         pairs.spliterator().forEachRemaining { if(it.symbol == c1.symbol + c2.symbol) pair = it }
         return pair
-    }
+    }*/
 
     override fun getPair(pairName: String): CurrencyPair? {
         var pair: CurrencyPair? = null

@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import ru.exrates.entities.exchanges.BasicExchange
-import ru.exrates.func.Aggregator
 import ru.exrates.utils.ExchangeSerializer
 import ru.exrates.utils.TimePeriodSerializer
 import java.time.Instant
@@ -17,8 +16,6 @@ import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import kotlin.jvm.Transient
 
-data class Currency(val name: String, val symbol: String)
-
 @Entity
 @JsonIgnoreProperties("id", "lastUse")
 data class CurrencyPair(var lastUse: Instant = Instant.now(), @Transient @JsonIgnore val logger: Logger = LogManager.getLogger(CurrencyPair::class)) : Comparable<CurrencyPair>{
@@ -27,6 +24,12 @@ data class CurrencyPair(var lastUse: Instant = Instant.now(), @Transient @JsonIg
 
     @Column(/*unique = true*/)
     lateinit var symbol: String
+
+    @Column
+    lateinit var baseCurrency: String
+
+    @Column
+    lateinit var quoteCurrency: String
 
     var price: Double = 0.0
         set(value) {
@@ -66,8 +69,9 @@ data class CurrencyPair(var lastUse: Instant = Instant.now(), @Transient @JsonIg
     @javax.persistence.Transient
     var historyPeriods : List<String>? = null
 
-    constructor(cur1: Currency, cur2: Currency): this() {symbol = cur1.symbol + cur2.symbol}
-    constructor(symbol: String, exchange: BasicExchange): this() {
+    constructor(curBase: String, curQuote: String, symbol: String, exchange: BasicExchange): this() {
+        baseCurrency = curBase
+        quoteCurrency = curQuote
         this.symbol = symbol
         this.exchange = exchange
         exId = exchange.exId
