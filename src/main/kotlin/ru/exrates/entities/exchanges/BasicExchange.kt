@@ -143,11 +143,11 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
         }
     }
 
-    /*override fun getPair(c1: Currency, c2: Currency): CurrencyPair? {
+    override fun getPair(c1: String, c2: String): CurrencyPair? {
         var pair: CurrencyPair? = null
-        pairs.spliterator().forEachRemaining { if(it.symbol == c1.symbol + c2.symbol) pair = it }
+        pairs.spliterator().forEachRemaining { if(it.symbol == c1 + c2) pair = it }
         return pair
-    }*/
+    }
 
     override fun getPair(pairName: String): CurrencyPair? {
         var pair: CurrencyPair? = null

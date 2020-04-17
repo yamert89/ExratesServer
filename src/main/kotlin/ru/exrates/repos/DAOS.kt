@@ -10,12 +10,14 @@ import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.BasicExchange
 
 interface CurrencyRepository : JpaRepository<CurrencyPair, Int> {
+    fun findByBaseCurrencyAndQuoteCurrencyAndExchange(baseCurrency: String, quoteCurrency: String, exchange: BasicExchange) : CurrencyPair?
+
     fun findBySymbolAndExchange(symbol: String, exchange: BasicExchange) : CurrencyPair?
 
     @Query("select c.symbol from CurrencyPair c")
     fun getAll(): List<String>
 
-    @Query("select c.symbol from CurrencyPair c where c.exchange = ?1")
+    @Query("select concat(c.baseCurrency, '/', c.quoteCurrency)  from CurrencyPair c where c.exchange = ?1")
     fun getCurrencyPairsNames(exchange: BasicExchange): List<String>
 
 }

@@ -58,7 +58,10 @@ class ExchangeService(private val logger: Logger = LogManager.getLogger(Exchange
     fun fillPairs(amount: Int) = currencyRepository.findAll(PageRequest.of(1, amount))
 
     @Transactional
-    fun findPair(symbol: String, exchange: BasicExchange) = currencyRepository.findBySymbolAndExchange(symbol, exchange)
+    fun findPair(c1: String, c2: String, exchange: BasicExchange) = currencyRepository.findByBaseCurrencyAndQuoteCurrencyAndExchange(c1, c2, exchange)
+
+    @Transactional
+    fun findPair(pSymbol: String, exchange: BasicExchange) = currencyRepository.findBySymbolAndExchange(pSymbol, exchange)
 
     @Transactional
     //fun getAllPairs() = currencyRepository.getAll().toSet().toList()
