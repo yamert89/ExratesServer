@@ -67,7 +67,7 @@ data class CurrencyPair(var lastUse: Instant = Instant.now(), @Transient @JsonIg
     val updateTimes: LongArray = LongArray(3)
 
     @javax.persistence.Transient
-    var historyPeriods : List<String>? = null
+    var historyPeriods : List<String>? = null //todo delete
 
     constructor(curBase: String, curQuote: String, symbol: String, exchange: BasicExchange): this() {
         baseCurrency = curBase

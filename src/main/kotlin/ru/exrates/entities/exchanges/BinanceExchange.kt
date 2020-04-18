@@ -34,7 +34,6 @@ class BinanceExchange(): BasicExchange() {
         limitCode = 429
         banCode = 418
         historyPeriods = listOf("3m", "5m", "15m", "30m", "1h", "4h", "6h", "8h", "12h", "1d", "3d", "1w", "1M")
-        webClient = WebClient.create(URL_ENDPOINT)
         if(!temporary) {
             super.init()
             return
@@ -104,7 +103,7 @@ class BinanceExchange(): BasicExchange() {
         super.task()
     }
 
-    private fun stringResponse(uri: String) = super.request(uri, String::class)
+    //private fun stringResponse(uri: String) = super.request(uri, String::class)
 
     override fun currentPrice(pair: CurrencyPair, timeout: Duration) {
         if(!dataElasped(pair, timeout, 0)){

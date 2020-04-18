@@ -150,7 +150,7 @@ class Aggregator(
                    // p = exchange.getPair(pair.symbol)!!
                     exchange.currentPrice(pair, exchange.updatePeriod)
                     exchange.priceChange(pair, exchange.updatePeriod)
-                    exchange.priceHistory(pair, histroryInterval ?: exchange.historyPeriods[0], limit)
+                    exchange.priceHistory(pair, histroryInterval ?: exchange.historyPeriods[0], limit) //todo [0] right?
                     pair.historyPeriods = exchange.historyPeriods
                 }
             }

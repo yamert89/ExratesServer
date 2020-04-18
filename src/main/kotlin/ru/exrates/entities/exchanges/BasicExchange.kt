@@ -76,6 +76,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
     @PostConstruct
     fun init(){
         logger.debug("Postconstruct super $name")
+        webClient = WebClient.create(URL_ENDPOINT)
         updatePeriod = Duration.ofMillis(props.timerPeriod())
         val task = object : TimerTask() {
             override fun run() {
@@ -99,7 +100,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
                 try {
                     currentPrice(p, updatePeriod)
                     priceChange(p, updatePeriod)
-                    priceHistory(p, historyPeriods[0], 10)
+                    priceHistory(p, historyPeriods[0], 10) //todo [0] right?
                 }catch (e: LimitExceededException){
                     logger.error(e.message)
                     sleepValueSeconds *= 2
@@ -132,6 +133,8 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
             Mono.error(ex) }
             .bodyToMono(clazz.java).block()!! //todo 1 - null compile notif? // 2 - todo operate exception
     }
+
+    fun stringResponse(uri: String) = request(uri, String::class)
 
 
 
