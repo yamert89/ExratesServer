@@ -13,7 +13,8 @@ import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.exchanges.BasicExchange
 import ru.exrates.entities.exchanges.BinanceExchange
 import ru.exrates.entities.exchanges.ExchangeDTO
-import ru.exrates.entities.exchanges.ExmoExchange
+import ru.exrates.entities.exchanges.P2pb2bExchange
+/*import ru.exrates.entities.exchanges.ExmoExchange*/
 import ru.exrates.repos.ExchangeService
 import java.util.*
 import javax.annotation.PostConstruct
@@ -36,7 +37,8 @@ class Aggregator(
 
     init {
         exchangeNames["binanceExchange"] = BinanceExchange::class
-        exchangeNames["exmoExchange"] = ExmoExchange::class
+        exchangeNames["p2pb2bExchange"] = P2pb2bExchange::class
+        //exchangeNames["exmoExchange"] = ExmoExchange::class
     }
 
     @PostConstruct

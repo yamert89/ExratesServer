@@ -43,7 +43,7 @@ class ExchangeService(private val logger: Logger = LogManager.getLogger(Exchange
         val periods = exchangeRepository.getAllTimePeriods()
         outer@ for (oldPeriod in periods) {
             for (it in exchange.changePeriods) {
-                if(oldPeriod == it) {
+                if(oldPeriod.name == it.name) {
                     exchange.changePeriods.remove(it)
                     exchange.changePeriods.add(oldPeriod)
                     continue@outer

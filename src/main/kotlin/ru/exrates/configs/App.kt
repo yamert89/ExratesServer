@@ -9,7 +9,9 @@ import org.springframework.context.annotation.Primary
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.transaction.annotation.EnableTransactionManagement
 import ru.exrates.entities.exchanges.BinanceExchange
-import ru.exrates.entities.exchanges.ExmoExchange
+import ru.exrates.entities.exchanges.P2pb2bExchange
+
+/*import ru.exrates.entities.exchanges.ExmoExchange*/
 
 @Configuration
 @EnableJpaRepositories(basePackages = ["ru.exrates.repos"])
@@ -18,15 +20,17 @@ class App {
 
     @Bean
     @Lazy
-    open fun binanceExchange(): BinanceExchange {
-        return BinanceExchange()
-    }
+    fun binanceExchange(): BinanceExchange = BinanceExchange()
 
     @Bean
     @Lazy
+    fun p2pb2bExchange() : P2pb2bExchange = P2pb2bExchange()
+
+    /*@Bean
+    @Lazy
     open fun exmoExchange(): ExmoExchange {
         return ExmoExchange()
-    }
+    }*/
 
     @Bean
     @Primary

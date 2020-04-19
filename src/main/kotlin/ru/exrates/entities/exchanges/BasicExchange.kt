@@ -30,16 +30,10 @@ import kotlin.reflect.KClass
 
 @Entity @Inheritance(strategy = InheritanceType.SINGLE_TABLE) @DiscriminatorColumn(name = "EXCHANGE_TYPE")
 @JsonIgnoreProperties("id", "limits", "limitCode", "banCode", "sleepValueSeconds", "updatePeriod", "temporary",
-    "webClient", "props", "URL_ENDPOINT", "URL_CURRENT_AVG_PRICE", "URL_INFO", "URL_PRICE_CHANGE", "URL_PING", "URL_ORDER",
-    "url_ENDPOINT", "url_CURRENT_AVG_PRICE", "url_INFO", "url_PRICE_CHANGE", "url_PING", "url_ORDER")
+    "webClient", "props")
 abstract class BasicExchange(@javax.persistence.Transient protected val logger: Logger = LogManager.getLogger(BasicExchange::class)) : Exchange, Cloneable{
 
-    lateinit var URL_ENDPOINT: String
-    lateinit var URL_CURRENT_AVG_PRICE: String
-    lateinit var URL_INFO: String
-    lateinit var URL_PRICE_CHANGE: String
-    lateinit var URL_PING: String
-    lateinit var URL_ORDER: String
+
     var exId: Int = 0
     var temporary = true
     var limitCode: Int = 0
@@ -76,7 +70,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
     @PostConstruct
     fun init(){
         logger.debug("Postconstruct super $name")
-        webClient = WebClient.create(URL_ENDPOINT)
+
         updatePeriod = Duration.ofMillis(props.timerPeriod())
         val task = object : TimerTask() {
             override fun run() {
@@ -121,20 +115,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
         return Instant.now().isAfter(Instant.ofEpochMilli(pair.updateTimes[idx] + timeout.toMillis()))
     }
 
-    fun <T: Any> request(uri: String, clazz: KClass<T>) : T{
-        logger.trace("Try request to : $uri")
-        return webClient.get().uri(uri).retrieve().onStatus(HttpStatus::is4xxClientError) { resp ->
-            val ex = when(resp.statusCode().value()){
-                banCode -> BanException()
-                limitCode -> LimitExceededException(LimitType.WEIGHT)
-                //null -> NullPointerException()
-                else -> IllegalStateException("Unexpected value: ${resp.statusCode().value()}")
-            }
-            Mono.error(ex) }
-            .bodyToMono(clazz.java).block()!! //todo 1 - null compile notif? // 2 - todo operate exception
-    }
 
-    fun stringResponse(uri: String) = request(uri, String::class)
 
 
 

@@ -1,5 +1,6 @@
 package ru.exrates.entities.exchanges
 
+/*
 import org.springframework.web.reactive.function.client.WebClient
 import ru.exrates.configs.Properties
 import ru.exrates.entities.CurrencyPair
@@ -65,4 +66,4 @@ class ExmoExchange() : BasicExchange(){
 
     }
 
-}
+}*/

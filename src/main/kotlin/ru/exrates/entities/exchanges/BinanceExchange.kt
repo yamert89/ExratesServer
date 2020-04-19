@@ -19,11 +19,21 @@ import javax.persistence.Entity
 import kotlin.math.round
 
 @Entity @DiscriminatorValue("binance")
-class BinanceExchange(): BasicExchange() {
+class BinanceExchange(): RestExchange() {
 
     @PostConstruct
     override fun init() {
-        if (id == 0 && !temporary) return
+        super.init()
+        val entity = JSONObject(stringResponse(URL_ENDPOINT + URL_INFO))
+        limitsFill(entity)
+        pairsFill(entity, "symbols", "baseAsset", "quoteAsset", "symbol")
+        temporary = false
+        logger.debug("exchange " + name + " initialized with " + pairs.size + " pairs")
+
+    }
+
+    override fun initVars() {
+        super.initVars()
         exId = 1
         URL_ENDPOINT = "https://api.binance.com"
         URL_CURRENT_AVG_PRICE = "/api/v3/avgPrice" //todo /api/v3/ticker/price ?
@@ -34,15 +44,12 @@ class BinanceExchange(): BasicExchange() {
         limitCode = 429
         banCode = 418
         historyPeriods = listOf("3m", "5m", "15m", "30m", "1h", "4h", "6h", "8h", "12h", "1d", "3d", "1w", "1M")
-        if(!temporary) {
+        /*if(!temporary) {
             super.init()
             return
-        }
-        logger.debug("Postconstuct concrete ${this::class.simpleName} id = $id" )
+        }*/
+
         name = "binanceExchange"
-
-
-
 
         changePeriods.addAll(listOf(
             TimePeriod(Duration.ofMinutes(3), "3m"),
@@ -59,7 +66,10 @@ class BinanceExchange(): BasicExchange() {
             TimePeriod(Duration.ofDays(7), "1w"),
             TimePeriod(Duration.ofDays(30), "1M"))
         )
-        val entity = JSONObject(stringResponse(URL_ENDPOINT + URL_INFO))
+    }
+
+    override fun limitsFill(entity: JSONObject) {
+        super.limitsFill(entity)
         val array = entity.getJSONArray("rateLimits")
         limits.plus(
             Limit(
@@ -76,52 +86,19 @@ class BinanceExchange(): BasicExchange() {
                 if(name == it.name) it.limitValue = ob.getInt("limit")
             }
         }
-        val symbols = entity.getJSONArray("symbols")
-        for(i in 0 until symbols.length()){
-            //pairs.plus(CurrencyPair(symbols.getJSONObject(i).getString("symbol"), this))
-            val baseCur = symbols.getJSONObject(i).getString("baseAsset")
-            val quoteCur = symbols.getJSONObject(i).getString("quoteAsset")
-            val symbol = symbols.getJSONObject(i).getString("symbol")
-            pairs.add(CurrencyPair(baseCur, quoteCur, symbol, this))
-        }
-
-        temporary = false
-        logger.debug("exchange " + name + " initialized with " + pairs.size + " pairs")
-        //todo needs exceptions?
-        super.init()
     }
-
-    override fun task() {
-        if(id == 0) {
-            logger.debug("task aborted, id = 0")
-            throw RuntimeException("interrupt task...")
-        }
-        logger.debug("task ping try...")
-        webClient.get().uri(URL_ENDPOINT + URL_PING).retrieve().onStatus(HttpStatus::isError){
-            Mono.error(ConnectException("Ping $URL_PING failed"))
-        }.bodyToMono(String::class.java).block()
-        super.task()
-    }
-
-    //private fun stringResponse(uri: String) = super.request(uri, String::class)
 
     override fun currentPrice(pair: CurrencyPair, timeout: Duration) {
-        if(!dataElasped(pair, timeout, 0)){
-            logger.trace("current price $pair.symbol req skipped")
-            return
-        }
+        super.currentPrice(pair, timeout)
         val uri = "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?symbol=${pair.symbol}"
         val entity = JSONObject(stringResponse(uri))
         val price = entity.getString("price").toDouble()
         pair.price = price
-        logger.trace("Price updated on ${pair.symbol} pair | = $price")
+        logger.trace("Price updated on ${pair.symbol} pair $name exch| = $price")
     }
 
     override fun priceChange(pair: CurrencyPair, timeout: Duration) {
-        if(!dataElasped(pair, timeout, 1)) {
-            logger.trace("price change $pair req skipped")
-            return
-        }
+        super.priceChange(pair, timeout)
         val symbol = "?symbol=" + pair.symbol
         val period = "&interval="
         changePeriods.forEach {
@@ -131,7 +108,7 @@ class BinanceExchange(): BasicExchange() {
             val oldVal = (array.getDouble(2) + array.getDouble(3)) / 2
             val changeVol = if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1
             pair.putInPriceChange(it, BigDecimal(changeVol, MathContext(2)).toDouble())
-            logger.trace("Change period updated on ${pair.symbol} pair, interval = $it.name | change = $changeVol")
+            logger.trace("Change period updated on ${pair.symbol} pair $name exch, interval = $it.name | change = $changeVol")
         }
     }
 
@@ -145,12 +122,11 @@ class BinanceExchange(): BasicExchange() {
             val array = entity.getJSONArray(i)
             pair.priceHistory.add((array.getDouble(2) + array.getDouble(3)) / 2)
         }
+        logger.trace("price history updated on ${pair.symbol} pair $name exch")
 
     }
 
-    override fun toString(): String {
-        return "${this::class.simpleName} exId = $exId pairs: ${pairs.joinToString{it.symbol}}\n"
-    }
+
 }
 
 /*public void priceChange (CurrencyPair pair, Duration timeout, Map<String, String> uriVariables) //todo limit > 1 logic
