@@ -34,15 +34,15 @@ abstract class RestExchange : BasicExchange(){
 
     @PostConstruct
     override fun init() {
-        super.init()
+
         if (id == 0 && !temporary) return
         logger.debug("Postconstuct concrete ${this::class.simpleName} id = $id" )
-        initVars()
-        webClient = WebClient.create(URL_ENDPOINT)
-        if (!temporary) {
+
+       /* if (!temporary) {
             //super.init()
             return
-        }
+        }*/
+        super.init()
         //todo needs exceptions?
 
     }
@@ -67,7 +67,7 @@ abstract class RestExchange : BasicExchange(){
             logger.debug("task aborted, id = 0")
             throw RuntimeException("interrupt task...")
         }
-        logger.debug("task ping try...")
+        logger.debug("task ping try...$URL_ENDPOINT$URL_PING")
         webClient.get().uri(URL_ENDPOINT + URL_PING).retrieve().onStatus(HttpStatus::isError){
             Mono.error(ConnectException("Ping $URL_PING failed"))
         }.bodyToMono(String::class.java).block()

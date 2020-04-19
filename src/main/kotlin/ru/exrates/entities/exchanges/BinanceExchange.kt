@@ -24,11 +24,14 @@ class BinanceExchange(): RestExchange() {
     @PostConstruct
     override fun init() {
         super.init()
+        initVars()
+        webClient = WebClient.create(URL_ENDPOINT)
         val entity = JSONObject(stringResponse(URL_ENDPOINT + URL_INFO))
         limitsFill(entity)
         pairsFill(entity, "symbols", "baseAsset", "quoteAsset", "symbol")
         temporary = false
         logger.debug("exchange " + name + " initialized with " + pairs.size + " pairs")
+
 
     }
 
@@ -44,10 +47,10 @@ class BinanceExchange(): RestExchange() {
         limitCode = 429
         banCode = 418
         historyPeriods = listOf("3m", "5m", "15m", "30m", "1h", "4h", "6h", "8h", "12h", "1d", "3d", "1w", "1M")
-        /*if(!temporary) {
+        if(!temporary) {
             super.init()
             return
-        }*/
+        }
 
         name = "binanceExchange"
 
@@ -63,9 +66,9 @@ class BinanceExchange(): RestExchange() {
             TimePeriod(Duration.ofHours(12), "12h"),
             TimePeriod(Duration.ofDays(1), "1d"),
             TimePeriod(Duration.ofDays(3), "3d"),
-            TimePeriod(Duration.ofDays(7), "1w"),
-            TimePeriod(Duration.ofDays(30), "1M"))
+            TimePeriod(Duration.ofDays(7), "1w"))
         )
+
     }
 
     override fun limitsFill(entity: JSONObject) {

@@ -102,7 +102,7 @@ data class CurrencyPair(var lastUse: Instant = Instant.now(), @Transient @JsonIg
 
     override fun hashCode(): Int {
         val hash = Objects.hash(symbol, exId, 142)
-        logger.trace("hash for $symbol = $hash")
+        //logger.trace("hash for $symbol = $hash")
         return hash
     }
 

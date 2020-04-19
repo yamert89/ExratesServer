@@ -77,7 +77,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
                 try {
                     task()
                 }catch (e: RuntimeException) {
-                    logger.debug(e.message)
+                    logger.debug(e)
                     this.cancel()
                 }
             }
@@ -94,7 +94,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
                 try {
                     currentPrice(p, updatePeriod)
                     priceChange(p, updatePeriod)
-                    priceHistory(p, historyPeriods[0], 10) //todo [0] right?
+                    priceHistory(p, changePeriods[0].name, 10) //todo [0] right?
                 }catch (e: LimitExceededException){
                     logger.error(e.message)
                     sleepValueSeconds *= 2

@@ -19,6 +19,7 @@ class P2pb2bExchange: RestExchange() {
     override fun init() {
         super.init()
         initVars()
+        webClient = WebClient.create(URL_ENDPOINT)
         val entity = JSONObject(stringResponse(URL_ENDPOINT + URL_INFO))
         pairsFill(entity, "result", "stock", "money", "name")
         temporary = false
@@ -33,11 +34,15 @@ class P2pb2bExchange: RestExchange() {
         URL_CURRENT_AVG_PRICE = "/api/v2/public/ticker"
         URL_INFO = "/api/v2/public/markets"
         URL_PRICE_CHANGE = "/api/v2/public/market/kline"
-        URL_PING = "/api/v2/public/history"
+        URL_PING = "/api/v2/public/ticker?market=ETH_BTC"
         limitCode = 0
         banCode = 0
         historyPeriods = listOf()
-        webClient = WebClient.create(URL_ENDPOINT)
+
+        if(!temporary) {
+            super.init()
+            return
+        }
 
         name = "p2pb2b"
 
