@@ -134,7 +134,7 @@ class Aggregator(
 
     //fun getCurStat(curName1: String, curName2: String) = getCurStat(curName1 + curName2)
 
-    fun getCurStat(c1: String, c2: String, histroryInterval: String?, limit: Int): List<CurrencyPair> {
+    fun getCurStat(c1: String, c2: String, historyInterval: String?, limit: Int): List<CurrencyPair> {
         logger.debug("exchanges: ${exchanges.values}")
         val curs = mutableListOf<CurrencyPair>()
         exchanges.forEach {
@@ -152,7 +152,7 @@ class Aggregator(
                    // p = exchange.getPair(pair.symbol)!!
                     exchange.currentPrice(pair, exchange.updatePeriod)
                     exchange.priceChange(pair, exchange.updatePeriod)
-                    exchange.priceHistory(pair, histroryInterval ?: exchange.historyPeriods[0], limit) //todo [0] right?
+                    exchange.priceHistory(pair, historyInterval ?: exchange.historyPeriods[0], limit) //todo [0] right?
                     pair.historyPeriods = exchange.historyPeriods
                 }
             }

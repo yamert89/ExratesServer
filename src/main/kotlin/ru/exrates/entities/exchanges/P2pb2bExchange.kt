@@ -37,7 +37,12 @@ class P2pb2bExchange: RestExchange() {
         URL_PING = "/api/v2/public/ticker?market=ETH_BTC"
         limitCode = 0
         banCode = 0
-        historyPeriods = listOf()
+        changePeriods.addAll(listOf(
+            TimePeriod(Duration.ofMinutes(3), "1m"),
+            TimePeriod(Duration.ofHours(1), "1h"),
+            TimePeriod(Duration.ofDays(1), "1d")
+        ))
+        historyPeriods = changePeriods.map { it.name }
 
         if(!temporary) {
             super.init()
@@ -46,11 +51,7 @@ class P2pb2bExchange: RestExchange() {
 
         name = "p2pb2b"
 
-        changePeriods.addAll(listOf(
-            TimePeriod(Duration.ofMinutes(3), "1m"),
-            TimePeriod(Duration.ofHours(1), "1h"),
-            TimePeriod(Duration.ofDays(1), "1d")
-        ))
+
     }
 
     override fun currentPrice(pair: CurrencyPair, timeout: Duration) {
@@ -87,7 +88,7 @@ class P2pb2bExchange: RestExchange() {
         pair.priceHistory.clear()
         for (i in 0 until array.length()){
             val arr = array.getJSONArray(i)
-            pair.priceHistory.add((arr.getDouble(1) + arr.getDouble(2) / 2))
+            pair.priceHistory.add((arr.getDouble(1) + arr.getDouble(2)) / 2)
         }
         logger.trace("price history updated on ${pair.symbol} pair $name exch")
 

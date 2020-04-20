@@ -46,7 +46,7 @@ data class CurrencyPair(var lastUse: Instant = Instant.now(), @Transient @JsonIg
     val priceHistory: MutableList<Double> = ArrayList()
         get() {
             lastUse = Instant.now()
-            logger.trace("last use of $symbol updated")
+            //logger.trace("last use of $symbol updated")
             return field
         }
 

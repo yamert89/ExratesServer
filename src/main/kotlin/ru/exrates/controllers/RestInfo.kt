@@ -41,7 +41,7 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
         val login = (secContext?.authentication?.principal as User?)?.username
         logger.debug("session user name $login")
         logger.debug("REQUEST ON /rest/exchange: $exchangePayload")
-        val ex = if(exchangePayload.pairs.isNotEmpty() || exchangePayload.timeout.isNotEmpty()){
+        val ex = if(exchangePayload.pairs.isNotEmpty() && exchangePayload.timeout.isNotEmpty()){
             with(exchangePayload){
                 val interval = if (timeout.isEmpty()) "1h" else timeout
                 aggregator.getExchange(exId, pairs, interval)
