@@ -127,17 +127,9 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
         }
     }
 
-    override fun getPair(c1: String, c2: String): CurrencyPair? {
-        var pair: CurrencyPair? = null
-        pairs.spliterator().forEachRemaining { if(it.symbol == c1 + c2) pair = it }
-        return pair
-    }
+    override fun getPair(c1: String, c2: String): CurrencyPair? = pairs.find{c1 == it.baseCurrency && c2 == it.quoteCurrency}
 
-    override fun getPair(pairName: String): CurrencyPair? {
-        var pair: CurrencyPair? = null
-        pairs.spliterator().forEachRemaining {  if(it.symbol == pairName) pair = it}
-        return pair
-    }
+    override fun getPair(pairName: String): CurrencyPair? = pairs.find { it.symbol == pairName }
 
     public override fun clone(): Any {
         return super.clone()

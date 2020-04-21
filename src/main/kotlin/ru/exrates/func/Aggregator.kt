@@ -139,22 +139,17 @@ class Aggregator(
         val curs = mutableListOf<CurrencyPair>()
         exchanges.forEach {
             val exchange = it.value
-            val p = exchange.getPair(c1, c2)
-            if(p != null){
+            var p = exchange.getPair(c1, c2)
+            if(p == null) p = exchangeService.findPair(c1, c2, exchange)
+            if (p != null){
                 p.exchange = exchange
+                exchange.insertPair(p)
+                // p = exchange.getPair(pair.symbol)!!
+                exchange.currentPrice(p, exchange.updatePeriod)
+                exchange.priceChange(p, exchange.updatePeriod)
+                exchange.priceHistory(p, historyInterval ?: exchange.historyPeriods[0], limit) //todo [0] right?
+                p.historyPeriods = exchange.historyPeriods
                 curs.add(p)
-            } else {
-                val pair = exchangeService.findPair(c1, c2, exchange)
-                if (pair != null){ //todo optional
-                    pair.exchange = exchange
-                    curs.add(pair)
-                    exchange.insertPair(pair)
-                   // p = exchange.getPair(pair.symbol)!!
-                    exchange.currentPrice(pair, exchange.updatePeriod)
-                    exchange.priceChange(pair, exchange.updatePeriod)
-                    exchange.priceHistory(pair, historyInterval ?: exchange.historyPeriods[0], limit) //todo [0] right?
-                    pair.historyPeriods = exchange.historyPeriods
-                }
             }
         }
 

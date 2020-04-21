@@ -93,4 +93,6 @@ class P2pb2bExchange: RestExchange() {
         logger.trace("price history updated on ${pair.symbol} pair $name exch")
 
     }
+
+
 }
