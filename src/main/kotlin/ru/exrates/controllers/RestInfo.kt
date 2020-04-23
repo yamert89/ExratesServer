@@ -18,6 +18,7 @@ import ru.exrates.utils.ExchangePayload
 import java.security.Principal
 import javax.servlet.http.HttpServletResponse
 import javax.servlet.http.HttpSession
+import kotlin.Exception
 
 
 @RestController
@@ -47,9 +48,15 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
                 aggregator.getExchange(exId, pairs, interval)
             }
         } else aggregator.getExchange(exchangePayload.exId)
-        logger.debug("RESPONSE of /rest/exchange: ${objectMapper.writeValueAsString(ex)}")
-        logger.debug("RESPONSE Pairs of /rest/exchange: $ex")
-        logger.debug("pairs: ${ex?.pairs?.joinToString()}")
+        try {
+            logger.debug("RESPONSE of /rest/exchange: ${objectMapper.writeValueAsString(ex)}")
+            logger.debug("RESPONSE Pairs of /rest/exchange: $ex")
+            logger.debug("pairs: ${ex?.pairs?.joinToString()}")
+        }catch (e: Exception){
+            logger.error(e)
+            logger.error(ex.toString())
+        }
+
         if (ex == null) {
             response.status = 404 //todo test
             response.sendError(404, "Exchange not found")

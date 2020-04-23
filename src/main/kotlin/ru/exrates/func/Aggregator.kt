@@ -140,10 +140,12 @@ class Aggregator(
         exchanges.forEach {
             val exchange = it.value
             var p = exchange.getPair(c1, c2)
-            if(p == null) p = exchangeService.findPair(c1, c2, exchange)
+            if(p == null) {
+                p = exchangeService.findPair(c1, c2, exchange)
+                if (p != null) exchange.insertPair(p)
+            }
             if (p != null){
                 p.exchange = exchange
-                exchange.insertPair(p)
                 // p = exchange.getPair(pair.symbol)!!
                 exchange.currentPrice(p, exchange.updatePeriod)
                 exchange.priceChange(p, exchange.updatePeriod)

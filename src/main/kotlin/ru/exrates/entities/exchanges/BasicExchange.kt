@@ -154,7 +154,7 @@ class ExchangeDTO(exchange: BasicExchange?){
     var pairs: SortedSet<CurrencyPair> = TreeSet<CurrencyPair>(exchange?.pairs ?: TreeSet<CurrencyPair>())
 
     override fun toString(): String {
-        return "$name exId = $exId pairs: ${pairs.joinToString { it.symbol }}\n"
+        return "\n$name exId = $exId pairs: ${pairs.joinToString { it.symbol }}"
     }
 
 }
