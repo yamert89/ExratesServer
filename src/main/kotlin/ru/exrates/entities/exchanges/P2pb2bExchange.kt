@@ -86,7 +86,7 @@ class P2pb2bExchange: RestExchange() {
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=$interval&limit=$limit"
         val array = JSONObject(stringResponse(uri)).getJSONArray("result")
         pair.priceHistory.clear()
-        for (i in 0 until array.length()){
+        for (i in 0 until limit){
             val arr = array.getJSONArray(i)
             pair.priceHistory.add((arr.getDouble(1) + arr.getDouble(2)) / 2)
         }

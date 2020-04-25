@@ -8,6 +8,7 @@ import org.springframework.beans.factory.config.BeanDefinitionCustomizer
 import org.springframework.context.ApplicationContext
 import org.springframework.context.support.GenericApplicationContext
 import org.springframework.stereotype.Component
+import org.springframework.web.bind.annotation.RequestParam
 import ru.exrates.configs.Properties
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.exchanges.BasicExchange
@@ -158,12 +159,12 @@ class Aggregator(
         return curs
     }
 
-    fun priceHistory(pName: String, exId: Int, historyInterval: String, limit: Int): List<Double>{
+    fun priceHistory(c1: String, c2: String, exId: Int, historyInterval: String, limit: Int): List<Double>{
         logger.debug("exchanges: ${exchanges.values}")
         val exchange: BasicExchange = getExById(exId) ?: throw NullPointerException("exchange $exId not found")
-        var pair = exchange.getPair(pName)
+        var pair = exchange.getPair(c1, c2)
         if(pair == null){
-            pair = exchangeService.findPair(pName, exchange) ?: throw NullPointerException("pair $pName not found")
+            pair = exchangeService.findPair(c1, c2, exchange) ?: throw NullPointerException("pair $c1 - $c2 not found")
             exchange.insertPair(pair)
         }
         exchange.priceHistory(pair, historyInterval, limit)
