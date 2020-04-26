@@ -15,6 +15,7 @@ import ru.exrates.entities.exchanges.ExchangeDTO
 import ru.exrates.entities.exchanges.secondary.ExchangeNamesObject
 import ru.exrates.func.Aggregator
 import ru.exrates.utils.ExchangePayload
+import java.net.ConnectException
 import java.security.Principal
 import javax.servlet.http.HttpServletResponse
 import javax.servlet.http.HttpSession
@@ -48,21 +49,24 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
                 aggregator.getExchange(exId, pairs, interval)
             }
         } else aggregator.getExchange(exchangePayload.exId)
-        try {
-            logger.debug("RESPONSE of /rest/exchange: ${objectMapper.writeValueAsString(ex)}")
-            logger.debug("RESPONSE Pairs of /rest/exchange: $ex")
-            logger.debug("pairs: ${ex?.pairs?.joinToString()}")
-        }catch (e: Exception){
-            logger.error(e)
-            logger.error(ex.toString())
-        }
 
-        if (ex == null) {
+        if (ex.status == 400 ) {
             response.status = 404 //todo test
             response.sendError(404, "Exchange not found")
             //response.sendRedirect("/error?message=Exchange not found")
             return ExchangeDTO(null)
         }
+
+        try {
+            logger.debug("RESPONSE of /rest/exchange: ${objectMapper.writeValueAsString(ex)}")
+            logger.debug("RESPONSE Pairs of /rest/exchange: $ex")
+            logger.debug("pairs: ${ex.pairs.joinToString()}")
+        }catch (e: Exception){
+            logger.error(e)
+            logger.error(ex.toString())
+        }
+
+
         return ex
     }
 
@@ -83,7 +87,13 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
     @GetMapping("/rest/pair/history")
     fun history(@RequestParam c1: String, @RequestParam c2: String, @RequestParam exId: Int, @RequestParam historyinterval: String, @RequestParam limit: Int): List<Double>{
         logger.debug("REQUEST ON /rest/pair/history: pair = $c1 - $c2, exchId = $exId, historyinterval = $historyinterval, limit = $limit")
-        val list = aggregator.priceHistory(c1, c2, exId, historyinterval, limit)
+        var list: List<Double>? = null
+        try{
+            list = aggregator.priceHistory(c1, c2, exId, historyinterval, limit)
+        } catch (e: ConnectException){
+            logger.error("RESPONSE of /rest/pair/history: Connection exception")
+            return listOf(400.0)
+        }
         logger.debug("RESPONSE of /rest/pair/history: ${objectMapper.writeValueAsString(list)}")
         return list
     }

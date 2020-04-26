@@ -90,6 +90,7 @@ class Aggregator(
         logger.debug("get exchange for exId $exId")
         val ex: BasicExchange? = getExById(exId)
         val dto = ExchangeDTO(ex)
+        if (ex == null) return dto
         val pairs = TreeSet<CurrencyPair>()
         val iterator = dto.pairs.iterator()
         for (i in 0..3) pairs.add(iterator.next())  //todo top pairs
@@ -98,12 +99,12 @@ class Aggregator(
         return dto
     }
 
-    fun getExchange(exId: Int, pairsN: Array<String>, period: String): ExchangeDTO?{
+    fun getExchange(exId: Int, pairsN: Array<String>, period: String): ExchangeDTO{
         logger.debug("exchanges: ${exchanges.values}")
         val exch = getExById(exId)
         if(exch == null){
             logger.error("Exchange $exId not found")
-            return null
+            return ExchangeDTO(null)
         }
         val pairs = exch.pairs
         val temp = CurrencyPair()

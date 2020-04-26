@@ -18,6 +18,7 @@ import ru.exrates.entities.exchanges.secondary.ErrorCodeException
 import ru.exrates.entities.exchanges.secondary.Limit
 import ru.exrates.entities.exchanges.secondary.LimitExceededException
 import ru.exrates.utils.TimePeriodListSerializer
+import java.net.ConnectException
 import java.time.Duration
 import java.time.Instant
 import java.util.*
@@ -38,6 +39,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
     var temporary = true
     var limitCode: Int = 0
     var banCode: Int = 0
+    var serverError: Int = 503
     var sleepValueSeconds = 30L
 
     @Autowired
@@ -105,6 +107,8 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
                 }catch (e: BanException){
                     logger.error(e.message)
                     throw RuntimeException("You are banned from $name")
+                }catch (e: ConnectException){
+                    logger.error(e)
                 }
             }
         /*}*/
@@ -149,9 +153,14 @@ class ExchangeDTO(exchange: BasicExchange?){
     val exId = exchange?.exId ?: 0
     val name = exchange?.name ?: ""
     @JsonSerialize(using = TimePeriodListSerializer::class)
-    val changePeriods = exchange?.changePeriods ?: listOf(TimePeriod())
+    val changePeriods = exchange?.changePeriods ?: listOf<TimePeriod>()
     val historyPeriods = exchange?.historyPeriods ?: emptyList()
     var pairs: SortedSet<CurrencyPair> = TreeSet<CurrencyPair>(exchange?.pairs ?: TreeSet<CurrencyPair>())
+    var status: Int = 200
+    init {
+       if(exchange == null) status = 400
+    }
+
 
     override fun toString(): String {
         return "\n$name exId = $exId pairs: ${pairs.joinToString { it.symbol }}"

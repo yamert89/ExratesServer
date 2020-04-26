@@ -81,13 +81,15 @@ abstract class RestExchange : BasicExchange(){
                 logger.trace("RESPONSE of $uri: ${resp}")
                 val ex = when(resp.statusCode().value()){
                     banCode -> BanException()
-                    limitCode -> LimitExceededException(LimitType.WEIGHT)
+                    limitCode -> LimitExceededException(LimitType.WEIGHT) //todo add server error code p2p error 4001 / 503
+                    serverError -> ConnectException("Server error: $uri")
+
                     //null -> NullPointerException()
                     else -> IllegalStateException("Unexpected value: ${resp.statusCode().value()}")
                 }
                 Mono.error(ex) }
 
-            .bodyToMono(clazz.java).block()!! //todo 1 - null compile notif? // 2 - todo operate exception
+            .bodyToMono(clazz.java).block()!! //todo 1 - null compile notif? // 2 - FIXMe operate exception !!!
         logger.trace("Response of $uri : $resp")
         return resp
     }
