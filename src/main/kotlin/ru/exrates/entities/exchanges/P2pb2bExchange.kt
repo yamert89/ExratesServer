@@ -10,6 +10,7 @@ import java.time.Duration
 import javax.annotation.PostConstruct
 import javax.persistence.DiscriminatorValue
 import javax.persistence.Entity
+import kotlin.Exception
 
 @Entity
 @DiscriminatorValue("p2pb2b")
@@ -68,16 +69,23 @@ class P2pb2bExchange: RestExchange() {
 
     override fun priceChange(pair: CurrencyPair, timeout: Duration) {
         super.priceChange(pair, timeout)
-        changePeriods.forEach {
-            val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=${it.name}"
-            val array = JSONObject(stringResponse(uri)).getJSONArray("result")
-            val array2 = array.getJSONArray(0)
-            val oldVal = (array2.getDouble(1) + array2.getDouble(2)) / 2
-            val changeVol = if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1
-            pair.putInPriceChange(it, BigDecimal(changeVol, MathContext(2)).toDouble())
-            logger.trace("Change period updated on ${pair.symbol} pair $name exch, interval = $it.name | change = $changeVol")
 
+        try{
+            changePeriods.forEach {
+                val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=${it.name}limit=50"
+                val array = JSONObject(stringResponse(uri)).getJSONArray("result")
+                val array2 = array.getJSONArray(0)
+                val oldVal = (array2.getDouble(1) + array2.getDouble(2)) / 2
+                val changeVol = if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1
+                pair.putInPriceChange(it, BigDecimal(changeVol, MathContext(2)).toDouble())
+                logger.trace("Change period updated on ${pair.symbol} pair $name exch, interval = $it.name | change = $changeVol")
+
+            }
+        }catch (e: Exception){
+            logger.error("Connect exception") //todo wrong operate
         }
+
+
 
 
     }
@@ -85,13 +93,18 @@ class P2pb2bExchange: RestExchange() {
     override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int) {
         val limit = if (limit < 50) 50 else limit
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=$interval&limit=$limit"
-        val array = JSONObject(stringResponse(uri)).getJSONArray("result")
-        pair.priceHistory.clear()
-        for (i in 0 until limit){
-            val arr = array.getJSONArray(i)
-            pair.priceHistory.add((arr.getDouble(1) + arr.getDouble(2)) / 2)
-        }
-        logger.trace("price history updated on ${pair.symbol} pair $name exch")
+
+        try{
+            val array = JSONObject(stringResponse(uri)).getJSONArray("result")
+            pair.priceHistory.clear()
+            for (i in 0 until limit){
+                val arr = array.getJSONArray(i)
+                pair.priceHistory.add((arr.getDouble(1) + arr.getDouble(2)) / 2)
+            }
+            logger.trace("price history updated on ${pair.symbol} pair $name exch")
+        }catch (e: Exception){logger.error("Connect exception")} //todo wrong operate
+
+
 
     }
 
