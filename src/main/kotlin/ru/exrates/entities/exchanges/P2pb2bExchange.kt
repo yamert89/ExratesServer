@@ -72,7 +72,7 @@ class P2pb2bExchange: RestExchange() {
 
         try{
             changePeriods.forEach {
-                val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=${it.name}limit=50"
+                val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=${it.name}&limit=50"
                 val array = JSONObject(stringResponse(uri)).getJSONArray("result")
                 val array2 = array.getJSONArray(0)
                 val oldVal = (array2.getDouble(1) + array2.getDouble(2)) / 2
@@ -91,8 +91,8 @@ class P2pb2bExchange: RestExchange() {
     }
 
     override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int) {
-        val limit = if (limit < 50) 50 else limit
-        val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=$interval&limit=$limit"
+        val lim = if (limit < 50) 50 else limit
+        val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=$interval&limit=$lim"
 
         try{
             val array = JSONObject(stringResponse(uri)).getJSONArray("result")
