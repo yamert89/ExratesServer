@@ -93,7 +93,7 @@ class Aggregator(
         if (ex == null) return dto
         val pairs = TreeSet<CurrencyPair>()
         val iterator = dto.pairs.iterator()
-        for (i in 0..3) pairs.add(iterator.next())  //todo top pairs
+        for (i in 0 until props.maxSize()) pairs.add(iterator.next())  //todo top pairs
         dto.pairs = pairs
         logger.debug("pairs in exchange: ${pairs.joinToString()}")
         return dto
