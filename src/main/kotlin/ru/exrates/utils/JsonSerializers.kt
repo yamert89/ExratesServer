@@ -11,10 +11,7 @@ import java.lang.IllegalArgumentException
 
 class TimePeriodSerializer(private val mapper: ObjectMapper = ObjectMapper()): JsonSerializer<TimePeriod>() {
     override fun serialize(value: TimePeriod?, gen: JsonGenerator?, serializers: SerializerProvider?) {
-        val writer = StringWriter()
-        mapper.writeValue(writer, value?.name)
-        gen?.writeFieldName(writer.toString())
-        writer.close()
+        gen?.writeFieldName(value?.name)
     }
 }
 
