@@ -144,7 +144,12 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
 
     abstract fun priceChange(pair: CurrencyPair, timeout: Duration)
 
-    abstract fun priceHistory(pair: CurrencyPair, interval: String, limit: Int)
+    fun priceHistory(pair: CurrencyPair, interval: String, limit: Int){
+        if (!this.historyPeriods.contains(interval)) {
+            logger.error("History period $interval incorrect for ${this.name} exchange")
+            return
+        }
+    }
 
 
 }

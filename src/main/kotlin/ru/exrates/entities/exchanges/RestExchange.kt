@@ -110,7 +110,9 @@ abstract class RestExchange : BasicExchange(){
         }
     }
 
-    abstract override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int)
+   override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int){
+       super.priceHistory(pair, interval, limit)
+   }
 
     override fun toString(): String {
         return "${this::class.simpleName} exId = $exId pairs: ${pairs.joinToString{it.symbol}}\n"

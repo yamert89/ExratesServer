@@ -116,6 +116,7 @@ class BinanceExchange(): RestExchange() {
     }
 
     override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int){
+        super.priceHistory(pair, interval, limit)
         val symbol = "?symbol=" + pair.symbol
         val period = "&interval=$interval"
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE$symbol$period&limit=$limit"

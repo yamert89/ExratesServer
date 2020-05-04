@@ -91,6 +91,7 @@ class P2pb2bExchange: RestExchange() {
     }
 
     override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int) {
+        super.priceHistory(pair, interval, limit)
         val lim = if (limit < 50) 50 else limit
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=$interval&limit=$lim"
 
