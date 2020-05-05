@@ -64,8 +64,9 @@ abstract class RestExchange : BasicExchange(){
 
     override fun task() {
         if(id == 0) {
-            logger.debug("task aborted, id = 0")
-            throw RuntimeException("interrupt task...")
+            return
+            /*logger.debug("task aborted, id = 0")
+            throw RuntimeException("interrupt task...")*/
         }
         logger.debug("task ping try...$URL_ENDPOINT$URL_PING")
         webClient.get().uri(URL_ENDPOINT + URL_PING).retrieve().onStatus(HttpStatus::isError){
