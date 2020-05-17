@@ -39,7 +39,7 @@ class P2pb2bExchange: RestExchange() {
         limitCode = 0
         banCode = 0
         changePeriods.addAll(listOf(
-            TimePeriod(Duration.ofMinutes(3), "1m"),
+            TimePeriod(Duration.ofMinutes(1), "1m"),
             TimePeriod(Duration.ofHours(1), "1h"),
             TimePeriod(Duration.ofDays(1), "1d")
         ))

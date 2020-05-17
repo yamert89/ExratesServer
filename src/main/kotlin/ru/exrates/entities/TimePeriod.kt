@@ -11,10 +11,10 @@ import javax.persistence.*
 @Table(name = "change_periods")
 @JsonSerialize(using = TimePeriodSerializer::class)
 class TimePeriod(){
-    @JsonIgnore @Convert(converter = DurationConverter::class) @Column(nullable = false)
+    @JsonIgnore @Convert(converter = DurationConverter::class) @Column(nullable = false, unique = true)
     lateinit var period: Duration
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     lateinit var name: String
 
     @Id @GeneratedValue 

@@ -44,8 +44,9 @@ class ExchangeService(private val logger: Logger = LogManager.getLogger(Exchange
         outer@ for (oldPeriod in periods) {
             for (it in exchange.changePeriods) {
                 if(oldPeriod.name == it.name) {
+                    val idx = exchange.changePeriods.indexOf(it)
                     exchange.changePeriods.remove(it)
-                    exchange.changePeriods.add(oldPeriod)
+                    exchange.changePeriods.add(idx, oldPeriod)
                     continue@outer
                 }
             }
