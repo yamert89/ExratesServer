@@ -66,7 +66,8 @@ class BinanceExchange(): RestExchange() {
             TimePeriod(Duration.ofHours(12), "12h"),
             TimePeriod(Duration.ofDays(1), "1d"),
             TimePeriod(Duration.ofDays(3), "3d"),
-            TimePeriod(Duration.ofDays(7), "1w"))
+            TimePeriod(Duration.ofDays(7), "1w"),
+            TimePeriod(Duration.ofDays(30), "1M"))
         )
 
     }
