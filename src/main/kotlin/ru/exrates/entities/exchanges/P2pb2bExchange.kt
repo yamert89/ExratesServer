@@ -31,6 +31,7 @@ class P2pb2bExchange: RestExchange() {
     override fun initVars() {
         super.initVars()
         exId = 2
+        delimiter = "_"
         URL_ENDPOINT = "https://api.p2pb2b.io"
         URL_CURRENT_AVG_PRICE = "/api/v2/public/ticker"
         URL_INFO = "/api/v2/public/markets"

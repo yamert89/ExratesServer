@@ -49,6 +49,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
     @Id @GeneratedValue
     var id: Int = 0
     var name: String = ""
+    var delimiter = ""
 
     @OneToMany(cascade = [CascadeType.PERSIST], fetch = FetchType.EAGER)
     @SortComparator(CurrencyPair.SortComparator::class)
@@ -162,6 +163,7 @@ class ExchangeDTO(exchange: BasicExchange?){
     val historyPeriods = exchange?.historyPeriods ?: emptyList()
     var pairs: SortedSet<CurrencyPair> = TreeSet<CurrencyPair>(exchange?.pairs ?: TreeSet<CurrencyPair>())
     var status: Int = 200
+    var delimiter = exchange?.delimiter ?: ""
     init {
        if(exchange == null) status = 400
     }

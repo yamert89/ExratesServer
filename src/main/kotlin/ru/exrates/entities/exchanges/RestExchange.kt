@@ -51,13 +51,14 @@ abstract class RestExchange : BasicExchange(){
 
    protected fun limitsFill(entity: JSONObject){}
 
-   protected fun pairsFill(entity: JSONObject, symbolsKey: String, baseCurKey: String, quoteCurKey: String, symbolKey: String){
+   protected fun pairsFill(entity: JSONObject, symbolsKey: String, baseCurKey: String, quoteCurKey: String, symbolKey: String, delimiterForRemoving: String = ""){
        val symbols = entity.getJSONArray(symbolsKey)
        for(i in 0 until symbols.length()){
            //pairs.plus(CurrencyPair(symbols.getJSONObject(i).getString("symbol"), this))
            val baseCur = symbols.getJSONObject(i).getString(baseCurKey)
            val quoteCur = symbols.getJSONObject(i).getString(quoteCurKey)
-           val symbol = symbols.getJSONObject(i).getString(symbolKey)
+           var symbol = symbols.getJSONObject(i).getString(symbolKey)
+           if(delimiterForRemoving.isNotEmpty()) symbol = symbol.replace(delimiterForRemoving, "")
            pairs.add(CurrencyPair(baseCur, quoteCur, symbol, this))
        }
    }
