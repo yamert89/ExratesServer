@@ -21,7 +21,7 @@ class P2pb2bExchange: RestExchange() {
         super.init()
         initVars()
         webClient = WebClient.create(URL_ENDPOINT)
-        val entity = JSONObject(stringResponse(URL_ENDPOINT + URL_INFO))
+        val entity = JSONObject(testResponse(URL_ENDPOINT + URL_INFO))
         pairsFill(entity, "result", "stock", "money", "name")
         temporary = false
         logger.debug("exchange " + name + " initialized with " + pairs.size + " pairs")
@@ -59,7 +59,7 @@ class P2pb2bExchange: RestExchange() {
     override fun currentPrice(pair: CurrencyPair, timeout: Duration) {
         super.currentPrice(pair, timeout)
         val uri = "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?market=${pair.symbol}"
-        val entity = JSONObject(stringResponse(uri))
+        val entity = JSONObject(testResponse(uri))
         val result = entity.getJSONObject("result")
         val bid = result.getDouble("bid")
         val ask = result.getDouble("ask")
@@ -74,7 +74,7 @@ class P2pb2bExchange: RestExchange() {
         try{
             changePeriods.forEach {
                 val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=${it.name}&limit=50"
-                val array = JSONObject(stringResponse(uri)).getJSONArray("result")
+                val array = JSONObject(testResponse(uri)).getJSONArray("result")
                 val array2 = array.getJSONArray(0)
                 val oldVal = (array2.getDouble(1) + array2.getDouble(2)) / 2
                 val changeVol = if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1
@@ -97,7 +97,7 @@ class P2pb2bExchange: RestExchange() {
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=$interval&limit=$lim"
 
         try{
-            val array = JSONObject(stringResponse(uri)).getJSONArray("result")
+            val array = JSONObject(testResponse(uri)).getJSONArray("result")
             pair.priceHistory.clear()
             for (i in 0 until limit){
                 val arr = array.getJSONArray(i)

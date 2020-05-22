@@ -76,7 +76,27 @@ abstract class RestExchange : BasicExchange(){
         super.task()
     }
 
-    fun <T: Any> request(uri: String, clazz: KClass<T>) : T{
+    fun <T: Any> request(uri: String, clazz: KClass<T>) : Mono<T>{
+        logger.trace("Try request to : $uri")
+        val resp = webClient.get().uri(uri).retrieve()
+            .onStatus(HttpStatus::is4xxClientError) { resp ->
+                logger.trace("RESPONSE of $uri: ${resp}")
+                val ex = when(resp.statusCode().value()){
+                    banCode -> BanException()
+                    limitCode -> LimitExceededException(LimitType.WEIGHT) //todo add server error code p2p error 4001 / 503
+                    serverError -> ConnectException("Server error: $uri")
+
+                    //null -> NullPointerException()
+                    else -> IllegalStateException("Unexpected value: ${resp.statusCode().value()}")
+                }
+                Mono.error(ex) }
+
+            .bodyToMono(clazz.java) //todo 1 - null compile notif? // 2 - FIXMe operate exception !!!
+        logger.trace("Response of $uri : $resp")
+        return resp
+    }
+
+    fun <T: Any> testRequest(uri: String, clazz: KClass<T>) : T{
         logger.trace("Try request to : $uri")
         val resp = webClient.get().uri(uri).retrieve()
             .onStatus(HttpStatus::is4xxClientError) { resp ->
@@ -95,6 +115,8 @@ abstract class RestExchange : BasicExchange(){
         logger.trace("Response of $uri : $resp")
         return resp
     }
+
+    fun testResponse(uri: String) = testRequest(uri, String::class)
 
     fun stringResponse(uri: String) = request(uri, String::class)
 

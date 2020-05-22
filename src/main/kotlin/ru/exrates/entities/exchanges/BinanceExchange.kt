@@ -26,7 +26,7 @@ class BinanceExchange(): RestExchange() {
         super.init()
         initVars()
         webClient = WebClient.create(URL_ENDPOINT)
-        val entity = JSONObject(stringResponse(URL_ENDPOINT + URL_INFO))
+        val entity = JSONObject(stringResponse(URL_ENDPOINT + URL_INFO).block())
         limitsFill(entity)
         pairsFill(entity, "symbols", "baseAsset", "quoteAsset", "symbol")
         temporary = false
@@ -95,7 +95,7 @@ class BinanceExchange(): RestExchange() {
     override fun currentPrice(pair: CurrencyPair, timeout: Duration) {
         super.currentPrice(pair, timeout)
         val uri = "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?symbol=${pair.symbol}"
-        val entity = JSONObject(stringResponse(uri))
+        val entity = JSONObject(stringResponse(uri).block())
         val price = entity.getString("price").toDouble()
         pair.price = price
         logger.trace("Price updated on ${pair.symbol} pair $name exch| = $price")
@@ -105,15 +105,23 @@ class BinanceExchange(): RestExchange() {
         super.priceChange(pair, timeout)
         val symbol = "?symbol=" + pair.symbol
         val period = "&interval="
+        val list = hashMapOf<TimePeriod, Mono<String>>()
+        val debMills = System.currentTimeMillis()
         changePeriods.forEach {
             val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE$symbol$period${it.name}&limit=1"
-            val entity = JSONArray(stringResponse(uri))
+            list[it] = stringResponse(uri)
+        }
+
+        list.forEach {
+            val res = it.value.block()
+            val entity = JSONArray(res)
             val array = entity.getJSONArray(0)
             val oldVal = (array.getDouble(2) + array.getDouble(3)) / 2
             val changeVol = if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1
-            pair.putInPriceChange(it, BigDecimal(changeVol, MathContext(2)).toDouble())
+            pair.putInPriceChange(it.key, BigDecimal(changeVol, MathContext(2)).toDouble())
             logger.trace("Change period updated on ${pair.symbol} pair $name exch, interval = $it.name | change = $changeVol")
         }
+        logger.debug("price change ends with ${System.currentTimeMillis() - debMills}")
     }
 
     override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int){
@@ -121,7 +129,7 @@ class BinanceExchange(): RestExchange() {
         val symbol = "?symbol=" + pair.symbol
         val period = "&interval=$interval"
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE$symbol$period&limit=$limit"
-        val entity = JSONArray(stringResponse(uri))
+        val entity = JSONArray(testResponse(uri))
         pair.priceHistory.clear()
         for (i in 0 until entity.length()){
             val array = entity.getJSONArray(i)
