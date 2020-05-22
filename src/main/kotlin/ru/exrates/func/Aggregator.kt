@@ -101,6 +101,8 @@ class Aggregator(
 
     fun getExchange(exId: Int, pairsN: Array<String>, period: String): ExchangeDTO{
         logger.debug("exchanges: ${exchanges.values}")
+        var currentMills = System.currentTimeMillis()
+        logger.debug("start ex")
         val exch = getExById(exId)
         if(exch == null){
             logger.error("Exchange $exId not found")
@@ -116,8 +118,12 @@ class Aggregator(
                 ?: throw NullPointerException("Pair $it not found in ${exch.name}"))
 
         }
+        currentMills = System.currentTimeMillis() - currentMills
+        logger.debug("end pairsN loop: $currentMills")
 
         val reqPairs = HashSet(pairs.filter { pairsN.contains(it.symbol) })
+        currentMills = System.currentTimeMillis() - currentMills
+        logger.debug("end reqPairs Filter: $currentMills")
         //todo - limit request pairs
         val timePeriod = exch.changePeriods.filter { it.name == period }[0]
         reqPairs.forEach {
@@ -125,6 +131,8 @@ class Aggregator(
             exch.priceChange(it, timePeriod.period) //todo needs try catch?
             exch.priceHistory(it, period, 10)
         }
+        currentMills = System.currentTimeMillis() - currentMills
+        logger.debug("end reqPairs update: $currentMills")
         val dto = ExchangeDTO(exch)
         dto.pairs.removeIf { !pairsN.contains(it.symbol) }
 
