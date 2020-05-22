@@ -113,13 +113,14 @@ class BinanceExchange(): RestExchange() {
         }
 
         list.forEach {
+            val curMills = System.currentTimeMillis()
             val res = it.value.block()
             val entity = JSONArray(res)
             val array = entity.getJSONArray(0)
             val oldVal = (array.getDouble(2) + array.getDouble(3)) / 2
             val changeVol = if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1
             pair.putInPriceChange(it.key, BigDecimal(changeVol, MathContext(2)).toDouble())
-            logger.trace("Change period updated on ${pair.symbol} pair $name exch, interval = $it.name | change = $changeVol")
+            logger.trace("Change period updated in ${System.currentTimeMillis() - curMills} ms on ${pair.symbol} pair $name exch, interval = $it.name | change = $changeVol")
         }
         logger.debug("price change ends with ${System.currentTimeMillis() - debMills}")
     }
@@ -129,7 +130,7 @@ class BinanceExchange(): RestExchange() {
         val symbol = "?symbol=" + pair.symbol
         val period = "&interval=$interval"
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE$symbol$period&limit=$limit"
-        val entity = JSONArray(testResponse(uri))
+        val entity = JSONArray(stringResponse(uri).block())
         pair.priceHistory.clear()
         for (i in 0 until entity.length()){
             val array = entity.getJSONArray(i)
