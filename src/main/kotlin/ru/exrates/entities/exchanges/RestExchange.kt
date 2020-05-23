@@ -12,6 +12,7 @@ import ru.exrates.entities.exchanges.secondary.BanException
 import ru.exrates.entities.exchanges.secondary.LimitExceededException
 import java.net.ConnectException
 import java.time.Duration
+import java.util.function.BooleanSupplier
 import javax.annotation.PostConstruct
 import javax.persistence.DiscriminatorColumn
 import javax.persistence.Entity
@@ -108,8 +109,8 @@ abstract class RestExchange : BasicExchange(){
         }
     }
 
-    override fun priceChange(pair: CurrencyPair, timeout: Duration, singlePeriod: String){
-        if(!dataElasped(pair, timeout, 1)) {
+    override fun priceChange(pair: CurrencyPair, interval: TimePeriod, singleInterval: Boolean){
+        if(!dataElasped(pair, interval.period, 1)) {
             logger.trace("price change $pair req skipped")
             return
         }

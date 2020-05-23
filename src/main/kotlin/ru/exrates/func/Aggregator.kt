@@ -28,7 +28,7 @@ import kotlin.reflect.KClass
 @Component
 class Aggregator(
     val logger: Logger = LogManager.getLogger(Aggregator::class),
-    val exchanges: MutableMap<String, BasicExchange> = HashMap(),
+    val exchanges: MutableMap<Int, BasicExchange> = HashMap(),
     val exchangeNames: MutableMap<String, KClass<out BasicExchange>> = HashMap(),
     @Autowired
     val exchangeService: ExchangeService,
@@ -74,7 +74,7 @@ class Aggregator(
                 arrayOf(BeanDefinitionCustomizer { def: BeanDefinition -> def.isPrimary = true }))
 
             exchange = genericApplicationContext.getBean(it.value.java)
-            exchanges[it.key] = exchange
+            exchanges[exchange.exId] = exchange
              val task = object: TimerTask(){
                  override fun run() {
                      save()
@@ -90,7 +90,7 @@ class Aggregator(
     fun getExchange(exId: Int): ExchangeDTO{
         logger.debug("exchanges: ${exchanges.values}")
         logger.debug("get exchange for exId $exId")
-        val ex: BasicExchange? = getExById(exId)
+        val ex: BasicExchange? = exchanges[exId]
         val dto = ExchangeDTO(ex)
         if (ex == null) return dto
         val pairs = TreeSet<CurrencyPair>()
@@ -105,7 +105,7 @@ class Aggregator(
         logger.debug("exchanges: ${exchanges.values}")
         var currentMills = System.currentTimeMillis()
         logger.debug("start ex")
-        val exch = getExById(exId)
+        val exch = exchanges[exId]
         if(exch == null){
             logger.error("Exchange $exId not found")
             return ExchangeDTO(null)
@@ -127,10 +127,10 @@ class Aggregator(
         currentMills = System.currentTimeMillis() - currentMills
         logger.debug("end reqPairs Filter: $currentMills")
         //todo - limit request pairs
-        val timePeriod = exch.changePeriods.filter { it.name == period }[0]
+        val timePeriod = exch.getTimePeriod(period)
         reqPairs.forEach {
             exch.currentPrice(it, timePeriod.period)
-            exch.priceChange(it, timePeriod.period) //todo needs try catch?
+            exch.priceChange(it, timePeriod) //todo needs try catch?
             exch.priceHistory(it, period, 10)
         }
         currentMills = System.currentTimeMillis() - currentMills
@@ -160,7 +160,7 @@ class Aggregator(
                 p.exchange = exchange
                 // p = exchange.getPair(pair.symbol)!!
                 exchange.currentPrice(p, exchange.updatePeriod)
-                exchange.priceChange(p, exchange.updatePeriod)
+                exchange.priceChange(p, exchange.getTimePeriod(exchange.updatePeriod))
                 exchange.priceHistory(p, historyInterval ?: exchange.historyPeriods[0], limit) //todo [0] right?
                 p.historyPeriods = exchange.historyPeriods
                 curs.add(p)
@@ -172,10 +172,10 @@ class Aggregator(
 
     fun priceHistory(c1: String, c2: String, exId: Int, historyInterval: String, limit: Int): List<Double>{
         logger.debug("exchanges: ${exchanges.values}")
-        val exchange: BasicExchange = getExById(exId) ?: throw NullPointerException("exchange $exId not found")
+        val exchange: BasicExchange = exchanges[exId] ?: throw NullPointerException("exchange $exId not found")
         var pair = exchange.getPair(c1, c2)
         if(pair == null){
-            pair = exchangeService.findPair(c1, c2, exchange) ?: throw NullPointerException("pair $c1 - $c2 not found")
+            pair = exchangeService.findPair(c1, c2, exchange) ?: throw NullPointerException("pair $c1 - $c2 not found in $exchange")
             exchange.insertPair(pair)
         }
         exchange.priceHistory(pair, historyInterval, limit)
@@ -183,7 +183,21 @@ class Aggregator(
     }
 
     fun getCursIntervalStatistic(cursPayload: ExchangePayload): CursPeriod{
-        val ex = exchanges
+        val ex = exchanges[cursPayload.exId]!!
+        val values = HashMap<String, Double>()
+
+        cursPayload.pairs.forEach {
+            var pair = ex.getPair(it)
+            if(pair == null){
+                pair = exchangeService.findPair(it, ex) ?: throw java.lang.NullPointerException("pair $it not found in $ex")
+                ex.insertPair(pair)
+            }
+            val timePeriod = ex.getTimePeriod(cursPayload.interval)
+            ex.currentPrice(pair, timePeriod.period)
+            ex.priceChange(pair, timePeriod, true)
+            values[pair.symbol] = pair.getPriceChangeValue(ex.getTimePeriod(cursPayload.interval))!!
+        }
+        return CursPeriod(cursPayload.interval, values)
     }
 
     fun getNamesExchangesAndCurrencies() = exchangeService.getAllPairs(exchanges.values)
@@ -207,7 +221,6 @@ class Aggregator(
         return counter / tLimits.size
     }
 
-    private fun getExById(id: Int) = exchanges.values.find { it.exId == id }
 
 
 

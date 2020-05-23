@@ -1,6 +1,7 @@
 package ru.exrates.entities.exchanges
 
 import ru.exrates.entities.CurrencyPair
+import ru.exrates.entities.TimePeriod
 import java.time.Duration
 
 class EmptyExchange: BasicExchange() {
@@ -8,7 +9,7 @@ class EmptyExchange: BasicExchange() {
 
     }
 
-    override fun priceChange(pair: CurrencyPair, timeout: Duration, singlePeriod: String) {
+    override fun priceChange(pair: CurrencyPair, interval: TimePeriod, singleInterval: Boolean) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 

@@ -69,12 +69,12 @@ class P2pb2bExchange: RestExchange() {
 
     }
 
-    override fun priceChange(pair: CurrencyPair, timeout: Duration, singlePeriod: String) {
-        super.priceChange(pair, timeout, singlePeriod)
-        if(singlePeriod.isNotEmpty()){
-            val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=$singlePeriod&limit=50"
-            updateSinglePriceChange(pair, this.changePeriods.find { it.name == singlePeriod }!!, stringResponse(uri))
-
+    override fun priceChange(pair: CurrencyPair, interval: TimePeriod, singleInterval : Boolean) {
+        super.priceChange(pair, interval, singleInterval)
+        if(singleInterval){
+            val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=${interval.name}&limit=50"
+            updateSinglePriceChange(pair, interval, stringResponse(uri))
+            return
         }
         val debMills = System.currentTimeMillis()
 

@@ -12,6 +12,7 @@ import ru.exrates.entities.exchanges.secondary.Limit
 import java.math.BigDecimal
 import java.math.MathContext
 import java.net.ConnectException
+import java.sql.Time
 import java.time.Duration
 import javax.annotation.PostConstruct
 import javax.persistence.DiscriminatorValue
@@ -101,13 +102,14 @@ class BinanceExchange(): RestExchange() {
         logger.trace("Price updated on ${pair.symbol} pair $name exch| = $price")
     }
 
-    override fun priceChange(pair: CurrencyPair, timeout: Duration, singlePeriod: String) {
-        super.priceChange(pair, timeout, singlePeriod)
+    override fun priceChange(pair: CurrencyPair, interval: TimePeriod, singleInterval: Boolean) {
+        super.priceChange(pair, interval, singleInterval)
         val symbol = "?symbol=" + pair.symbol
         val period = "&interval="
-        if (singlePeriod.isNotEmpty()) {
-            val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE$symbol$period${singlePeriod}&limit=1"
-            updateSinglePriceChange(pair, this.changePeriods.find { it.name == singlePeriod }!!, stringResponse(uri))
+        if (singleInterval) {
+            val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE$symbol$period${interval.name}&limit=1"
+            updateSinglePriceChange(pair, interval, stringResponse(uri))
+            return
         }
         val list = hashMapOf<TimePeriod, Mono<String>>()
         val debMills = System.currentTimeMillis()

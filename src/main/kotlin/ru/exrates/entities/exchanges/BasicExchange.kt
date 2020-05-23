@@ -25,6 +25,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentSkipListSet
 import javax.annotation.PostConstruct
 import javax.persistence.*
+import kotlin.NullPointerException
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
 import kotlin.reflect.KClass
@@ -96,7 +97,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
             for (p in pairs){
                 try {
                     currentPrice(p, updatePeriod)
-                    priceChange(p, updatePeriod)
+                    priceChange(p, TimePeriod(updatePeriod, ""))
                     priceHistory(p, changePeriods[0].name, 10) //todo [0] right?
                 }catch (e: LimitExceededException){
                     logger.error(e.message)
@@ -136,6 +137,10 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
 
     override fun getPair(pairName: String): CurrencyPair? = pairs.find { it.symbol == pairName }
 
+    fun getTimePeriod(period: String) = changePeriods.find { it.name == period } ?: throw NullPointerException("period in ${this.name} for $period not found")
+
+    fun getTimePeriod(duration: Duration) = changePeriods.find { it.period == duration } ?: throw NullPointerException("period in ${this.name} for $duration not found")
+
     public override fun clone(): Any {
         return super.clone()
     }
@@ -143,7 +148,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
 
     abstract fun currentPrice(pair: CurrencyPair, timeout: Duration)
 
-    abstract fun priceChange(pair: CurrencyPair, timeout: Duration, singlePeriod: String = "")
+    abstract fun priceChange(pair: CurrencyPair, interval: TimePeriod, singleInterval: Boolean = false)
 
     fun priceHistory(pair: CurrencyPair, interval: String, limit: Int){
         if (!this.historyPeriods.contains(interval)) {
