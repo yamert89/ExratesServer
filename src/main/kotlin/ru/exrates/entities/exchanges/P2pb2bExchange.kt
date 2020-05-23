@@ -22,7 +22,7 @@ class P2pb2bExchange: RestExchange() {
         super.init()
         initVars()
         webClient = WebClient.create(URL_ENDPOINT)
-        val entity = JSONObject(testResponse(URL_ENDPOINT + URL_INFO))
+        val entity = JSONObject(stringResponse(URL_ENDPOINT + URL_INFO).block())
         pairsFill(entity, "result", "stock", "money", "name")
         temporary = false
         logger.debug("exchange " + name + " initialized with " + pairs.size + " pairs")
@@ -69,31 +69,29 @@ class P2pb2bExchange: RestExchange() {
 
     }
 
-    override fun priceChange(pair: CurrencyPair, timeout: Duration) {
-        super.priceChange(pair, timeout)
+    override fun priceChange(pair: CurrencyPair, timeout: Duration, singlePeriod: String) {
+        super.priceChange(pair, timeout, singlePeriod)
+        if(singlePeriod.isNotEmpty()){
+            val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=$singlePeriod&limit=50"
+            updateSinglePriceChange(pair, this.changePeriods.find { it.name == singlePeriod }!!, stringResponse(uri))
+
+        }
+        val debMills = System.currentTimeMillis()
 
         try{
             val list = hashMapOf<TimePeriod, Mono<String>>()
+
             changePeriods.forEach {
                 val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=${it.name}&limit=50"
                 list[it] = stringResponse(uri)
             }
             list.forEach {
-                val array = JSONObject(it.value.block()).getJSONArray("result")
-                val array2 = array.getJSONArray(0)
-                val oldVal = (array2.getDouble(1) + array2.getDouble(2)) / 2
-                val changeVol = if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1
-                pair.putInPriceChange(it.key, BigDecimal(changeVol, MathContext(2)).toDouble())
-                logger.trace("Change period updated on ${pair.symbol} pair $name exch, interval = $it.name | change = $changeVol")
-
+                updateSinglePriceChange(pair, it.key, it.value)
             }
         }catch (e: Exception){
             logger.error("Connect exception") //todo wrong operate
         }
-
-
-
-
+        logger.debug("price change ends with ${System.currentTimeMillis() - debMills}")
     }
 
     override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int) {
@@ -111,8 +109,16 @@ class P2pb2bExchange: RestExchange() {
             logger.trace("price history updated on ${pair.symbol} pair $name exch")
         }catch (e: Exception){logger.error("Connect exception")} //todo wrong operate
 
+    }
 
-
+    override fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod, stringResponse: Mono<String>){
+        val curMills = System.currentTimeMillis()
+        val array = JSONObject(stringResponse.block()).getJSONArray("result")
+        val array2 = array.getJSONArray(0)
+        val oldVal = (array2.getDouble(1) + array2.getDouble(2)) / 2
+        val changeVol = if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1
+        pair.putInPriceChange(period, BigDecimal(changeVol, MathContext(2)).toDouble())
+        logger.trace("Change period updated in ${System.currentTimeMillis() - curMills} ms on ${pair.symbol} pair $name exch, interval = ${period.name} | change = $changeVol")
     }
 
 

@@ -101,10 +101,14 @@ class BinanceExchange(): RestExchange() {
         logger.trace("Price updated on ${pair.symbol} pair $name exch| = $price")
     }
 
-    override fun priceChange(pair: CurrencyPair, timeout: Duration) {
-        super.priceChange(pair, timeout)
+    override fun priceChange(pair: CurrencyPair, timeout: Duration, singlePeriod: String) {
+        super.priceChange(pair, timeout, singlePeriod)
         val symbol = "?symbol=" + pair.symbol
         val period = "&interval="
+        if (singlePeriod.isNotEmpty()) {
+            val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE$symbol$period${singlePeriod}&limit=1"
+            updateSinglePriceChange(pair, this.changePeriods.find { it.name == singlePeriod }!!, stringResponse(uri))
+        }
         val list = hashMapOf<TimePeriod, Mono<String>>()
         val debMills = System.currentTimeMillis()
         changePeriods.forEach {
@@ -112,16 +116,7 @@ class BinanceExchange(): RestExchange() {
             list[it] = stringResponse(uri)
         }
 
-        list.forEach {
-            val curMills = System.currentTimeMillis()
-            val res = it.value.block()
-            val entity = JSONArray(res)
-            val array = entity.getJSONArray(0)
-            val oldVal = (array.getDouble(2) + array.getDouble(3)) / 2
-            val changeVol = if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1
-            pair.putInPriceChange(it.key, BigDecimal(changeVol, MathContext(2)).toDouble())
-            logger.trace("Change period updated in ${System.currentTimeMillis() - curMills} ms on ${pair.symbol} pair $name exch, interval = $it.name | change = $changeVol")
-        }
+        list.forEach { updateSinglePriceChange(pair, it.key, it.value)}
         logger.debug("price change ends with ${System.currentTimeMillis() - debMills}")
     }
 
@@ -138,6 +133,17 @@ class BinanceExchange(): RestExchange() {
         }
         logger.trace("price history updated on ${pair.symbol} pair $name exch")
 
+    }
+
+    override fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod, stringResponse: Mono<String>){
+        val curMills = System.currentTimeMillis()
+        val res = stringResponse.block()
+        val entity = JSONArray(res)
+        val array = entity.getJSONArray(0)
+        val oldVal = (array.getDouble(2) + array.getDouble(3)) / 2
+        val changeVol = if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1
+        pair.putInPriceChange(period, BigDecimal(changeVol, MathContext(2)).toDouble())
+        logger.trace("Change period updated in ${System.currentTimeMillis() - curMills} ms on ${pair.symbol} pair $name exch, interval = ${period.name} | change = $changeVol")
     }
 
 
