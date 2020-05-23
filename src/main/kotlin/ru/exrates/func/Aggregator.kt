@@ -17,6 +17,8 @@ import ru.exrates.entities.exchanges.ExchangeDTO
 import ru.exrates.entities.exchanges.P2pb2bExchange
 /*import ru.exrates.entities.exchanges.ExmoExchange*/
 import ru.exrates.repos.ExchangeService
+import ru.exrates.utils.CursPeriod
+import ru.exrates.utils.ExchangePayload
 import java.util.*
 import javax.annotation.PostConstruct
 import kotlin.collections.HashMap
@@ -178,6 +180,10 @@ class Aggregator(
         }
         exchange.priceHistory(pair, historyInterval, limit)
         return pair.priceHistory
+    }
+
+    fun getCursIntervalStatistic(cursPayload: ExchangePayload): CursPeriod{
+        val ex = exchanges
     }
 
     fun getNamesExchangesAndCurrencies() = exchangeService.getAllPairs(exchanges.values)

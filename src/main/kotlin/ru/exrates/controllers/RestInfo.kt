@@ -9,11 +9,10 @@ import org.springframework.security.core.context.SecurityContext
 import org.springframework.security.core.userdetails.User
 import org.springframework.web.bind.annotation.*
 import ru.exrates.entities.CurrencyPair
-import ru.exrates.entities.exchanges.BasicExchange
-import ru.exrates.entities.exchanges.EmptyExchange
 import ru.exrates.entities.exchanges.ExchangeDTO
 import ru.exrates.entities.exchanges.secondary.ExchangeNamesObject
 import ru.exrates.func.Aggregator
+import ru.exrates.utils.CursPeriod
 import ru.exrates.utils.ExchangePayload
 import java.net.ConnectException
 import java.security.Principal
@@ -43,9 +42,9 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
         val login = (secContext?.authentication?.principal as User?)?.username
         logger.debug("session user name $login")
         logger.debug("REQUEST ON /rest/exchange: $exchangePayload")
-        val ex = if(exchangePayload.pairs.isNotEmpty() && exchangePayload.timeout.isNotEmpty()){
+        val ex = if(exchangePayload.pairs.isNotEmpty() && exchangePayload.interval.isNotEmpty()){
             with(exchangePayload){
-                val interval = if (timeout.isEmpty()) "1h" else timeout
+                val interval = if (interval.isEmpty()) "1h" else interval
                 aggregator.getExchange(exId, pairs, interval)
             }
         } else aggregator.getExchange(exchangePayload.exId)
@@ -69,6 +68,9 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
 
         return ex
     }
+
+    @GetMapping("/rest/dynamics")
+    fun priceChange(@RequestBody curs: ExchangePayload) = aggregator.getCursIntervalStatistic(curs)
 
    /* @GetMapping("/rest/pair", params = ["c1", "c2"])
     fun pair(@RequestParam c1: String, @RequestParam c2: String):List<CurrencyPair>{
