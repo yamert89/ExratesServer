@@ -102,20 +102,12 @@ class BinanceExchange(): RestExchange() {
         logger.trace("Price updated on ${pair.symbol} pair $name exch| = $price")
     }
 
-    override fun priceChange(pair: CurrencyPair, interval: TimePeriod, singleInterval: Boolean) {
-        super.priceChange(pair, interval, singleInterval)
-        val symbol = "?symbol=" + pair.symbol
-        val period = "&interval="
-        if (singleInterval) {
-            val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE$symbol$period${interval.name}&limit=1"
-            updateSinglePriceChange(pair, interval, stringResponse(uri))
-            return
-        }
+    override fun priceChange(pair: CurrencyPair, interval: TimePeriod) {
+        super.priceChange(pair, interval)
         val list = hashMapOf<TimePeriod, Mono<String>>()
         val debMills = System.currentTimeMillis()
         changePeriods.forEach {
-            val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE$symbol$period${it.name}&limit=1"
-            list[it] = stringResponse(uri)
+            list[it] = singlePriceChangeRequest(pair, it)
         }
 
         list.forEach { updateSinglePriceChange(pair, it.key, it.value)}
@@ -146,6 +138,11 @@ class BinanceExchange(): RestExchange() {
         val changeVol = if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1
         pair.putInPriceChange(period, BigDecimal(changeVol, MathContext(2)).toDouble())
         logger.trace("Change period updated in ${System.currentTimeMillis() - curMills} ms on ${pair.symbol} pair $name exch, interval = ${period.name} | change = $changeVol")
+    }
+
+    override fun singlePriceChangeRequest(pair: CurrencyPair, interval: TimePeriod): Mono<String> {
+        val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?symbol=${pair.symbol}&interval=${interval.name}&limit=1"
+        return stringResponse(uri)
     }
 
 

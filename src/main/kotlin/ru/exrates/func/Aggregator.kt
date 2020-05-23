@@ -9,12 +9,10 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.support.GenericApplicationContext
 import org.springframework.stereotype.Component
 import org.springframework.web.bind.annotation.RequestParam
+import reactor.core.publisher.Mono
 import ru.exrates.configs.Properties
 import ru.exrates.entities.CurrencyPair
-import ru.exrates.entities.exchanges.BasicExchange
-import ru.exrates.entities.exchanges.BinanceExchange
-import ru.exrates.entities.exchanges.ExchangeDTO
-import ru.exrates.entities.exchanges.P2pb2bExchange
+import ru.exrates.entities.exchanges.*
 /*import ru.exrates.entities.exchanges.ExmoExchange*/
 import ru.exrates.repos.ExchangeService
 import ru.exrates.utils.CursPeriod
@@ -185,6 +183,9 @@ class Aggregator(
     fun getCursIntervalStatistic(cursPayload: ExchangePayload): CursPeriod{
         val ex = exchanges[cursPayload.exId]!!
         val values = HashMap<String, Double>()
+        val requests = HashMap<CurrencyPair, Mono<String>>()
+        val restEx = ex as RestExchange
+        val timePeriod = ex.getTimePeriod(cursPayload.interval)
 
         cursPayload.pairs.forEach {
             var pair = ex.getPair(it)
@@ -192,10 +193,14 @@ class Aggregator(
                 pair = exchangeService.findPair(it, ex) ?: throw java.lang.NullPointerException("pair $it not found in $ex")
                 ex.insertPair(pair)
             }
-            val timePeriod = ex.getTimePeriod(cursPayload.interval)
-            ex.currentPrice(pair, timePeriod.period)
-            ex.priceChange(pair, timePeriod, true)
-            values[pair.symbol] = pair.getPriceChangeValue(ex.getTimePeriod(cursPayload.interval))!!
+            requests[pair] = restEx.singlePriceChangeRequest(pair, timePeriod)
+           //
+        }
+
+        requests.forEach {
+            ex.currentPrice(it.key, timePeriod.period)
+            restEx.updateSinglePriceChange(it.key, timePeriod, it.value)
+            values[it.key.symbol] = it.key.getPriceChangeValue(ex.getTimePeriod(cursPayload.interval))!!
         }
         return CursPeriod(cursPayload.interval, values)
     }

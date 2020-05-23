@@ -69,21 +69,13 @@ class P2pb2bExchange: RestExchange() {
 
     }
 
-    override fun priceChange(pair: CurrencyPair, interval: TimePeriod, singleInterval : Boolean) {
-        super.priceChange(pair, interval, singleInterval)
-        if(singleInterval){
-            val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=${interval.name}&limit=50"
-            updateSinglePriceChange(pair, interval, stringResponse(uri))
-            return
-        }
+    override fun priceChange(pair: CurrencyPair, interval: TimePeriod) {
+        super.priceChange(pair, interval)
         val debMills = System.currentTimeMillis()
-
         try{
             val list = hashMapOf<TimePeriod, Mono<String>>()
-
             changePeriods.forEach {
-                val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=${it.name}&limit=50"
-                list[it] = stringResponse(uri)
+                list[it] = singlePriceChangeRequest(pair, it)
             }
             list.forEach {
                 updateSinglePriceChange(pair, it.key, it.value)
@@ -119,6 +111,11 @@ class P2pb2bExchange: RestExchange() {
         val changeVol = if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1
         pair.putInPriceChange(period, BigDecimal(changeVol, MathContext(2)).toDouble())
         logger.trace("Change period updated in ${System.currentTimeMillis() - curMills} ms on ${pair.symbol} pair $name exch, interval = ${period.name} | change = $changeVol")
+    }
+
+    override fun singlePriceChangeRequest(pair: CurrencyPair, interval: TimePeriod): Mono<String> {
+        val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=${interval.name}&limit=50"
+        return stringResponse(uri)
     }
 
 
