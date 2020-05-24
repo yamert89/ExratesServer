@@ -70,7 +70,12 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
     }
 
     @PostMapping("/rest/dynamics")
-    fun priceChange(@RequestBody curs: ExchangePayload) = aggregator.getCursIntervalStatistic(curs)
+    fun priceChange(@RequestBody curs: ExchangePayload): CursPeriod{
+        logger.debug("REQUEST ON /rest/dynamics: $curs")
+        val res = aggregator.getCursIntervalStatistic(curs)
+        logger.debug("RESPONSE OF /rest/dynamics: $res")
+        return res
+    }
 
    /* @GetMapping("/rest/pair", params = ["c1", "c2"])
     fun pair(@RequestParam c1: String, @RequestParam c2: String):List<CurrencyPair>{

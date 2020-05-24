@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import reactor.core.publisher.Mono
 import ru.exrates.configs.Properties
 import ru.exrates.entities.CurrencyPair
+import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.*
 /*import ru.exrates.entities.exchanges.ExmoExchange*/
 import ru.exrates.repos.ExchangeService
@@ -127,7 +128,7 @@ class Aggregator(
         //todo - limit request pairs
         val timePeriod = exch.getTimePeriod(period)
         reqPairs.forEach {
-            exch.currentPrice(it, timePeriod.period)
+            exch.currentPrice(it, timePeriod)
             exch.priceChange(it, timePeriod, true) //todo needs try catch?
             exch.priceHistory(it, period, 10)
         }
@@ -157,8 +158,9 @@ class Aggregator(
             if (p != null){
                 p.exchange = exchange
                 // p = exchange.getPair(pair.symbol)!!
-                exchange.currentPrice(p, exchange.updatePeriod)
-                exchange.priceChange(p, exchange.getTimePeriod(exchange.updatePeriod))
+                val period = TimePeriod(exchange.updatePeriod, "")
+                exchange.currentPrice(p, period)
+                exchange.priceChange(p, period)
                 exchange.priceHistory(p, historyInterval ?: exchange.historyPeriods[0], limit) //todo [0] right?
                 p.historyPeriods = exchange.historyPeriods
                 curs.add(p)
@@ -193,12 +195,12 @@ class Aggregator(
                 pair = exchangeService.findPair(it, ex) ?: throw java.lang.NullPointerException("pair $it not found in $ex")
                 ex.insertPair(pair)
             }
-            requests[pair] = restEx.singlePriceChangeRequest(pair, timePeriod)
+            if (pair.updateTimes.priceChangeTimeElapsed(timePeriod)) requests[pair] = restEx.singlePriceChangeRequest(pair, timePeriod)
            //
         }
 
         requests.forEach {
-            ex.currentPrice(it.key, timePeriod.period)
+            ex.currentPrice(it.key, timePeriod)
             restEx.updateSinglePriceChange(it.key, timePeriod, it.value)
             values[it.key.symbol] = it.key.getPriceChangeValue(ex.getTimePeriod(cursPayload.interval))!!
         }

@@ -57,8 +57,8 @@ class P2pb2bExchange: RestExchange() {
 
     }
 
-    override fun currentPrice(pair: CurrencyPair, timeout: Duration) {
-        super.currentPrice(pair, timeout)
+    override fun currentPrice(pair: CurrencyPair, period: TimePeriod) {
+        super.currentPrice(pair, period)
         val uri = "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?market=${pair.symbol}"
         val entity = JSONObject(stringResponse(uri).block())
         val result = entity.getJSONObject("result")

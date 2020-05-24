@@ -104,15 +104,15 @@ abstract class RestExchange : BasicExchange(){
 
     abstract fun singlePriceChangeRequest(pair: CurrencyPair, interval: TimePeriod): Mono<String>
 
-    override fun currentPrice(pair: CurrencyPair, timeout: Duration){
-        if(!dataElasped(pair, timeout, 0)){
+    override fun currentPrice(pair: CurrencyPair, period: TimePeriod){
+        if(!pair.updateTimes.priceTimeElapsed(period)){
             logger.trace("current price $pair.symbol req skipped")
             return
         }
     }
 
     override fun priceChange(pair: CurrencyPair, interval: TimePeriod, single: Boolean){
-        if(!dataElasped(pair, interval.period, 1)) {
+        if(!pair.updateTimes.priceChangeTimeElapsed(interval)) {
             logger.trace("price change $pair req skipped")
             return
         }

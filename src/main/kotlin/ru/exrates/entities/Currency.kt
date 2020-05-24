@@ -17,7 +17,7 @@ import kotlin.collections.HashMap
 import kotlin.jvm.Transient
 
 @Entity
-@JsonIgnoreProperties("id", "lastUse")
+@JsonIgnoreProperties("id", "lastUse", "updateTimes")
 data class CurrencyPair(var lastUse: Instant = Instant.now(), @Transient @JsonIgnore val logger: Logger = LogManager.getLogger(CurrencyPair::class)) : Comparable<CurrencyPair>{
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Int = 0
@@ -33,7 +33,7 @@ data class CurrencyPair(var lastUse: Instant = Instant.now(), @Transient @JsonIg
 
     var price: Double = 0.0
         set(value) {
-            updateTimes[0] = Instant.now().toEpochMilli()
+            updateTimes.priceTime = Instant.now().toEpochMilli()
             field = value
         }
 
@@ -57,14 +57,7 @@ data class CurrencyPair(var lastUse: Instant = Instant.now(), @Transient @JsonIg
 
     var exId: Int = 0
 
-
-    /*
-      indexes:
-        0 - price
-        1 - priceChange
-        2 - priceHistory
-     */
-    val updateTimes: LongArray = LongArray(3)
+    val updateTimes: UpdateTimes = UpdateTimes()
 
     @javax.persistence.Transient
     var historyPeriods : List<String>? = null //todo delete
@@ -84,14 +77,14 @@ data class CurrencyPair(var lastUse: Instant = Instant.now(), @Transient @JsonIg
     }
 
     fun putInPriceChange(period: TimePeriod, value: Double){
-        updateTimes[1] = Instant.now().toEpochMilli()
+        updateTimes.priceChangeTimes[period.name] = Instant.now().toEpochMilli()
         priceChange[period] = value
     }
 
-    fun removeFromPriceChange(period: TimePeriod){
+    /*fun removeFromPriceChange(period: TimePeriod){
         updateTimes[1] = Instant.now().toEpochMilli()
         priceChange.remove(period)
-    }
+    }*/
 
     fun getPriceChangeValue(period: TimePeriod) = priceChange[period] //todo updateTimes?
 

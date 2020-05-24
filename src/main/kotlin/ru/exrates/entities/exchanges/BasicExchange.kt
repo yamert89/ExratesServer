@@ -18,6 +18,7 @@ import ru.exrates.entities.exchanges.secondary.ErrorCodeException
 import ru.exrates.entities.exchanges.secondary.Limit
 import ru.exrates.entities.exchanges.secondary.LimitExceededException
 import ru.exrates.utils.TimePeriodListSerializer
+import java.lang.reflect.Field
 import java.net.ConnectException
 import java.time.Duration
 import java.time.Instant
@@ -96,8 +97,9 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
         /*synchronized(pairs){*/
             for (p in pairs){
                 try {
-                    currentPrice(p, updatePeriod)
-                    priceChange(p, TimePeriod(updatePeriod, ""))
+                    val period = TimePeriod(updatePeriod, "")
+                    currentPrice(p, period)
+                    priceChange(p, period)
                     priceHistory(p, changePeriods[0].name, 10) //todo [0] right?
                 }catch (e: LimitExceededException){
                     logger.error(e.message)
@@ -115,15 +117,6 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
             }
         /*}*/
     }
-
-    fun dataElasped(pair: CurrencyPair, timeout: Duration, idx: Int): Boolean{
-        logger.debug("Pair $pair was updated on field $idx ${Instant.ofEpochMilli(pair.updateTimes[idx])} | now is ${Instant.now()}")
-        return Instant.now().isAfter(Instant.ofEpochMilli(pair.updateTimes[idx] + timeout.toMillis()))
-    }
-
-
-
-
 
     override fun insertPair(pair: CurrencyPair) {
         pairs.add(pair)
@@ -146,7 +139,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
     }
 
 
-    abstract fun currentPrice(pair: CurrencyPair, timeout: Duration)
+    abstract fun currentPrice(pair: CurrencyPair, period: TimePeriod)
 
     abstract fun priceChange(pair: CurrencyPair, interval: TimePeriod, single: Boolean = false)
 
