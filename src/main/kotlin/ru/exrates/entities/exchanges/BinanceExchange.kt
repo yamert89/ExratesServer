@@ -47,6 +47,7 @@ class BinanceExchange(): RestExchange() {
         URL_ORDER = "/api/v3/depth"
         limitCode = 429
         banCode = 418
+        taskTimeOut = TimePeriod(Duration.ofMinutes(3), "binanceTaskTimeout")
         historyPeriods = listOf("3m", "5m", "15m", "30m", "1h", "4h", "6h", "8h", "12h", "1d", "3d", "1w", "1M")
         if(!temporary) {
             super.init()

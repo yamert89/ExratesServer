@@ -8,6 +8,7 @@ import ru.exrates.entities.TimePeriod
 import java.math.BigDecimal
 import java.math.MathContext
 import java.time.Duration
+import java.util.*
 import javax.annotation.PostConstruct
 import javax.persistence.DiscriminatorValue
 import javax.persistence.Entity
@@ -40,6 +41,7 @@ class P2pb2bExchange: RestExchange() {
         URL_PING = "/api/v2/public/ticker?market=ETH_BTC"
         limitCode = 0
         banCode = 0
+        taskTimeOut = TimePeriod(Duration.ofMinutes(1), "p2pTaskTimeout")
         changePeriods.addAll(listOf(
             TimePeriod(Duration.ofMinutes(1), "1m"),
             TimePeriod(Duration.ofHours(1), "1h"),

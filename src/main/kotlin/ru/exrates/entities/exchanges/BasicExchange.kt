@@ -6,33 +6,26 @@ import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.hibernate.annotations.SortComparator
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
 import org.springframework.web.reactive.function.client.WebClient
-import reactor.core.publisher.Mono
 import ru.exrates.configs.Properties
 import ru.exrates.entities.CurrencyPair
-import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.secondary.BanException
 import ru.exrates.entities.exchanges.secondary.ErrorCodeException
 import ru.exrates.entities.exchanges.secondary.Limit
 import ru.exrates.entities.exchanges.secondary.LimitExceededException
 import ru.exrates.utils.TimePeriodListSerializer
-import java.lang.reflect.Field
 import java.net.ConnectException
 import java.time.Duration
-import java.time.Instant
 import java.util.*
-import java.util.concurrent.ConcurrentSkipListSet
 import javax.annotation.PostConstruct
 import javax.persistence.*
 import kotlin.NullPointerException
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
-import kotlin.reflect.KClass
 
 @Entity @Inheritance(strategy = InheritanceType.SINGLE_TABLE) @DiscriminatorColumn(name = "EXCHANGE_TYPE")
-@JsonIgnoreProperties("id", "limits", "limitCode", "banCode", "sleepValueSeconds", "updatePeriod", "temporary",
+@JsonIgnoreProperties("id", "limits", "limitCode", "banCode", "sleepValueSeconds", "taskTimeOut", "temporary",
     "webClient", "props")
 abstract class BasicExchange(@javax.persistence.Transient protected val logger: Logger = LogManager.getLogger(BasicExchange::class)) : Exchange, Cloneable{
 
@@ -64,7 +57,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
     @OneToMany(orphanRemoval = true, cascade = [CascadeType.PERSIST], fetch = FetchType.EAGER)
     val limits: Set<Limit> = HashSet()
 
-    lateinit var updatePeriod: Duration
+    lateinit var taskTimeOut: TimePeriod //fixme add converter
 
     @Transient
     lateinit var webClient: WebClient
@@ -76,7 +69,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
     fun init(){
         logger.debug("Postconstruct super $name")
 
-        updatePeriod = Duration.ofMillis(props.timerPeriod())
+        taskTimeOut = TimePeriod(Duration.ofMillis(props.timerPeriod()), "BaseTaskTimeOut")
         val task = object : TimerTask() {
             override fun run() {
                 try {
@@ -97,9 +90,8 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
         /*synchronized(pairs){*/
             for (p in pairs){
                 try {
-                    val period = TimePeriod(updatePeriod, "")
-                    currentPrice(p, period)
-                    priceChange(p, period)
+                    currentPrice(p, taskTimeOut)
+                    priceChange(p, taskTimeOut)
                     priceHistory(p, changePeriods[0].name, 10) //todo [0] right?
                 }catch (e: LimitExceededException){
                     logger.error(e.message)

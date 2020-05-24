@@ -57,7 +57,8 @@ data class CurrencyPair(var lastUse: Instant = Instant.now(), @Transient @JsonIg
 
     var exId: Int = 0
 
-    val updateTimes: UpdateTimes = UpdateTimes()
+    lateinit var updateTimes: UpdateTimes
+        private set
 
     @javax.persistence.Transient
     var historyPeriods : List<String>? = null //todo delete
@@ -68,6 +69,7 @@ data class CurrencyPair(var lastUse: Instant = Instant.now(), @Transient @JsonIg
         this.symbol = symbol
         this.exchange = exchange
         exId = exchange.exId
+        updateTimes = UpdateTimes(exchange.taskTimeOut)
     }
 
     @JsonIgnore

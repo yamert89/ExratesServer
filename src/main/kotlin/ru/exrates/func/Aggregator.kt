@@ -5,10 +5,8 @@ import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.config.BeanDefinition
 import org.springframework.beans.factory.config.BeanDefinitionCustomizer
-import org.springframework.context.ApplicationContext
 import org.springframework.context.support.GenericApplicationContext
 import org.springframework.stereotype.Component
-import org.springframework.web.bind.annotation.RequestParam
 import reactor.core.publisher.Mono
 import ru.exrates.configs.Properties
 import ru.exrates.entities.CurrencyPair
@@ -18,6 +16,7 @@ import ru.exrates.entities.exchanges.*
 import ru.exrates.repos.ExchangeService
 import ru.exrates.utils.CursPeriod
 import ru.exrates.utils.ExchangePayload
+import java.time.Duration
 import java.util.*
 import javax.annotation.PostConstruct
 import kotlin.collections.HashMap
@@ -35,6 +34,7 @@ class Aggregator(
     val genericApplicationContext: GenericApplicationContext,
     @Autowired
     val props: Properties
+
 ) {
 
     init {
@@ -158,9 +158,8 @@ class Aggregator(
             if (p != null){
                 p.exchange = exchange
                 // p = exchange.getPair(pair.symbol)!!
-                val period = TimePeriod(exchange.updatePeriod, "")
-                exchange.currentPrice(p, period)
-                exchange.priceChange(p, period)
+                exchange.currentPrice(p, exchange.taskTimeOut)
+                exchange.priceChange(p, exchange.taskTimeOut)
                 exchange.priceHistory(p, historyInterval ?: exchange.historyPeriods[0], limit) //todo [0] right?
                 p.historyPeriods = exchange.historyPeriods
                 curs.add(p)
@@ -196,6 +195,7 @@ class Aggregator(
                 ex.insertPair(pair)
             }
             if (pair.updateTimes.priceChangeTimeElapsed(timePeriod)) requests[pair] = restEx.singlePriceChangeRequest(pair, timePeriod)
+            else logger.debug("SKIPPED: price change for ${timePeriod.name} in $pair")
            //
         }
 
