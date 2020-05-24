@@ -128,7 +128,7 @@ class Aggregator(
         val timePeriod = exch.getTimePeriod(period)
         reqPairs.forEach {
             exch.currentPrice(it, timePeriod.period)
-            exch.priceChange(it, timePeriod) //todo needs try catch?
+            exch.priceChange(it, timePeriod, true) //todo needs try catch?
             exch.priceHistory(it, period, 10)
         }
         currentMills = System.currentTimeMillis() - currentMills

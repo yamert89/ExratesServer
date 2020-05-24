@@ -69,8 +69,12 @@ class P2pb2bExchange: RestExchange() {
 
     }
 
-    override fun priceChange(pair: CurrencyPair, interval: TimePeriod) {
-        super.priceChange(pair, interval)
+    override fun priceChange(pair: CurrencyPair, interval: TimePeriod, single: Boolean) {
+        super.priceChange(pair, interval, single)
+        if (single){
+            updateSinglePriceChange(pair, interval, singlePriceChangeRequest(pair, interval))
+            return
+        }
         val debMills = System.currentTimeMillis()
         try{
             val list = hashMapOf<TimePeriod, Mono<String>>()

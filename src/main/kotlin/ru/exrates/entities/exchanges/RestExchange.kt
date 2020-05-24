@@ -111,7 +111,7 @@ abstract class RestExchange : BasicExchange(){
         }
     }
 
-    override fun priceChange(pair: CurrencyPair, interval: TimePeriod){
+    override fun priceChange(pair: CurrencyPair, interval: TimePeriod, single: Boolean){
         if(!dataElasped(pair, interval.period, 1)) {
             logger.trace("price change $pair req skipped")
             return
