@@ -148,13 +148,3 @@ class BinanceExchange(): RestExchange() {
 
 
 }
-
-/*public void priceChange (CurrencyPair pair, Duration timeout, Map<String, String> uriVariables) //todo limit > 1 logic
-            throws JSONException, LimitExceededException, ErrorCodeException, BanException{
-        if (!dataElapsed(pair, timeout, 1)) return;
-        for (TimePeriod per : changePeriods) {
-            var entity = new JSONArray(stringResponse(URL_PRICE_CHANGE));
-            var array = entity.getJSONArray(0);
-            pair.putInPriceChange(per, (array.getDouble(2) + array.getDouble(3)) / 2);
-        }
-    }*/

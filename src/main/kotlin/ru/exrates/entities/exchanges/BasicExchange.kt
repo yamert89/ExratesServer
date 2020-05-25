@@ -49,7 +49,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
 
     @OneToMany(cascade = [CascadeType.PERSIST], fetch = FetchType.EAGER)
     @SortComparator(CurrencyPair.SortComparator::class)
-    val pairs: SortedSet<CurrencyPair> = TreeSet<CurrencyPair>() //FIXMe duplicate pairs in response
+    val pairs: SortedSet<CurrencyPair> = TreeSet<CurrencyPair>()
 
     @ManyToMany(cascade = [CascadeType.PERSIST], fetch = FetchType.EAGER)
     @JsonSerialize(using = TimePeriodListSerializer::class)

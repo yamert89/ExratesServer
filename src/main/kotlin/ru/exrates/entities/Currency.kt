@@ -88,7 +88,7 @@ data class CurrencyPair(var lastUse: Instant = Instant.now(), @Transient @JsonIg
         priceChange.remove(period)
     }*/
 
-    fun getPriceChangeValue(period: TimePeriod) = priceChange[period] //todo updateTimes?
+    fun getPriceChangeValue(period: TimePeriod) = priceChange[period]
 
     override fun equals(other: Any?): Boolean {
         if(this === other) return true

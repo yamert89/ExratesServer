@@ -93,7 +93,6 @@ abstract class RestExchange : BasicExchange(){
                 Mono.error(ex) }
 
             .bodyToMono(clazz.java) //todo 1 - null compile notif? // 2 - FIXMe operate exception !!!
-        logger.trace("Response of $uri : $resp")
         return resp
     }
 
