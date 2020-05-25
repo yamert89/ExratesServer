@@ -14,6 +14,7 @@ import ru.exrates.entities.exchanges.secondary.BanException
 import ru.exrates.entities.exchanges.secondary.ErrorCodeException
 import ru.exrates.entities.exchanges.secondary.Limit
 import ru.exrates.entities.exchanges.secondary.LimitExceededException
+import ru.exrates.repos.TimePeriodConverter
 import ru.exrates.utils.TimePeriodListSerializer
 import java.net.ConnectException
 import java.time.Duration
@@ -57,7 +58,8 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
     @OneToMany(orphanRemoval = true, cascade = [CascadeType.PERSIST], fetch = FetchType.EAGER)
     val limits: Set<Limit> = HashSet()
 
-    lateinit var taskTimeOut: TimePeriod //fixme add converter
+    @Convert(converter = TimePeriodConverter::class)
+    lateinit var taskTimeOut: TimePeriod
 
     @Transient
     lateinit var webClient: WebClient
