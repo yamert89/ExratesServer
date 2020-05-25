@@ -135,7 +135,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
 
     abstract fun currentPrice(pair: CurrencyPair, period: TimePeriod)
 
-    abstract fun priceChange(pair: CurrencyPair, interval: TimePeriod, single: Boolean = false)
+    abstract fun priceChange(pair: CurrencyPair, interval: TimePeriod)
 
     fun priceHistory(pair: CurrencyPair, interval: String, limit: Int){
         if (!this.historyPeriods.contains(interval)) {

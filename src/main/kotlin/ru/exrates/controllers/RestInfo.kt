@@ -23,8 +23,8 @@ import kotlin.Exception
 
 @RestController
 class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMapper: ObjectMapper,
-               @Autowired val context: ConfigurableApplicationContext,
-               val logger: Logger = LogManager.getLogger(RestInfo::class)) {
+               @Autowired val context: ConfigurableApplicationContext) {
+    val logger: Logger = LogManager.getLogger(RestInfo::class)
 
     /*
        {"exchange" : "binanceExchange", "timeout": "3m", "pairs" : ["btcusd", "etcbtc"]}

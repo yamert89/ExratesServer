@@ -103,12 +103,8 @@ class BinanceExchange(): RestExchange() {
         logger.trace("Price updated on ${pair.symbol} pair $name exch| = $price")
     }
 
-    override fun priceChange(pair: CurrencyPair, interval: TimePeriod, single: Boolean) {
-        super.priceChange(pair, interval, single)
-        if (single) {
-            updateSinglePriceChange(pair, interval, singlePriceChangeRequest(pair, interval))
-            return
-        }
+    override fun priceChange(pair: CurrencyPair, interval: TimePeriod) {
+        super.priceChange(pair, interval)
         val list = hashMapOf<TimePeriod, Mono<String>>()
         val debMills = System.currentTimeMillis()
         changePeriods.forEach {

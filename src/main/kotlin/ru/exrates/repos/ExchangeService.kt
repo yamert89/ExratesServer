@@ -11,9 +11,9 @@ import javax.persistence.NoResultException
 import javax.transaction.Transactional
 
 @Service @Transactional
-class ExchangeService(private val logger: Logger = LogManager.getLogger(ExchangeService::class),
-                      @Autowired private val exchangeRepository: ExchangeRepository,
+class ExchangeService(@Autowired private val exchangeRepository: ExchangeRepository,
                       @Autowired private val currencyRepository: CurrencyRepository) {
+    private val logger: Logger = LogManager.getLogger(ExchangeService::class)
 
     @Transactional
     fun find(id: Int): BasicExchange? = exchangeRepository.findById(id).orElse(null)

@@ -10,7 +10,7 @@ class EmptyExchange: BasicExchange() {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun priceChange(pair: CurrencyPair, interval: TimePeriod, single: Boolean) {
+    override fun priceChange(pair: CurrencyPair, interval: TimePeriod) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 

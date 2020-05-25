@@ -25,17 +25,16 @@ import kotlin.reflect.KClass
 
 @Component
 class Aggregator(
-    val logger: Logger = LogManager.getLogger(Aggregator::class),
-    val exchanges: MutableMap<Int, BasicExchange> = HashMap(),
-    val exchangeNames: MutableMap<String, KClass<out BasicExchange>> = HashMap(),
     @Autowired
     val exchangeService: ExchangeService,
     @Autowired
     val genericApplicationContext: GenericApplicationContext,
     @Autowired
     val props: Properties
-
 ) {
+    val logger: Logger = LogManager.getLogger(Aggregator::class)
+    val exchanges: MutableMap<Int, BasicExchange> = HashMap()
+    val exchangeNames: MutableMap<String, KClass<out BasicExchange>> = HashMap()
 
     init {
         exchangeNames["binanceExchange"] = BinanceExchange::class
@@ -127,9 +126,11 @@ class Aggregator(
         logger.debug("end reqPairs Filter: $currentMills")
         //todo - limit request pairs
         val timePeriod = exch.getTimePeriod(period)
+        val restExch = exch as RestExchange
         reqPairs.forEach {
             exch.currentPrice(it, timePeriod)
-            exch.priceChange(it, timePeriod, true) //todo needs try catch?
+            if (it.updateTimes.priceChangeTimeElapsed(timePeriod)) restExch.updateSinglePriceChange(it, timePeriod, restExch.singlePriceChangeRequest(it, timePeriod))
+           //exch.priceChange(it, timePeriod, true) //todo needs try catch?
             exch.priceHistory(it, period, 10)
         }
         currentMills = System.currentTimeMillis() - currentMills

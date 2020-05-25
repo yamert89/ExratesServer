@@ -8,9 +8,8 @@ import ru.exrates.entities.AuthorizedUser
 import javax.transaction.Transactional
 
 @Service @Transactional
-class UserService(private val logger: Logger = LogManager.getLogger(ExchangeService::class),
-                  @Autowired val userRepository: UserRepository
-) {
+class UserService(@Autowired val userRepository: UserRepository) {
+    private val logger: Logger = LogManager.getLogger(ExchangeService::class)
 
     fun userIsExists(userToken: String): Boolean = userRepository.findByToken(userToken) != null
 

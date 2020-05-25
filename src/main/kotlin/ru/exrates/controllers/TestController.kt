@@ -14,8 +14,8 @@ import javax.servlet.http.HttpServletResponse
 
 @RestController
 class TestController(@Autowired val aggregator: Aggregator, @Autowired val objectMapper: ObjectMapper,
-                     @Autowired val context: ConfigurableApplicationContext,
-                     val logger: Logger = LogManager.getLogger(RestInfo::class)) {
+                     @Autowired val context: ConfigurableApplicationContext) {
+    val logger: Logger = LogManager.getLogger(RestInfo::class)
 
     @GetMapping("/test/pair/history")
     fun history(@RequestParam c1: String, @RequestParam c2: String, @RequestParam exId: Int,
