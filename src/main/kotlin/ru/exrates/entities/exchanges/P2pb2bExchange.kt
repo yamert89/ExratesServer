@@ -21,6 +21,10 @@ class P2pb2bExchange: RestExchange() {
     @PostConstruct
     override fun init() {
         super.init()
+        if (!temporary){
+            webClient = WebClient.create(URL_ENDPOINT)
+            return
+        }
         initVars()
         webClient = WebClient.create(URL_ENDPOINT)
         val entity = JSONObject(stringResponse(URL_ENDPOINT + URL_INFO).block())
@@ -42,21 +46,13 @@ class P2pb2bExchange: RestExchange() {
         limitCode = 0
         banCode = 0
         taskTimeOut = TimePeriod(Duration.ofMinutes(1), "p2pTaskTimeout")
+        historyPeriods = changePeriods.map { it.name }
+        name = "p2pb2b"
         changePeriods.addAll(listOf(
             TimePeriod(Duration.ofMinutes(1), "1m"),
             TimePeriod(Duration.ofHours(1), "1h"),
             TimePeriod(Duration.ofDays(1), "1d")
         ))
-        historyPeriods = changePeriods.map { it.name }
-
-        if(!temporary) {
-            super.init()
-            return
-        }
-
-        name = "p2pb2b"
-
-
     }
 
     override fun createTopFromReq(body: Mono<String>) {

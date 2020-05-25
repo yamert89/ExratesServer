@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
+import org.hibernate.annotations.Fetch
+import org.hibernate.annotations.FetchMode
 import org.hibernate.annotations.SortComparator
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.reactive.function.client.WebClient
@@ -52,11 +54,12 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
     val pairs: SortedSet<CurrencyPair> = TreeSet<CurrencyPair>()
 
     @ManyToMany(cascade = [CascadeType.PERSIST], fetch = FetchType.EAGER)
+    @Fetch(FetchMode.SELECT)
     @JsonSerialize(using = TimePeriodListSerializer::class)
     val changePeriods: MutableList<TimePeriod> = ArrayList()
 
     @OneToMany(orphanRemoval = true, cascade = [CascadeType.PERSIST], fetch = FetchType.EAGER)
-    val limits: Set<Limit> = HashSet()
+    val limits: MutableSet<Limit> = HashSet()
 
     @Convert(converter = TimePeriodConverter::class)
     lateinit var taskTimeOut: TimePeriod
@@ -64,7 +67,8 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
     @Transient
     lateinit var webClient: WebClient
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
+    @Fetch(FetchMode.SELECT)
     lateinit var historyPeriods: List<String>
 
     @ElementCollection
@@ -75,7 +79,6 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
         logger.debug("Postconstruct super $name")
 
         taskTimeOut = TimePeriod(Duration.ofMillis(props.timerPeriod()), "BaseTaskTimeOut")
-        fillTop()
         val task = object : TimerTask() {
             override fun run() {
                 try {
