@@ -14,4 +14,8 @@ class EmptyExchange: BasicExchange() {
 
     override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int) {
     }
+
+    override fun fillTop() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 }

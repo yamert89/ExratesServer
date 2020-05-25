@@ -67,11 +67,15 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
     @ElementCollection
     lateinit var historyPeriods: List<String>
 
+    @ElementCollection
+    val topPairs: List<String> = LinkedList()
+
     @PostConstruct
     fun init(){
         logger.debug("Postconstruct super $name")
 
         taskTimeOut = TimePeriod(Duration.ofMillis(props.timerPeriod()), "BaseTaskTimeOut")
+        fillTop()
         val task = object : TimerTask() {
             override fun run() {
                 try {
@@ -112,6 +116,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
         /*}*/
     }
 
+
     override fun insertPair(pair: CurrencyPair) {
         pairs.add(pair)
         if(pairs.size > props.maxSize()) {
@@ -128,14 +133,11 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
 
     fun getTimePeriod(duration: Duration) = changePeriods.find { it.period == duration } ?: throw NullPointerException("period in ${this.name} for $duration not found")
 
-    public override fun clone(): Any {
-        return super.clone()
-    }
-
-
     abstract fun currentPrice(pair: CurrencyPair, period: TimePeriod)
 
     abstract fun priceChange(pair: CurrencyPair, interval: TimePeriod)
+
+    abstract override fun fillTop()
 
     fun priceHistory(pair: CurrencyPair, interval: String, limit: Int){
         if (!this.historyPeriods.contains(interval)) {

@@ -59,6 +59,10 @@ class P2pb2bExchange: RestExchange() {
 
     }
 
+    override fun createTopFromReq(body: Mono<String>) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
     override fun currentPrice(pair: CurrencyPair, period: TimePeriod) {
         super.currentPrice(pair, period)
         val uri = "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?market=${pair.symbol}"

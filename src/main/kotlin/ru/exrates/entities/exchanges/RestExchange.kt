@@ -12,6 +12,7 @@ import ru.exrates.entities.exchanges.secondary.BanException
 import ru.exrates.entities.exchanges.secondary.LimitExceededException
 import java.net.ConnectException
 import java.time.Duration
+import java.util.*
 import java.util.function.BooleanSupplier
 import javax.annotation.PostConstruct
 import javax.persistence.DiscriminatorColumn
@@ -32,6 +33,7 @@ abstract class RestExchange : BasicExchange(){
     lateinit var URL_PRICE_CHANGE: String
     lateinit var URL_PING: String
     lateinit var URL_ORDER: String
+    lateinit var URL_TOP_STATISTIC: String
 
     @PostConstruct
     override fun init() {
@@ -48,11 +50,16 @@ abstract class RestExchange : BasicExchange(){
 
     }
 
-   protected fun initVars(){}
+    override fun fillTop() {
+        createTopFromReq(stringResponse(URL_TOP_STATISTIC))
+    }
+    protected abstract fun createTopFromReq(body: Mono<String>)
 
-   protected fun limitsFill(entity: JSONObject){}
+    protected fun initVars(){}
 
-   protected fun pairsFill(entity: JSONObject, symbolsKey: String, baseCurKey: String, quoteCurKey: String, symbolKey: String, delimiterForRemoving: String = ""){
+    protected fun limitsFill(entity: JSONObject){}
+
+    protected fun pairsFill(entity: JSONObject, symbolsKey: String, baseCurKey: String, quoteCurKey: String, symbolKey: String, delimiterForRemoving: String = ""){
        val symbols = entity.getJSONArray(symbolsKey)
        for(i in 0 until symbols.length()){
            //pairs.plus(CurrencyPair(symbols.getJSONObject(i).getString("symbol"), this))
@@ -62,7 +69,7 @@ abstract class RestExchange : BasicExchange(){
            if(delimiterForRemoving.isNotEmpty()) symbol = symbol.replace(delimiterForRemoving, "")
            pairs.add(CurrencyPair(baseCur, quoteCur, symbol, this))
        }
-   }
+    }
 
     override fun task() {
         if(id == 0) {

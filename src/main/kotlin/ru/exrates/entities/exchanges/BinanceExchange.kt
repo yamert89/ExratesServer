@@ -31,6 +31,7 @@ class BinanceExchange(): RestExchange() {
         limitsFill(entity)
         pairsFill(entity, "symbols", "baseAsset", "quoteAsset", "symbol")
         temporary = false
+
         logger.debug("exchange " + name + " initialized with " + pairs.size + " pairs")
 
 
@@ -45,6 +46,7 @@ class BinanceExchange(): RestExchange() {
         URL_PRICE_CHANGE = "/api/v1/klines"
         URL_PING = "/api/v1/ping"
         URL_ORDER = "/api/v3/depth"
+        URL_TOP_STATISTIC = "/api/v3/ticker/24hr"
         limitCode = 429
         banCode = 418
         taskTimeOut = TimePeriod(Duration.ofMinutes(3), "binanceTaskTimeout")
@@ -72,6 +74,10 @@ class BinanceExchange(): RestExchange() {
             TimePeriod(Duration.ofDays(30), "1M"))
         )
 
+    }
+
+    override fun createTopFromReq(body: Mono<String>) {
+        //TODO
     }
 
     override fun limitsFill(entity: JSONObject) {
