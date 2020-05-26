@@ -14,9 +14,11 @@ import java.math.MathContext
 import java.net.ConnectException
 import java.sql.Time
 import java.time.Duration
+import java.util.*
 import javax.annotation.PostConstruct
 import javax.persistence.DiscriminatorValue
 import javax.persistence.Entity
+import kotlin.Comparator
 import kotlin.math.round
 
 @Entity @DiscriminatorValue("binance")
@@ -51,6 +53,8 @@ class BinanceExchange(): RestExchange() {
         URL_PING = "/api/v1/ping"
         URL_ORDER = "/api/v3/depth"
         URL_TOP_STATISTIC = "/api/v3/ticker/24hr"
+        TOP_COUNT_FIELD = "count"
+        TOP_SYMBOL_FIELD = "symbol"
         limitCode = 429
         banCode = 418
         taskTimeOut = TimePeriod(Duration.ofMinutes(3), "binanceTaskTimeout")
@@ -72,10 +76,6 @@ class BinanceExchange(): RestExchange() {
         )
         historyPeriods = changePeriods.map { it.name }
 
-    }
-
-    override fun createTopFromReq(body: Mono<String>) {
-        //TODO
     }
 
     override fun limitsFill(entity: JSONObject) {

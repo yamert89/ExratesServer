@@ -72,7 +72,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
     lateinit var historyPeriods: List<String>
 
     @ElementCollection
-    val topPairs: List<String> = LinkedList()
+    val topPairs: MutableList<String> = LinkedList()
 
     @PostConstruct
     fun init(){

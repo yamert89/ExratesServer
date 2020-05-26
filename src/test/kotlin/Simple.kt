@@ -22,6 +22,8 @@ fun round(){
     println(BigDecimal(changeVol, MathContext(2)))
 }
 
+
+
 class MySerializer: JsonSerializer<MutableList<Any>>(){
     override fun serialize(value: MutableList<Any>?, gen: JsonGenerator?, serializers: SerializerProvider?) {
         gen!!.writeStartArray()
@@ -36,10 +38,6 @@ class MySerializer: JsonSerializer<MutableList<Any>>(){
     }
 
 }
-
-
-
-
 
 class My{
     @JsonSerialize(using = MySerializer::class)

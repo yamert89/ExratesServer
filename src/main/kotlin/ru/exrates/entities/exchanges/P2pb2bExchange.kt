@@ -43,6 +43,9 @@ class P2pb2bExchange: RestExchange() {
         URL_INFO = "/api/v2/public/markets"
         URL_PRICE_CHANGE = "/api/v2/public/market/kline"
         URL_PING = "/api/v2/public/ticker?market=ETH_BTC"
+        URL_TOP_STATISTIC = ""
+        TOP_COUNT_FIELD = ""
+        TOP_SYMBOL_FIELD = ""
         limitCode = 0
         banCode = 0
         taskTimeOut = TimePeriod(Duration.ofMinutes(1), "p2pTaskTimeout")
@@ -53,10 +56,6 @@ class P2pb2bExchange: RestExchange() {
             TimePeriod(Duration.ofHours(1), "1h"),
             TimePeriod(Duration.ofDays(1), "1d")
         ))
-    }
-
-    override fun createTopFromReq(body: Mono<String>) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     override fun currentPrice(pair: CurrencyPair, period: TimePeriod) {

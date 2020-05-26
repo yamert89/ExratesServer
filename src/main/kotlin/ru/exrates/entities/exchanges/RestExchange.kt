@@ -1,6 +1,7 @@
 package ru.exrates.entities.exchanges
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
 import org.springframework.http.HttpStatus
 import org.springframework.web.reactive.function.client.WebClient
@@ -34,6 +35,8 @@ abstract class RestExchange : BasicExchange(){
     lateinit var URL_PING: String
     lateinit var URL_ORDER: String
     lateinit var URL_TOP_STATISTIC: String
+    lateinit var TOP_COUNT_FIELD: String
+    lateinit var TOP_SYMBOL_FIELD: String
 
     @PostConstruct
     override fun init() {
@@ -51,9 +54,20 @@ abstract class RestExchange : BasicExchange(){
     }
 
     override fun fillTop() {
-        createTopFromReq(stringResponse(URL_TOP_STATISTIC))
+        val pairs = JSONArray(stringResponse(URL_TOP_STATISTIC).block())
+        val all = HashMap<String, Int>()
+        val topSize = if(props.maxSize() < pairs.length()) props.maxSize() else pairs.length()
+        var count = 0
+        var pairName = ""
+        var jsonObject: JSONObject
+        for (i in 0 until pairs.length()){
+            jsonObject = pairs.getJSONObject(i)
+            count = jsonObject.getInt(TOP_COUNT_FIELD)
+            pairName = jsonObject.getString(TOP_SYMBOL_FIELD)
+            all[pairName] = count
+        }
+        topPairs.addAll(all.entries.sortedBy { it.value }.map { it.key }.subList(0, topSize))
     }
-    protected abstract fun createTopFromReq(body: Mono<String>)
 
     protected fun initVars(){}
 
