@@ -29,15 +29,17 @@ class BinanceExchange(): RestExchange() {
         super.init()
         if (!temporary){
             webClient = WebClient.create(URL_ENDPOINT)
+            fillTop()
             return
         }
+
         initVars()
         webClient = WebClient.create(URL_ENDPOINT)
         val entity = JSONObject(stringResponse(URL_ENDPOINT + URL_INFO).block())
         limitsFill(entity)
         pairsFill(entity, "symbols", "baseAsset", "quoteAsset", "symbol")
         temporary = false
-
+        fillTop()
         logger.debug("exchange " + name + " initialized with " + pairs.size + " pairs")
 
 

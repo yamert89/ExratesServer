@@ -58,9 +58,9 @@ class Aggregator(
             }else{
                 pairsSize = calculatePairsSize(exchange)
                 if(exchange.pairs.size > pairsSize) {
-                    val page = exchangeService.fillPairs(pairsSize)
+                    val pairs = exchangeService.fillPairs(pairsSize, exchange.topPairs)
                     exchange.pairs.clear()
-                    exchange.pairs.addAll(page.content)
+                    exchange.pairs.addAll(pairs)
                 }
             }
 
@@ -93,7 +93,7 @@ class Aggregator(
         if (ex == null) return dto
         val pairs = TreeSet<CurrencyPair>()
         val iterator = dto.pairs.iterator()
-        for (i in 0 until props.maxSize()) pairs.add(iterator.next())  //todo top pairs
+        for (i in 0 until props.maxSize()) pairs.add(iterator.next())
         dto.pairs = pairs
         logger.debug("pairs in exchange: ${pairs.joinToString()}")
         return dto

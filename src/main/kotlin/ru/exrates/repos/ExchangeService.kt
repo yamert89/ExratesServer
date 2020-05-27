@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
+import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.exchanges.BasicExchange
 import ru.exrates.entities.exchanges.secondary.ExchangeNamesObject
 import javax.persistence.NoResultException
@@ -57,6 +58,16 @@ class ExchangeService(@Autowired private val exchangeRepository: ExchangeReposit
 
     @Transactional
     fun fillPairs(amount: Int) = currencyRepository.findAll(PageRequest.of(1, amount))
+
+    @Transactional
+    fun fillPairs(amount: Int, pairs: List<String>): List<CurrencyPair>{
+        val curPairs = currencyRepository.findBySymbolIn(pairs)
+        if (curPairs.size < amount){
+            val diffNumb = amount - curPairs.size
+            curPairs.addAll(currencyRepository.findTopBySymbolNotIn(pairs, PageRequest.of(1, diffNumb)))
+        }
+        return curPairs
+    }
 
     @Transactional
     fun findPair(c1: String, c2: String, exchange: BasicExchange) = currencyRepository.findByBaseCurrencyAndQuoteCurrencyAndExchange(c1, c2, exchange)

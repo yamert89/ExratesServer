@@ -23,6 +23,7 @@ class P2pb2bExchange: RestExchange() {
         super.init()
         if (!temporary){
             webClient = WebClient.create(URL_ENDPOINT)
+            fillTop()
             return
         }
         initVars()
@@ -30,6 +31,7 @@ class P2pb2bExchange: RestExchange() {
         val entity = JSONObject(stringResponse(URL_ENDPOINT + URL_INFO).block())
         pairsFill(entity, "result", "stock", "money", "name")
         temporary = false
+        fillTop()
         logger.debug("exchange " + name + " initialized with " + pairs.size + " pairs")
 
     }
@@ -56,6 +58,11 @@ class P2pb2bExchange: RestExchange() {
             TimePeriod(Duration.ofHours(1), "1h"),
             TimePeriod(Duration.ofDays(1), "1d")
         ))
+    }
+
+    override fun fillTop() {
+        topPairs.addAll(listOf("ETH_BTC", "BNB_BTC", "DASH_BTC", "NEO_BTC", "BCH_BTC", "ETC_BTC", "BTG_BTC",
+            "LTC_BTC", "XLM_BTC", "WAVES_BTC", "WTC_BTC", "GAS_BTC", "YAP_BTC", "DOGE_BTC", "ENJ_BTC", "HNC_BTC"))
     }
 
     override fun currentPrice(pair: CurrencyPair, period: TimePeriod) {

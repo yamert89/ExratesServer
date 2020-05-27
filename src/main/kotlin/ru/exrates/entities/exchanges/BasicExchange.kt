@@ -71,7 +71,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
     @Fetch(FetchMode.SELECT)
     lateinit var historyPeriods: List<String>
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     val topPairs: MutableList<String> = LinkedList()
 
     @PostConstruct

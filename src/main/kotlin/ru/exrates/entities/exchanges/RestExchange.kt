@@ -66,7 +66,7 @@ abstract class RestExchange : BasicExchange(){
             pairName = jsonObject.getString(TOP_SYMBOL_FIELD)
             all[pairName] = count
         }
-        topPairs.addAll(all.entries.sortedBy { it.value }.map { it.key }.subList(0, topSize))
+        topPairs.addAll(all.entries.sortedByDescending { it.value }.map { it.key }.subList(0, topSize))
     }
 
     protected fun initVars(){}
