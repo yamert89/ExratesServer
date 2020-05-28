@@ -77,7 +77,6 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
     @PostConstruct
     fun init(){
         logger.debug("Postconstruct super $name")
-
         taskTimeOut = TimePeriod(Duration.ofMillis(props.timerPeriod()), "BaseTaskTimeOut")
         val task = object : TimerTask() {
             override fun run() {
