@@ -51,13 +51,13 @@ class P2pb2bExchange: RestExchange() {
         limitCode = 0
         banCode = 0
         taskTimeOut = TimePeriod(Duration.ofMinutes(1), "p2pTaskTimeout")
-        historyPeriods = changePeriods.map { it.name }
         name = "p2pb2b"
         changePeriods.addAll(listOf(
             TimePeriod(Duration.ofMinutes(1), "1m"),
             TimePeriod(Duration.ofHours(1), "1h"),
             TimePeriod(Duration.ofDays(1), "1d")
         ))
+        historyPeriods = changePeriods.map { it.name }
     }
 
     override fun fillTop() {
