@@ -24,6 +24,12 @@ import kotlin.math.round
 @Entity @DiscriminatorValue("binance")
 class BinanceExchange(): RestExchange() {
 
+    /*
+    * ******************************************************************************************************************
+    *       Initialization
+    * ******************************************************************************************************************
+    * */
+
     @PostConstruct
     override fun init() {
         super.init()
@@ -100,6 +106,12 @@ class BinanceExchange(): RestExchange() {
         }
     }
 
+    /*
+    * ******************************************************************************************************************
+    *       Update methods
+    * ******************************************************************************************************************
+    * */
+
     override fun currentPrice(pair: CurrencyPair, period: TimePeriod) {
         super.currentPrice(pair, period)
         val uri = "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?symbol=${pair.symbol}"
@@ -135,6 +147,12 @@ class BinanceExchange(): RestExchange() {
         logger.trace("price history updated on ${pair.symbol} pair $name exch")
 
     }
+
+    /*
+    * ******************************************************************************************************************
+    *       Super class methods
+    * ******************************************************************************************************************
+    * */
 
     override fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod, stringResponse: Mono<String>){
         val curMills = System.currentTimeMillis()

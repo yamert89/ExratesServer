@@ -42,6 +42,12 @@ class Aggregator(
         //exchangeNames["exmoExchange"] = ExmoExchange::class
     }
 
+    /*
+    * ******************************************************************************************************************
+    *       Initialization
+    * ******************************************************************************************************************
+    * */
+
     @PostConstruct
     fun init(){
         exchangeNames.entries.forEach {
@@ -84,6 +90,12 @@ class Aggregator(
 
         }
     }
+
+    /*
+    * ******************************************************************************************************************
+    *       Request methods
+    * ******************************************************************************************************************
+    * */
 
     fun getExchange(exId: Int): ExchangeDTO{
         logger.debug("exchanges: ${exchanges.values}")
@@ -207,6 +219,12 @@ class Aggregator(
         }
         return CursPeriod(cursPayload.interval, values)
     }
+
+    /*
+    * ******************************************************************************************************************
+    *       Class methods
+    * ******************************************************************************************************************
+    * */
 
     fun getNamesExchangesAndCurrencies() = exchangeService.getAllPairs(exchanges.values)
 

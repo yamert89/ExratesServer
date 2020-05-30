@@ -38,6 +38,12 @@ abstract class RestExchange : BasicExchange(){
     lateinit var TOP_COUNT_FIELD: String
     lateinit var TOP_SYMBOL_FIELD: String
 
+    /*
+    * ******************************************************************************************************************
+    *       Initialization
+    * ******************************************************************************************************************
+    * */
+
     @PostConstruct
     override fun init() {
 
@@ -98,6 +104,32 @@ abstract class RestExchange : BasicExchange(){
         super.task()
     }
 
+    /*
+    * ******************************************************************************************************************
+    *       Update methods
+    * ******************************************************************************************************************
+    * */
+
+    override fun currentPrice(pair: CurrencyPair, period: TimePeriod){
+        if(!pair.updateTimes.priceTimeElapsed()){
+            logger.trace("current price $pair.symbol req skipped")
+            return
+        }
+    }
+
+    override fun priceChange(pair: CurrencyPair, interval: TimePeriod){
+        if(!pair.updateTimes.priceChangeTimeElapsed(interval)) {
+            logger.trace("price change $pair req skipped")
+            return
+        }
+    }
+
+    /*
+    * ******************************************************************************************************************
+    *       Class methods
+    * ******************************************************************************************************************
+    * */
+
     fun <T: Any> request(uri: String, clazz: KClass<T>) : Mono<T>{
         logger.trace("Try request to : $uri")
         val resp = webClient.get().uri(uri).retrieve()
@@ -123,24 +155,6 @@ abstract class RestExchange : BasicExchange(){
     abstract fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod, stringResponse: Mono<String>)
 
     abstract fun singlePriceChangeRequest(pair: CurrencyPair, interval: TimePeriod): Mono<String>
-
-    override fun currentPrice(pair: CurrencyPair, period: TimePeriod){
-        if(!pair.updateTimes.priceTimeElapsed()){
-            logger.trace("current price $pair.symbol req skipped")
-            return
-        }
-    }
-
-    override fun priceChange(pair: CurrencyPair, interval: TimePeriod){
-        if(!pair.updateTimes.priceChangeTimeElapsed(interval)) {
-            logger.trace("price change $pair req skipped")
-            return
-        }
-    }
-
-    override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int){
-       super.priceHistory(pair, interval, limit)
-    }
 
 
     override fun toString(): String {

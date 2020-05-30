@@ -18,6 +18,12 @@ import kotlin.Exception
 @DiscriminatorValue("p2pb2b")
 class P2pb2bExchange: RestExchange() {
 
+    /*
+    * ******************************************************************************************************************
+    *       Initialization
+    * ******************************************************************************************************************
+    * */
+
     @PostConstruct
     override fun init() {
         super.init()
@@ -65,6 +71,12 @@ class P2pb2bExchange: RestExchange() {
             "LTC_BTC", "XLM_BTC", "WAVES_BTC", "WTC_BTC", "GAS_BTC", "YAP_BTC", "DOGE_BTC", "ENJ_BTC", "HNC_BTC"))
     }
 
+    /*
+    * ******************************************************************************************************************
+    *       Update methods
+    * ******************************************************************************************************************
+    * */
+
     override fun currentPrice(pair: CurrencyPair, period: TimePeriod) {
         super.currentPrice(pair, period)
         val uri = "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?market=${pair.symbol}"
@@ -110,6 +122,12 @@ class P2pb2bExchange: RestExchange() {
         }catch (e: Exception){logger.error("Connect exception")} //todo wrong operate
 
     }
+
+    /*
+    * ******************************************************************************************************************
+    *       Super class methods
+    * ******************************************************************************************************************
+    * */
 
     override fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod, stringResponse: Mono<String>){
         val curMills = System.currentTimeMillis()

@@ -74,6 +74,12 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
     @ElementCollection(fetch = FetchType.EAGER)
     val topPairs: MutableList<String> = LinkedList()
 
+    /*
+    * ******************************************************************************************************************
+    *       Initialization
+    * ******************************************************************************************************************
+    * */
+
     @PostConstruct
     fun init(){
         logger.debug("Postconstruct super $name")
@@ -118,6 +124,31 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
         /*}*/
     }
 
+    abstract override fun fillTop()
+
+    /*
+    * ******************************************************************************************************************
+    *       Update methods
+    * ******************************************************************************************************************
+    * */
+
+    abstract fun currentPrice(pair: CurrencyPair, period: TimePeriod)
+
+    abstract fun priceChange(pair: CurrencyPair, interval: TimePeriod)
+
+    fun priceHistory(pair: CurrencyPair, interval: String, limit: Int){
+        if (!this.historyPeriods.contains(interval)) {
+            logger.error("History period $interval incorrect for ${this.name} exchange")
+            return
+        }
+    }
+
+
+    /*
+    * ******************************************************************************************************************
+    *       Class methods
+    * ******************************************************************************************************************
+    * */
 
     override fun insertPair(pair: CurrencyPair) {
         pairs.add(pair)
@@ -134,20 +165,6 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
     fun getTimePeriod(period: String) = changePeriods.find { it.name == period } ?: throw NullPointerException("period in ${this.name} for $period not found")
 
     fun getTimePeriod(duration: Duration) = changePeriods.find { it.period == duration } ?: throw NullPointerException("period in ${this.name} for $duration not found")
-
-    abstract fun currentPrice(pair: CurrencyPair, period: TimePeriod)
-
-    abstract fun priceChange(pair: CurrencyPair, interval: TimePeriod)
-
-    abstract override fun fillTop()
-
-    fun priceHistory(pair: CurrencyPair, interval: String, limit: Int){
-        if (!this.historyPeriods.contains(interval)) {
-            logger.error("History period $interval incorrect for ${this.name} exchange")
-            return
-        }
-    }
-
 
 }
 
