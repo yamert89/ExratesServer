@@ -17,8 +17,13 @@ import kotlin.collections.HashMap
 import kotlin.jvm.Transient
 
 @Entity
-@JsonIgnoreProperties("id", "lastUse", "updateTimes")
-data class CurrencyPair(var lastUse: Instant = Instant.now(), @Transient @JsonIgnore val logger: Logger = LogManager.getLogger(CurrencyPair::class)) : Comparable<CurrencyPair>{
+@JsonIgnoreProperties("id", "lastUse", "updateTimes", "logger", "initialized")
+class CurrencyPair() : Comparable<CurrencyPair>{
+    var lastUse: Instant = Instant.now()
+
+    @Transient
+    val logger: Logger = LogManager.getLogger(CurrencyPair::class)
+
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Int = 0
 
@@ -50,7 +55,7 @@ data class CurrencyPair(var lastUse: Instant = Instant.now(), @Transient @JsonIg
             return field
         }
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JsonSerialize(using = ExchangeSerializer::class)
     @JsonProperty("exchangeName")
     var exchange: BasicExchange? = null
@@ -90,6 +95,8 @@ data class CurrencyPair(var lastUse: Instant = Instant.now(), @Transient @JsonIg
 
     fun getPriceChangeValue(period: TimePeriod) = priceChange[period]
 
+    fun isInitialized() = this::symbol.isInitialized
+
     override fun equals(other: Any?): Boolean {
         if(this === other) return true
         if(other == null || this::class != other::class) return false
@@ -98,6 +105,7 @@ data class CurrencyPair(var lastUse: Instant = Instant.now(), @Transient @JsonIg
     }
 
     override fun hashCode(): Int {
+        if (!isInitialized()) return (Math.random() * 10000).toInt()
         val hash = Objects.hash(symbol, exId, 142)
         //logger.trace("hash for $symbol = $hash")
         return hash
@@ -106,6 +114,7 @@ data class CurrencyPair(var lastUse: Instant = Instant.now(), @Transient @JsonIg
     class SortComparator: Comparator<CurrencyPair>{
         override fun compare(o1: CurrencyPair?, o2: CurrencyPair?): Int {
             if (o1 == null || o2 == null) throw NullPointerException("Comparing null element")
+            if (!o1.isInitialized() || !o2.isInitialized() ) return 0
             if (o1.symbol == o2.symbol) return 0
             if (o1.lastUse.toEpochMilli() == o2.lastUse.toEpochMilli()) return o1.symbol.compareTo(o2.symbol)
             return if (o1.lastUse.isAfter(o2.lastUse)) 1 else -1

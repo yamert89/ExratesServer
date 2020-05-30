@@ -60,11 +60,16 @@ class ExchangeService(@Autowired private val exchangeRepository: ExchangeReposit
     fun fillPairs(amount: Int) = currencyRepository.findAll(PageRequest.of(1, amount))
 
     @Transactional
-    fun fillPairs(amount: Int, pairs: List<String>): List<CurrencyPair>{
-        val curPairs = currencyRepository.findBySymbolIn(pairs)
+    fun fillPairs(amount: Int, exchange: BasicExchange): List<CurrencyPair>{
+
+        val reqPairs = if (amount < exchange.topPairs.size) {
+            exchange.topPairs.subList(0, amount)
+        } else exchange.topPairs
+
+        val curPairs = currencyRepository.findByExchangeAndSymbolIn(exchange, reqPairs)
         if (curPairs.size < amount){
             val diffNumb = amount - curPairs.size
-            curPairs.addAll(currencyRepository.findTopBySymbolNotIn(pairs, PageRequest.of(1, diffNumb)))
+            curPairs.addAll(currencyRepository.findTopBySymbolNotIn(exchange.topPairs, PageRequest.of(1, diffNumb)))
         }
         return curPairs
     }

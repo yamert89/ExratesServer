@@ -64,7 +64,7 @@ class Aggregator(
             }else{
                 pairsSize = calculatePairsSize(exchange)
                 if(exchange.pairs.size > pairsSize) {
-                    val pairs = exchangeService.fillPairs(pairsSize, exchange.topPairs)
+                    val pairs = exchangeService.fillPairs(pairsSize,exchange)
                     exchange.pairs.clear()
                     exchange.pairs.addAll(pairs)
                 }

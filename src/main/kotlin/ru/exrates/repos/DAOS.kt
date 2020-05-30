@@ -15,7 +15,7 @@ interface CurrencyRepository : JpaRepository<CurrencyPair, Int> {
 
     fun findBySymbolAndExchange(symbol: String, exchange: BasicExchange) : CurrencyPair?
 
-    fun findBySymbolIn(pairs: List<String>): MutableList<CurrencyPair>
+    fun findByExchangeAndSymbolIn(exchange: BasicExchange, pairs: List<String>): MutableList<CurrencyPair>
 
     fun findTopBySymbolNotIn(pairs: List<String>, page: PageRequest): MutableList<CurrencyPair>
 
