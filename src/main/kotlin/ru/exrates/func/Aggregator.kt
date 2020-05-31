@@ -64,7 +64,7 @@ class Aggregator(
             }else{
                 pairsSize = calculatePairsSize(exchange)
                 if(exchange.pairs.size > pairsSize) {
-                    val pairs = exchangeService.fillPairs(pairsSize,exchange)
+                    val pairs = exchangeService.fillPairs(pairsSize, exchange)
                     exchange.pairs.clear()
                     exchange.pairs.addAll(pairs)
                 }
@@ -173,7 +173,8 @@ class Aggregator(
                 // p = exchange.getPair(pair.symbol)!!
                 exchange.currentPrice(p, exchange.taskTimeOut)
                 exchange.priceChange(p, exchange.taskTimeOut)
-                exchange.priceHistory(p, historyInterval ?: exchange.historyPeriods[0], limit) //todo [0] right?
+                exchange.priceHistory(p, historyInterval ?:
+                    exchange.historyPeriods.find { per -> per == "1h" } ?: exchange.historyPeriods[1], limit)
                 p.historyPeriods = exchange.historyPeriods
                 curs.add(p)
             }
