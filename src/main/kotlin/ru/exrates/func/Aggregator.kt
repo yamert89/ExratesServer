@@ -183,6 +183,19 @@ class Aggregator(
         return curs
     }
 
+    fun getOnePair(c1: String, c2: String, exId: Int, currentInterval: String): CurrencyPair {
+        val ex = exchanges[exId]!!
+        var pair = ex.getPair(c1, c2)
+        if (pair == null) {
+            pair = exchangeService.findPair(c1, c2, ex)
+            ex.insertPair(pair!!)
+        }
+        ex.currentPrice(pair, ex.taskTimeOut)
+        ex.priceChange(pair, ex.taskTimeOut)
+        ex.priceHistory(pair, currentInterval, 10) //todo right?
+        return pair
+    }
+
     fun priceHistory(c1: String, c2: String, exId: Int, historyInterval: String, limit: Int): List<Double>{
         logger.debug("exchanges: ${exchanges.values}")
         val exchange: BasicExchange = exchanges[exId] ?: throw NullPointerException("exchange $exId not found")
@@ -216,7 +229,7 @@ class Aggregator(
         requests.forEach {
             ex.currentPrice(it.key, timePeriod)
             restEx.updateSinglePriceChange(it.key, timePeriod, it.value)
-            values[it.key.symbol] = it.key.getPriceChangeValue(ex.getTimePeriod(cursPayload.interval))!!
+            values[it.key.symbol] = it.key.getPriceChangeValue(ex.getTimePeriod(cursPayload.interval)) ?: 777.777 //fixme
         }
         return CursPeriod(cursPayload.interval, values)
     }
@@ -247,8 +260,6 @@ class Aggregator(
         tLimits.forEach { counter += it }
         return counter / tLimits.size
     }
-
-
 
 
 

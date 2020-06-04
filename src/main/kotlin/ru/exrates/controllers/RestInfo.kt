@@ -91,6 +91,14 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
         return res
     }
 
+    @GetMapping("/rest/pair/single")
+    fun onePair(@RequestParam c1: String, @RequestParam c2: String, @RequestParam exId: Int, @RequestParam currentInterval: String): CurrencyPair{
+        logger.debug("REQUEST ON /rest/pair/single: pair = $c1 - $c2, exchId = $exId")
+        val res = aggregator.getOnePair(c1, c2, exId, currentInterval)
+        logger.debug("RESPONSE of /rest/pair/single: ${objectMapper.writeValueAsString(res)}")
+        return res
+    }
+
     @GetMapping("/rest/pair/history")
     fun history(@RequestParam c1: String, @RequestParam c2: String, @RequestParam exId: Int, @RequestParam historyinterval: String, @RequestParam limit: Int): List<Double>{
         logger.debug("REQUEST ON /rest/pair/history: pair = $c1 - $c2, exchId = $exId, historyinterval = $historyinterval, limit = $limit")
