@@ -229,7 +229,7 @@ class Aggregator(
         requests.forEach {
             ex.currentPrice(it.key, timePeriod)
             restEx.updateSinglePriceChange(it.key, timePeriod, it.value)
-            values[it.key.symbol] = it.key.getPriceChangeValue(ex.getTimePeriod(cursPayload.interval)) ?: 777.777 //fixme
+            values[it.key.symbol] = it.key.getPriceChangeValue(ex.getTimePeriod(cursPayload.interval)) ?: Double.MAX_VALUE
         }
         return CursPeriod(cursPayload.interval, values)
     }

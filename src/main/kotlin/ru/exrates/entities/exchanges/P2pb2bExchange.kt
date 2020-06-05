@@ -134,11 +134,11 @@ class P2pb2bExchange: RestExchange() {
         val response = stringResponse.block()
         val array = JSONObject(response).getJSONArray("result")
         if(array.length() == 0){
-            pair.putInPriceChange(period, 777.777) //fixme
+            pair.putInPriceChange(period, Double.MAX_VALUE)
             return
         }
         try {
-            val array2 = array.getJSONArray(0) //fixme index out of range
+            val array2 = array.getJSONArray(0)
             val oldVal = (array2.getDouble(1) + array2.getDouble(2)) / 2
             val changeVol =
                 if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1
