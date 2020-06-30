@@ -77,12 +77,6 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
         return res
     }
 
-   /* @GetMapping("/rest/pair", params = ["c1", "c2"])
-    fun pair(@RequestParam c1: String, @RequestParam c2: String):List<CurrencyPair>{
-        logger.debug("c1 = $c1, c2 = $c2")
-        return aggregator.getCurStat(c1, c2)
-    }*/
-
     @GetMapping("/rest/pair"/*, params = ["pname", "historyinterval"]*/)
     fun pair(@RequestParam c1: String, @RequestParam c2: String, @RequestParam(required = false) historyInterval: String?, @RequestParam limit: Int): List<CurrencyPair>{
         logger.debug("REQUEST ON /rest/pair: c1 = $c1, c2 = $c2, historyInterval = $historyInterval, limit = $limit")
@@ -115,7 +109,7 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
 
 
     @GetMapping("/rest/lists")
-    fun lists() : List<ExchangeNamesObject>{
+    fun lists() : Map<Int, ExchangeNamesObject>{
         val res = aggregator.getNamesExchangesAndCurrencies()
         logger.debug("Lists response: ${objectMapper.writeValueAsString(res)}")
         return res
@@ -126,101 +120,4 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
 
     @GetMapping("/close")
     fun close() = context.close()
-
-    /*
-    Request:
-    {
-    "exchange" : "binanceExchange",
-    "timeout": "3m",
-    "pairs" : ["BTCUSDT", "ETCBTC"]
-    }
-
-
-
-    Response:
-    {
-  "limitCode": 429,
-  "name": "binanceExchange",
-  "pairs": [
-    {
-      "symbol": "VENBTC",
-      "price": 1.3928E-4,
-      "priceChange": {
-        "\"3d\"": 1.35645E-4,
-        "\"4h\"": 1.35645E-4,
-        "\"1h\"": 1.35645E-4,
-        "\"5m\"": 1.35625E-4,
-        "\"30m\"": 1.35645E-4,
-        "\"15m\"": 1.35645E-4,
-        "\"1d\"": 1.35645E-4,
-        "\"1M\"": 1.35645E-4,
-        "\"6h\"": 1.35645E-4,
-        "\"12h\"": 1.35645E-4,
-        "\"1w\"": 1.35645E-4,
-        "\"8h\"": 1.35645E-4,
-        "\"3m\"": 1.3559E-4
-      },
-      "priceHistory": [],
-      "updateTimes": [
-        1576605044157,
-        1576605048739,
-        0
-      ]
-    },
-    {
-      "symbol": "YOYOBNB",
-      "price": 7.62E-4,
-      "priceChange": {
-        "\"3d\"": 7.8E-4,
-        "\"4h\"": 7.62E-4,
-        "\"1h\"": 7.62E-4,
-        "\"5m\"": 7.62E-4,
-        "\"30m\"": 7.62E-4,
-        "\"15m\"": 7.62E-4,
-        "\"1d\"": 7.8E-4,
-        "\"1M\"": 8.515E-4,
-        "\"6h\"": 7.685E-4,
-        "\"12h\"": 7.685E-4,
-        "\"1w\"": 7.79E-4,
-        "\"8h\"": 7.62E-4,
-        "\"3m\"": 7.62E-4
-      },
-      "priceHistory": [],
-      "updateTimes": [
-        1576605036127,
-        1576605043358,
-        0
-      ]
-    }
-  ],
-  "changePeriods": [
-    "3m",
-    "5m",
-    "15m",
-    "30m",
-    "1h",
-    "4h",
-    "6h",
-    "8h",
-    "12h",
-    "1d",
-    "3d",
-    "1w",
-    "1M"
-  ],
-  "url_INFO": "/api/v1/exchangeInfo",
-  "url_ORDER": "/api/v3/depth",
-  "url_PING": "/api/v1/ping",
-  "url_ENDPOINT": "https://api.binance.com",
-  "url_CURRENT_AVG_PRICE": "/api/v3/avgPrice",
-  "url_PRICE_CHANGE": "/api/v1/klines"
-}
-
-
-
-
-
-    */
-
-
 }
