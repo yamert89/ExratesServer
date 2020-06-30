@@ -12,6 +12,7 @@ import ru.exrates.configs.Properties
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.*
+import ru.exrates.entities.exchanges.secondary.ExchangeNamesObject
 /*import ru.exrates.entities.exchanges.ExmoExchange*/
 import ru.exrates.repos.ExchangeService
 import ru.exrates.utils.CursPeriod
@@ -240,7 +241,9 @@ class Aggregator(
     * ******************************************************************************************************************
     * */
 
-    fun getNamesExchangesAndCurrencies() = exchangeService.getAllPairs(exchanges.values)
+    fun getNamesExchangesAndCurrencies(): Map<Int, ExchangeNamesObject>{
+        return exchangeService.getAllPairs(exchanges.values)
+    }
 
     fun save(){
         logger.debug("Saving exchanges...")
