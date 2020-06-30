@@ -110,8 +110,8 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
 
     @GetMapping("/rest/lists")
     fun lists() : Map<Int, ExchangeNamesObject>{
-        val res = aggregator.getNamesExchangesAndCurrencies()
-        logger.debug("Lists response: ${objectMapper.writeValueAsString(res)}")
+        val res : Map<Int, ExchangeNamesObject> = aggregator.getNamesExchangesAndCurrencies()
+        logger.debug("Lists response: ${objectMapper.writeValueAsString(res.values)}")
         return res
     }
 
