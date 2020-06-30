@@ -55,7 +55,8 @@ tasks {
         dependsOn(bootJar)
         val archieveName = "exratesServer.jar"
         val buildD = "$projectDir/build/libs/"
-        val startFolder = file("C:\\Users\\Пендальф Синий\\Desktop\\exrates\\")
+        var startFolder = file("C:\\Users\\Пендальф Синий\\Desktop\\exrates\\")
+        if(!startFolder.exists()) startFolder = file("D:\\my\\")
         from(file("$buildD/$archieveName"))
         into(startFolder)
 
