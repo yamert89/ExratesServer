@@ -84,7 +84,7 @@ class ExchangeService(@Autowired private val exchangeRepository: ExchangeReposit
     //fun getAllPairs() = currencyRepository.getAll().toSet().toList()
     fun getAllPairs(exchanges: Collection<BasicExchange>): Map<Int, ExchangeNamesObject> {
         val map = HashMap<Int, ExchangeNamesObject>()
-        exchanges.forEach {  map[it.exId] = ExchangeNamesObject(it.exId, it.name, currencyRepository.getCurrencyPairsNames(it)) }
+        exchanges.forEach {  map[it.exId] = ExchangeNamesObject(it.exId, it.name, it.delimiter, currencyRepository.getCurrencyPairsNames(it)) }
         return map
     }
 

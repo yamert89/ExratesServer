@@ -29,7 +29,7 @@ import kotlin.collections.HashSet
 
 @Entity @Inheritance(strategy = InheritanceType.SINGLE_TABLE) @DiscriminatorColumn(name = "EXCHANGE_TYPE")
 @JsonIgnoreProperties("id", "limits", "limitCode", "banCode", "sleepValueSeconds", "taskTimeOut", "temporary",
-    "webClient", "props")
+    "webClient", "props", "delimiter")
 abstract class BasicExchange(@javax.persistence.Transient protected val logger: Logger = LogManager.getLogger(BasicExchange::class)) : Exchange, Cloneable{
 
 
@@ -176,7 +176,6 @@ class ExchangeDTO(exchange: BasicExchange?){
     val historyPeriods = exchange?.historyPeriods ?: emptyList()
     var pairs: SortedSet<CurrencyPair> = TreeSet<CurrencyPair>(exchange?.pairs ?: TreeSet<CurrencyPair>())
     var status: Int = 200
-    var delimiter = exchange?.delimiter ?: ""
     init {
        if(exchange == null) status = 400
     }
