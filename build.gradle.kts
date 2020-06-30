@@ -56,7 +56,8 @@ tasks {
         val archieveName = "exratesServer.jar"
         val buildD = "$projectDir/build/libs/"
         var startFolder = file("C:\\Users\\Пендальф Синий\\Desktop\\exrates\\")
-        if(!startFolder.exists()) startFolder = file("D:\\my\\")
+        if(!startFolder.exists()) startFolder = file("D:/my/")
+        delete(file(startFolder.path + archieveName))
         from(file("$buildD/$archieveName"))
         into(startFolder)
 
