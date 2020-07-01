@@ -22,7 +22,7 @@ interface CurrencyRepository : JpaRepository<CurrencyPair, Int> {
     @Query("select c.symbol from CurrencyPair c")
     fun getAll(): List<String>
 
-    @Query("select concat(c.baseCurrency, '/', c.quoteCurrency)  from CurrencyPair c where c.exchange = ?1")
+    @Query("select concat(c.baseCurrency, ' / ', c.quoteCurrency)  from CurrencyPair c where c.exchange = ?1")
     fun getCurrencyPairsNames(exchange: BasicExchange): List<String>
 
 }

@@ -2,24 +2,19 @@ package ru.exrates.entities.exchanges
 
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
-import org.springframework.http.HttpStatus
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Mono
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.secondary.Limit
+import ru.exrates.func.RestCore
 import java.math.BigDecimal
 import java.math.MathContext
-import java.net.ConnectException
-import java.sql.Time
 import java.time.Duration
-import java.util.*
 import javax.annotation.PostConstruct
 import javax.persistence.DiscriminatorValue
 import javax.persistence.Entity
-import kotlin.Comparator
-import kotlin.math.round
 
 @Entity @DiscriminatorValue("binance")
 class BinanceExchange(): RestExchange() {
@@ -34,14 +29,14 @@ class BinanceExchange(): RestExchange() {
     override fun init() {
         super.init()
         if (!temporary){
-            webClient = WebClient.create(URL_ENDPOINT)
+            restCore = RestCore(URL_ENDPOINT, banCode, limitCode, serverError)
             fillTop()
             return
         }
 
         initVars()
-        webClient = WebClient.create(URL_ENDPOINT)
-        val entity = JSONObject(stringResponse(URL_ENDPOINT + URL_INFO).block())
+        restCore = RestCore(URL_ENDPOINT, banCode, limitCode, serverError)
+        val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONObject::class)
         limitsFill(entity)
         pairsFill(entity, "symbols", "baseAsset", "quoteAsset", "symbol")
         temporary = false
@@ -115,7 +110,8 @@ class BinanceExchange(): RestExchange() {
     override fun currentPrice(pair: CurrencyPair, period: TimePeriod) {
         super.currentPrice(pair, period)
         val uri = "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?symbol=${pair.symbol}"
-        val entity = JSONObject(stringResponse(uri).block())
+        val entity = restCore.blockingStringRequest(uri, JSONObject::class)
+        if (entity.length() == 0) return
         val price = entity.getString("price").toDouble()
         pair.price = price
         logger.trace("Price updated on ${pair.symbol} pair $name exch| = $price")
@@ -138,7 +134,8 @@ class BinanceExchange(): RestExchange() {
         val symbol = "?symbol=" + pair.symbol
         val period = "&interval=$interval"
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE$symbol$period&limit=$limit"
-        val entity = JSONArray(stringResponse(uri).block())
+        val entity = restCore.blockingStringRequest(uri, JSONArray::class)
+        if (entity.length() == 0) return
         pair.priceHistory.clear()
         for (i in 0 until entity.length()){
             val array = entity.getJSONArray(i)
@@ -167,8 +164,16 @@ class BinanceExchange(): RestExchange() {
 
     override fun singlePriceChangeRequest(pair: CurrencyPair, interval: TimePeriod): Mono<String> {
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?symbol=${pair.symbol}&interval=${interval.name}&limit=1"
-        return stringResponse(uri)
+        return restCore.stringRequest(uri)
     }
+
+    /*
+    * ******************************************************************************************************************
+    *       Class methods
+    * ******************************************************************************************************************
+    * */
+
+
 
 
 }

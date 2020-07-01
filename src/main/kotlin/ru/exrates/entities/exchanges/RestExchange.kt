@@ -2,19 +2,18 @@ package ru.exrates.entities.exchanges
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import org.springframework.boot.configurationprocessor.json.JSONArray
+import org.springframework.boot.configurationprocessor.json.JSONException
 import org.springframework.boot.configurationprocessor.json.JSONObject
 import org.springframework.http.HttpStatus
-import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Mono
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.secondary.BanException
 import ru.exrates.entities.exchanges.secondary.LimitExceededException
+import ru.exrates.func.RestCore
 import java.net.ConnectException
-import java.time.Duration
 import java.util.*
-import java.util.function.BooleanSupplier
 import javax.annotation.PostConstruct
 import javax.persistence.DiscriminatorColumn
 import javax.persistence.Entity
@@ -25,7 +24,7 @@ import kotlin.reflect.KClass
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE) @DiscriminatorColumn(name = "EXCHANGE_TYPE")
 @JsonIgnoreProperties("URL_ENDPOINT", "URL_CURRENT_AVG_PRICE", "URL_INFO", "URL_PRICE_CHANGE", "URL_PING", "URL_ORDER",
-    "url_ENDPOINT", "url_CURRENT_AVG_PRICE", "url_INFO", "url_PRICE_CHANGE", "url_PING", "url_ORDER")
+    "url_ENDPOINT", "url_CURRENT_AVG_PRICE", "url_INFO", "url_PRICE_CHANGE", "url_PING", "url_ORDER", "restCore")
 abstract class RestExchange : BasicExchange(){
 
     lateinit var URL_ENDPOINT: String
@@ -37,6 +36,8 @@ abstract class RestExchange : BasicExchange(){
     lateinit var URL_TOP_STATISTIC: String
     lateinit var TOP_COUNT_FIELD: String
     lateinit var TOP_SYMBOL_FIELD: String
+    @Transient
+    lateinit var restCore: RestCore
 
     /*
     * ******************************************************************************************************************
@@ -60,7 +61,8 @@ abstract class RestExchange : BasicExchange(){
     }
 
     override fun fillTop() {
-        val pairs = JSONArray(stringResponse(URL_TOP_STATISTIC).block())
+        val pairs = restCore.blockingStringRequest(URL_TOP_STATISTIC, JSONArray::class)
+        if (pairs.length() == 0) return
         val all = HashMap<String, Int>()
         val topSize = if(props.maxSize() < pairs.length()) props.maxSize() else pairs.length()
         var count = 0
@@ -91,16 +93,16 @@ abstract class RestExchange : BasicExchange(){
        }
     }
 
+
+
+
+
     override fun task() {
         if(id == 0) {
             return
-            /*logger.debug("task aborted, id = 0")
-            throw RuntimeException("interrupt task...")*/
         }
         logger.debug("task ping try...$URL_ENDPOINT$URL_PING")
-        webClient.get().uri(URL_ENDPOINT + URL_PING).retrieve().onStatus(HttpStatus::isError){
-            Mono.error(ConnectException("Ping $URL_PING failed"))
-        }.bodyToMono(String::class.java).block()
+        restCore.stringRequest("$URL_ENDPOINT$URL_PING").block()
         super.task()
     }
 
@@ -130,27 +132,6 @@ abstract class RestExchange : BasicExchange(){
     * ******************************************************************************************************************
     * */
 
-    fun <T: Any> request(uri: String, clazz: KClass<T>) : Mono<T>{
-        logger.trace("Try request to : $uri")
-        val resp = webClient.get().uri(uri).retrieve()
-            .onStatus(HttpStatus::is4xxClientError) { resp ->
-                logger.trace("RESPONSE of $uri: ${resp}")
-                val ex = when(resp.statusCode().value()){
-                    banCode -> BanException()
-                    limitCode -> LimitExceededException(LimitType.WEIGHT) //todo add server error code p2p error 4001 / 503
-                    serverError -> ConnectException("Server error: $uri")
-
-                    //null -> NullPointerException()
-                    else -> IllegalStateException("Unexpected value: ${resp.statusCode().value()}")
-                }
-                Mono.error(ex) }
-
-            .bodyToMono(clazz.java) //todo 1 - null compile notif? // 2 - FIXMe operate exception !!!
-        return resp
-    }
-
-
-    fun stringResponse(uri: String) = request(uri, String::class)
 
     abstract fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod, stringResponse: Mono<String>)
 

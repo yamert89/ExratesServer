@@ -29,7 +29,7 @@ import kotlin.collections.HashSet
 
 @Entity @Inheritance(strategy = InheritanceType.SINGLE_TABLE) @DiscriminatorColumn(name = "EXCHANGE_TYPE")
 @JsonIgnoreProperties("id", "limits", "limitCode", "banCode", "sleepValueSeconds", "taskTimeOut", "temporary",
-    "webClient", "props", "delimiter")
+    "props", "delimiter")
 abstract class BasicExchange(@javax.persistence.Transient protected val logger: Logger = LogManager.getLogger(BasicExchange::class)) : Exchange, Cloneable{
 
 
@@ -63,9 +63,6 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
 
     @Convert(converter = TimePeriodConverter::class)
     lateinit var taskTimeOut: TimePeriod
-
-    @Transient
-    lateinit var webClient: WebClient
 
     @ElementCollection(fetch = FetchType.EAGER)
     @Fetch(FetchMode.SELECT)

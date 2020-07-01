@@ -5,10 +5,10 @@ import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Mono
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.TimePeriod
+import ru.exrates.func.RestCore
 import java.math.BigDecimal
 import java.math.MathContext
 import java.time.Duration
-import java.util.*
 import javax.annotation.PostConstruct
 import javax.persistence.DiscriminatorValue
 import javax.persistence.Entity
@@ -28,14 +28,14 @@ class P2pb2bExchange: RestExchange() {
     override fun init() {
         super.init()
         if (!temporary){
-            webClient = WebClient.create(URL_ENDPOINT)
+            restCore = RestCore(URL_ENDPOINT, banCode, limitCode, serverError)
             fillTop()
             return
         }
         initVars()
-        webClient = WebClient.create(URL_ENDPOINT)
-        val entity = JSONObject(stringResponse(URL_ENDPOINT + URL_INFO).block())
-        pairsFill(entity, "result", "stock", "money", "name")
+        restCore = RestCore(URL_ENDPOINT, banCode, limitCode, serverError)
+        val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONObject::class)
+        pairsFill(entity, "result", "stock", "money", "name", "_")
         temporary = false
         fillTop()
         logger.debug("exchange " + name + " initialized with " + pairs.size + " pairs")
@@ -80,7 +80,7 @@ class P2pb2bExchange: RestExchange() {
     override fun currentPrice(pair: CurrencyPair, period: TimePeriod) {
         super.currentPrice(pair, period)
         val uri = "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?market=${pair.symbol}"
-        val entity = JSONObject(stringResponse(uri).block())
+        val entity = restCore.blockingStringRequest(uri, JSONObject::class)
         val result = entity.getJSONObject("result")
         val bid = result.getDouble("bid")
         val ask = result.getDouble("ask")
@@ -112,7 +112,7 @@ class P2pb2bExchange: RestExchange() {
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=$interval&limit=$lim"
 
         try{
-            val array = JSONObject(stringResponse(uri).block()).getJSONArray("result")
+            val array = restCore.blockingStringRequest(uri, JSONObject::class).getJSONArray("result")
             pair.priceHistory.clear()
             for (i in 0 until limit){
                 val arr = array.getJSONArray(i)
@@ -152,7 +152,7 @@ class P2pb2bExchange: RestExchange() {
 
     override fun singlePriceChangeRequest(pair: CurrencyPair, interval: TimePeriod): Mono<String> {
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=${interval.name}&limit=50"
-        return stringResponse(uri)
+        return restCore.stringRequest(uri)
     }
 
 
