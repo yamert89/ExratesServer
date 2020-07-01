@@ -1,6 +1,5 @@
 package ru.exrates.func
 
-import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.config.BeanDefinition
@@ -36,7 +35,8 @@ class Aggregator(
     @Autowired
     val stateChecker: EndpointStateChecker
 ) {
-    val logger: Logger = LogManager.getLogger(Aggregator::class)
+    @Autowired
+    lateinit var logger: Logger
     val exchanges: MutableMap<Int, BasicExchange> = HashMap()
     val exchangeNames: MutableMap<String, KClass<out BasicExchange>> = HashMap()
 

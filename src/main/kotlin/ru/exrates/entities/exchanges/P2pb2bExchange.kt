@@ -1,5 +1,6 @@
 package ru.exrates.entities.exchanges
 
+import org.springframework.beans.factory.getBean
 import org.springframework.boot.configurationprocessor.json.JSONObject
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Mono
@@ -28,12 +29,12 @@ class P2pb2bExchange: RestExchange() {
     override fun init() {
         super.init()
         if (!temporary){
-            restCore = RestCore(URL_ENDPOINT, banCode, limitCode, serverError)
+            restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, banCode, limitCode, serverError)
             fillTop()
             return
         }
         initVars()
-        restCore = RestCore(URL_ENDPOINT, banCode, limitCode, serverError)
+        restCore = applicationContext.getBean(RestCore::class, URL_ENDPOINT, banCode, limitCode, serverError)
         val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONObject::class)
         pairsFill(entity, "result", "stock", "money", "name", "_")
         temporary = false

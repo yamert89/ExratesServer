@@ -24,7 +24,8 @@ import kotlin.Exception
 @RestController
 class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMapper: ObjectMapper,
                @Autowired val context: ConfigurableApplicationContext) {
-    val logger: Logger = LogManager.getLogger(RestInfo::class)
+    @Autowired
+    lateinit var logger: Logger
 
     /*
        {"exchange" : "binanceExchange", "timeout": "3m", "pairs" : ["btcusd", "etcbtc"]}

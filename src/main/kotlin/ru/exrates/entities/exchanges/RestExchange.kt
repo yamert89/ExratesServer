@@ -1,6 +1,7 @@
 package ru.exrates.entities.exchanges
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONException
 import org.springframework.boot.configurationprocessor.json.JSONObject

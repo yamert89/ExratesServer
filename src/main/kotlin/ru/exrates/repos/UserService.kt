@@ -9,7 +9,8 @@ import javax.transaction.Transactional
 
 @Service @Transactional
 class UserService(@Autowired val userRepository: UserRepository) {
-    private val logger: Logger = LogManager.getLogger(ExchangeService::class)
+    @Autowired
+    private lateinit var logger: Logger
 
     fun userIsExists(userToken: String): Boolean = userRepository.findByToken(userToken) != null
 

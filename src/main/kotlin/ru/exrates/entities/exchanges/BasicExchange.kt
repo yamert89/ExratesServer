@@ -8,6 +8,7 @@ import org.hibernate.annotations.Fetch
 import org.hibernate.annotations.FetchMode
 import org.hibernate.annotations.SortComparator
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.ApplicationContext
 import org.springframework.web.reactive.function.client.WebClient
 import ru.exrates.configs.Properties
 import ru.exrates.entities.CurrencyPair
@@ -33,8 +34,7 @@ import kotlin.jvm.Transient
 @Entity @Inheritance(strategy = InheritanceType.SINGLE_TABLE) @DiscriminatorColumn(name = "EXCHANGE_TYPE")
 @JsonIgnoreProperties("id", "limits", "limitCode", "banCode", "sleepValueSeconds", "taskTimeOut", "temporary",
     "props", "delimiter")
-abstract class BasicExchange(@javax.persistence.Transient protected val logger: Logger = LogManager.getLogger(BasicExchange::class),
-                             @javax.persistence.Transient @Autowired val stateChecker: EndpointStateChecker) : Exchange, Cloneable{
+abstract class BasicExchange() : Exchange, Cloneable{
 
 
     var exId: Int = 0
@@ -47,6 +47,18 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
     @Autowired
     @javax.persistence.Transient
     lateinit var props: Properties
+
+    @javax.persistence.Transient
+    @Autowired
+    lateinit var stateChecker: EndpointStateChecker
+
+    @Autowired
+    @javax.persistence.Transient
+    lateinit var applicationContext: ApplicationContext
+
+    @javax.persistence.Transient
+    @Autowired
+    lateinit var logger: Logger
 
     @Id @GeneratedValue
     var id: Int = 0
@@ -74,6 +86,7 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
 
     @ElementCollection(fetch = FetchType.EAGER)
     val topPairs: MutableList<String> = LinkedList()
+
 
     /*
     * ******************************************************************************************************************

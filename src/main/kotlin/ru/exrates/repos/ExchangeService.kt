@@ -14,7 +14,8 @@ import javax.transaction.Transactional
 @Service @Transactional
 class ExchangeService(@Autowired private val exchangeRepository: ExchangeRepository,
                       @Autowired private val currencyRepository: CurrencyRepository) {
-    private val logger: Logger = LogManager.getLogger(ExchangeService::class)
+    @Autowired
+    private lateinit var logger: Logger
 
     @Transactional
     fun find(id: Int): BasicExchange? = exchangeRepository.findById(id).orElse(null)

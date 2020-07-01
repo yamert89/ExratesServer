@@ -4,7 +4,7 @@ import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.TimePeriod
 import java.time.Duration
 
-class EmptyExchange: BasicExchange() {
+class EmptyExchange(): BasicExchange() {
 
     override fun currentPrice(pair: CurrencyPair, period: TimePeriod) {
     }

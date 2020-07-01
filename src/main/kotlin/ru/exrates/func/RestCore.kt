@@ -2,10 +2,13 @@ package ru.exrates.func
 
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONException
 import org.springframework.boot.configurationprocessor.json.JSONObject
+import org.springframework.context.annotation.Scope
 import org.springframework.http.HttpStatus
+import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Mono
 import ru.exrates.entities.LimitType
@@ -16,10 +19,14 @@ import java.net.ConnectException
 import javax.persistence.Transient
 import kotlin.reflect.KClass
 
+@Service
+@Scope("prototype")
 class RestCore(endPoint: String, private val banCode: Int, private val limitCode: Int, private val serverError: Int) {
 
     var webClient: WebClient = WebClient.create(endPoint)
-    protected val logger: Logger = LogManager.getLogger(RestCore::class)
+
+    @Autowired
+    protected lateinit var logger: Logger
 
 
     fun <T: Any> request(uri: String, clazz: KClass<T>, connectionExceptionMessage: String = "Server error: $uri") : Mono<T> {
