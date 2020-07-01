@@ -21,10 +21,10 @@ class ObjectTest {
         checker.checkEmptyJson(jsEmpty, 1)
         checker.checkEmptyJson(jsEmpty, 1)
         checker.checkEmptyJson(jsEmpty, 1)
-        Assert.assertEquals(false, checker.checkAccessible(1))
+        Assert.assertEquals(false, checker.accessible(1))
         checker.checkEmptyJson(jsObj, 1)
-        Assert.assertEquals(true, checker.checkAccessible(1))
-        Assert.assertEquals(true, checker.checkAccessible(2))
+        Assert.assertEquals(true, checker.accessible(1))
+        Assert.assertEquals(true, checker.accessible(2))
 
     }
 }

@@ -2,11 +2,14 @@ package ru.exrates.func
 
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
+import org.springframework.stereotype.Component
+import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
+@Service
 class EndpointStateChecker {
 
     private val counter = ConcurrentHashMap<Int, AtomicInteger>()
@@ -35,5 +38,5 @@ class EndpointStateChecker {
         return res
     }
 
-    fun checkAccessible(exId: Int) = !nonAccessible.contains(exId)
+    fun accessible(exId: Int) = !nonAccessible.contains(exId)
 }

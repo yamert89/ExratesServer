@@ -2,7 +2,6 @@ package ru.exrates.entities.exchanges
 
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
-import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Mono
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.LimitType
@@ -111,7 +110,7 @@ class BinanceExchange(): RestExchange() {
         super.currentPrice(pair, period)
         val uri = "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?symbol=${pair.symbol}"
         val entity = restCore.blockingStringRequest(uri, JSONObject::class)
-        if (entity.length() == 0) return
+        if (stateChecker.checkEmptyJson(entity, exId)) return
         val price = entity.getString("price").toDouble()
         pair.price = price
         logger.trace("Price updated on ${pair.symbol} pair $name exch| = $price")
@@ -135,7 +134,7 @@ class BinanceExchange(): RestExchange() {
         val period = "&interval=$interval"
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE$symbol$period&limit=$limit"
         val entity = restCore.blockingStringRequest(uri, JSONArray::class)
-        if (entity.length() == 0) return
+        if (stateChecker.checkEmptyJson(entity, exId)) return
         pair.priceHistory.clear()
         for (i in 0 until entity.length()){
             val array = entity.getJSONArray(i)
@@ -155,6 +154,7 @@ class BinanceExchange(): RestExchange() {
         val curMills = System.currentTimeMillis()
         val res = stringResponse.block()
         val entity = JSONArray(res)
+        if (stateChecker.checkEmptyJson(entity, exId)) return
         val array = entity.getJSONArray(0)
         val oldVal = (array.getDouble(2) + array.getDouble(3)) / 2
         val changeVol = if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1

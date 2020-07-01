@@ -15,6 +15,7 @@ import ru.exrates.entities.exchanges.*
 import ru.exrates.entities.exchanges.secondary.ExchangeNamesObject
 /*import ru.exrates.entities.exchanges.ExmoExchange*/
 import ru.exrates.repos.ExchangeService
+import ru.exrates.utils.ClientCodes
 import ru.exrates.utils.CursPeriod
 import ru.exrates.utils.ExchangePayload
 import java.time.Duration
@@ -31,7 +32,9 @@ class Aggregator(
     @Autowired
     val genericApplicationContext: GenericApplicationContext,
     @Autowired
-    val props: Properties
+    val props: Properties,
+    @Autowired
+    val stateChecker: EndpointStateChecker
 ) {
     val logger: Logger = LogManager.getLogger(Aggregator::class)
     val exchanges: MutableMap<Int, BasicExchange> = HashMap()
@@ -48,6 +51,7 @@ class Aggregator(
     *       Initialization
     * ******************************************************************************************************************
     * */
+    //TODO replace to other class
 
     @PostConstruct
     fun init(){
@@ -101,6 +105,7 @@ class Aggregator(
     fun getExchange(exId: Int): ExchangeDTO{
         logger.debug("exchanges: ${exchanges.values}")
         logger.debug("get exchange for exId $exId")
+        if (!stateChecker.accessible(exId)) return ExchangeDTO(null, ClientCodes.EXCHANGE_NOT_ACCESSIBLE)
         val ex: BasicExchange? = exchanges[exId]
         val dto = ExchangeDTO(ex)
         if (ex == null) return dto
@@ -114,6 +119,7 @@ class Aggregator(
 
     fun getExchange(exId: Int, pairsN: Array<String>, period: String): ExchangeDTO{
         logger.debug("exchanges: ${exchanges.values}")
+        if (!stateChecker.accessible(exId)) return ExchangeDTO(null, ClientCodes.EXCHANGE_NOT_ACCESSIBLE)
         var currentMills = System.currentTimeMillis()
         logger.debug("start ex")
         val exch = exchanges[exId]
@@ -185,6 +191,7 @@ class Aggregator(
     }
 
     fun getOnePair(c1: String, c2: String, exId: Int, currentInterval: String): CurrencyPair {
+        if (!stateChecker.accessible(exId)) return CurrencyPair(ClientCodes.EXCHANGE_NOT_ACCESSIBLE)
         val ex = exchanges[exId]!!
         var pair = ex.getPair(c1, c2)
         if (pair == null) {
@@ -199,6 +206,7 @@ class Aggregator(
 
     fun priceHistory(c1: String, c2: String, exId: Int, historyInterval: String, limit: Int): List<Double>{
         logger.debug("exchanges: ${exchanges.values}")
+        if (!stateChecker.accessible(exId)) return listOf(ClientCodes.EXCHANGE_NOT_ACCESSIBLE.toDouble())
         val exchange: BasicExchange = exchanges[exId] ?: throw NullPointerException("exchange $exId not found")
         var pair = exchange.getPair(c1, c2)
         if(pair == null){
@@ -210,6 +218,7 @@ class Aggregator(
     }
 
     fun getCursIntervalStatistic(cursPayload: ExchangePayload): CursPeriod{
+        if (!stateChecker.accessible(cursPayload.exId)) return CursPeriod("", mapOf(), ClientCodes.EXCHANGE_NOT_ACCESSIBLE)
         val ex = exchanges[cursPayload.exId]!!
         val values = HashMap<String, Double>()
         val requests = HashMap<CurrencyPair, Mono<String>>()

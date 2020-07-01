@@ -16,7 +16,9 @@ import ru.exrates.entities.exchanges.secondary.BanException
 import ru.exrates.entities.exchanges.secondary.ErrorCodeException
 import ru.exrates.entities.exchanges.secondary.Limit
 import ru.exrates.entities.exchanges.secondary.LimitExceededException
+import ru.exrates.func.EndpointStateChecker
 import ru.exrates.repos.TimePeriodConverter
+import ru.exrates.utils.ClientCodes
 import ru.exrates.utils.TimePeriodListSerializer
 import java.net.ConnectException
 import java.time.Duration
@@ -26,11 +28,13 @@ import javax.persistence.*
 import kotlin.NullPointerException
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
+import kotlin.jvm.Transient
 
 @Entity @Inheritance(strategy = InheritanceType.SINGLE_TABLE) @DiscriminatorColumn(name = "EXCHANGE_TYPE")
 @JsonIgnoreProperties("id", "limits", "limitCode", "banCode", "sleepValueSeconds", "taskTimeOut", "temporary",
     "props", "delimiter")
-abstract class BasicExchange(@javax.persistence.Transient protected val logger: Logger = LogManager.getLogger(BasicExchange::class)) : Exchange, Cloneable{
+abstract class BasicExchange(@javax.persistence.Transient protected val logger: Logger = LogManager.getLogger(BasicExchange::class),
+                             @javax.persistence.Transient @Autowired val stateChecker: EndpointStateChecker) : Exchange, Cloneable{
 
 
     var exId: Int = 0
@@ -165,18 +169,17 @@ abstract class BasicExchange(@javax.persistence.Transient protected val logger: 
 
 }
 
-class ExchangeDTO(exchange: BasicExchange?){
+class ExchangeDTO(exchange: BasicExchange?, stat: Int = 200){
     val exId = exchange?.exId ?: 0
     val name = exchange?.name ?: ""
     @JsonSerialize(using = TimePeriodListSerializer::class)
     val changePeriods = exchange?.changePeriods ?: listOf<TimePeriod>()
     val historyPeriods = exchange?.historyPeriods ?: emptyList()
     var pairs: SortedSet<CurrencyPair> = TreeSet<CurrencyPair>(exchange?.pairs ?: TreeSet<CurrencyPair>())
-    var status: Int = 200
+    var status: Int = stat
     init {
-       if(exchange == null) status = 400
+       if(exchange == null) this.status = ClientCodes.EXCHANGE_NOT_FOUND
     }
-
 
     override fun toString(): String {
         return "\n$name exId = $exId pairs: ${pairs.joinToString { it.symbol }}"

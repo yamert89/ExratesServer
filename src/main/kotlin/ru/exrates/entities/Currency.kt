@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger
 import ru.exrates.entities.exchanges.BasicExchange
 import ru.exrates.utils.ExchangeSerializer
 import ru.exrates.utils.TimePeriodSerializer
+import java.time.Duration
 import java.time.Instant
 import java.util.*
 import javax.persistence.*
@@ -66,7 +67,12 @@ class CurrencyPair() : Comparable<CurrencyPair>{
         private set
 
     @javax.persistence.Transient
+    var status = 200
+
+    @javax.persistence.Transient
     var historyPeriods : List<String>? = null //todo delete
+
+
 
     constructor(curBase: String, curQuote: String, symbol: String, exchange: BasicExchange): this() {
         baseCurrency = curBase
@@ -75,6 +81,16 @@ class CurrencyPair() : Comparable<CurrencyPair>{
         this.exchange = exchange
         exId = exchange.exId
         updateTimes = UpdateTimes(exchange.taskTimeOut)
+    }
+
+    constructor(errorCode: Int): this(){
+        baseCurrency = ""
+        quoteCurrency = ""
+        this.symbol = ""
+        this.exchange = null
+        exId = 0
+        updateTimes = UpdateTimes(TimePeriod(Duration.ZERO, ""))
+        status = errorCode
     }
 
     @JsonIgnore
