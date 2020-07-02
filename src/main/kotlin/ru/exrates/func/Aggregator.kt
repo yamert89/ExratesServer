@@ -105,7 +105,7 @@ class Aggregator(
     fun getExchange(exId: Int): ExchangeDTO{
         logger.debug("exchanges: ${exchanges.values}")
         logger.debug("get exchange for exId $exId")
-        if (!stateChecker.accessible(exId)) return ExchangeDTO(null, ClientCodes.EXCHANGE_NOT_ACCESSIBLE)
+        if (!stateChecker.accessible(exId)) return ExchangeDTO(null, exchanges[exId]!!.name, ClientCodes.EXCHANGE_NOT_ACCESSIBLE)
         val ex: BasicExchange? = exchanges[exId]
         val dto = ExchangeDTO(ex)
         if (ex == null) return dto
@@ -119,7 +119,7 @@ class Aggregator(
 
     fun getExchange(exId: Int, pairsN: Array<String>, period: String): ExchangeDTO{
         logger.debug("exchanges: ${exchanges.values}")
-        if (!stateChecker.accessible(exId)) return ExchangeDTO(null, ClientCodes.EXCHANGE_NOT_ACCESSIBLE)
+        if (!stateChecker.accessible(exId)) return ExchangeDTO(null, exchanges[exId]!!.name, ClientCodes.EXCHANGE_NOT_ACCESSIBLE)
         var currentMills = System.currentTimeMillis()
         logger.debug("start ex")
         val exch = exchanges[exId]
@@ -206,7 +206,7 @@ class Aggregator(
 
     fun priceHistory(c1: String, c2: String, exId: Int, historyInterval: String, limit: Int): List<Double>{
         logger.debug("exchanges: ${exchanges.values}")
-        if (!stateChecker.accessible(exId)) return listOf(ClientCodes.EXCHANGE_NOT_ACCESSIBLE.toDouble())
+        if (!stateChecker.accessible(exId)) return listOf(ClientCodes.EXCHANGE_NOT_ACCESSIBLE.toDouble(), exId.toDouble())
         val exchange: BasicExchange = exchanges[exId] ?: throw NullPointerException("exchange $exId not found")
         var pair = exchange.getPair(c1, c2)
         if(pair == null){
