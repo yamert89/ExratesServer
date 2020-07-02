@@ -40,7 +40,6 @@ class EndpointStateChecker() {
             counter[exId]?.set(0)
             nonAccessible.remove(exId)
         }
-
         return res
     }
 

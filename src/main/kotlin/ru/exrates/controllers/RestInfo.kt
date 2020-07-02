@@ -27,11 +27,8 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
     @Autowired
     lateinit var logger: Logger
 
-    /*
-       {"exchange" : "binanceExchange", "timeout": "3m", "pairs" : ["btcusd", "etcbtc"]}
-       {\"exchange\": \"binanceExchange\", \"timeout\" : 12, \"pairs\":[\"VENBTC\"]}
        //todo pairs - list of favorite pairs in bd for each user
-    */
+
 
     @GetMapping("/ping")
     fun ping() = ""
@@ -51,7 +48,7 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
         } else aggregator.getExchange(exchangePayload.exId)
 
         if (ex.status == 400 ) {
-            response.status = 404 //todo test
+            response.status = 404 //todo replace with ex code
             response.sendError(404, "Exchange not found")
             //response.sendRedirect("/error?message=Exchange not found")
             return ExchangeDTO(null)
@@ -78,7 +75,7 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
         return res
     }
 
-    @GetMapping("/rest/pair"/*, params = ["pname", "historyinterval"]*/)
+    @GetMapping("/rest/pair")
     fun pair(@RequestParam c1: String, @RequestParam c2: String, @RequestParam(required = false) historyInterval: String?, @RequestParam limit: Int): List<CurrencyPair>{
         logger.debug("REQUEST ON /rest/pair: c1 = $c1, c2 = $c2, historyInterval = $historyInterval, limit = $limit")
         val res = aggregator.getCurStat(c1, c2, historyInterval, limit)

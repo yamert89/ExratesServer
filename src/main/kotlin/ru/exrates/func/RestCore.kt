@@ -39,12 +39,9 @@ class RestCore(endPoint: String, private val banCode: Int, private val limitCode
                     banCode -> BanException()
                     limitCode -> LimitExceededException(LimitType.WEIGHT) //todo add server error code p2p error 4001 / 503
                     serverError -> ConnectException(connectionExceptionMessage)
-
-                    //null -> NullPointerException()
                     else -> IllegalStateException("Unexpected value: ${resp.statusCode().value()}")
                 }
                 Mono.error(ex) }
-
             .bodyToMono(clazz.java) //todo 1 - null compile notif? // 2 - FIXMe operate exception !!!
         return resp
     }

@@ -79,7 +79,6 @@ class Aggregator(
 
             val finalExchange = exchange
             val clazz: KClass<BasicExchange> = it.value as KClass<BasicExchange>
-            //Arrays.stream(genericApplicationContext.beanDefinitionNames).forEach(System.out::println);
             genericApplicationContext.registerBean(
                 clazz.java, {finalExchange},
                 arrayOf(BeanDefinitionCustomizer { def: BeanDefinition -> def.isPrimary = true }))
@@ -92,9 +91,6 @@ class Aggregator(
                  }
              }
             Timer().schedule(task, 300000, props.savingTimer())
-            //Arrays.stream(genericApplicationContext.beanDefinitionNames).forEach(System.out::println);
-            //genericApplicationContext.removeBeanDefinition(it.key);
-
         }
     }
 
@@ -168,8 +164,6 @@ class Aggregator(
         return dto
 
     }
-
-    //fun getCurStat(curName1: String, curName2: String) = getCurStat(curName1 + curName2)
 
     fun getCurStat(c1: String, c2: String, historyInterval: String?, limit: Int): List<CurrencyPair> {
         logger.debug("exchanges: ${exchanges.values}")
@@ -245,7 +239,6 @@ class Aggregator(
             }
             if (pair.updateTimes.priceChangeTimeElapsed(timePeriod)) requests[pair] = restEx.singlePriceChangeRequest(pair, timePeriod)
             else logger.debug("SKIPPED: price change for ${timePeriod.name} in $pair")
-           //
         }
 
         requests.forEach {

@@ -21,8 +21,5 @@ class TaskHandler {
             ThreadPoolExecutor(properties.initPoolSize(), properties.maxPoolSize(), 1, TimeUnit.MINUTES, LinkedBlockingQueue<Runnable>() )
         executor.execute(task)
     }
-
-
-
-
+    //todo pool size needs empiric tests
 }

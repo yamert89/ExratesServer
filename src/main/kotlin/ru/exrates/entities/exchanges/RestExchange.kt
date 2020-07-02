@@ -51,11 +51,6 @@ abstract class RestExchange : BasicExchange(){
 
         if (id == 0 && !temporary) return
         logger.debug("Postconstuct concrete ${this::class.simpleName} id = $id" )
-
-       /* if (!temporary) {
-            //super.init()
-            return
-        }*/
         super.init()
         //todo needs exceptions?
 

@@ -162,5 +162,4 @@ class P2pb2bExchange: RestExchange() {
         return restCore.stringRequest(uri)
     }
 
-
 }

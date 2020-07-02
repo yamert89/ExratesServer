@@ -124,9 +124,7 @@ class CurrencyPair() : Comparable<CurrencyPair>{
 
     override fun hashCode(): Int {
         if (!isInitialized()) return (Math.random() * 10000).toInt()
-        val hash = Objects.hash(symbol, exId, 142)
-        //logger.trace("hash for $symbol = $hash")
-        return hash
+        return Objects.hash(symbol, exId, 142)
     }
 
     class SortComparator: Comparator<CurrencyPair>{

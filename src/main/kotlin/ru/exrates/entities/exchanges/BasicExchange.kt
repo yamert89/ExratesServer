@@ -36,8 +36,6 @@ import kotlin.jvm.Transient
 @JsonIgnoreProperties("id", "limits", "limitCode", "banCode", "sleepValueSeconds", "taskTimeOut", "temporary",
     "props", "delimiter")
 abstract class BasicExchange() : Exchange, Cloneable{
-
-
     var exId: Int = 0
     var temporary = true
     var limitCode: Int = 0
@@ -120,7 +118,6 @@ abstract class BasicExchange() : Exchange, Cloneable{
     fun task(){
         logger.debug("$name task started with ${pairs.size} pairs")
         logger.debug("pairs in exchange: ${pairs.joinToString { it.symbol }}")
-        /*synchronized(pairs){*/
             for (p in pairs){
                 try {
                     with(taskHandler){
@@ -143,7 +140,6 @@ abstract class BasicExchange() : Exchange, Cloneable{
                     logger.error(e)
                 }
             }
-        /*}*/
     }
 
     abstract override fun fillTop()
