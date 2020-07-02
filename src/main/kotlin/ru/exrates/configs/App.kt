@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement
 import ru.exrates.entities.exchanges.BinanceExchange
 import ru.exrates.entities.exchanges.P2pb2bExchange
 import ru.exrates.func.RestCore
+import ru.exrates.func.TaskHandler
 
 /*import ru.exrates.entities.exchanges.ExmoExchange*/
 
@@ -53,4 +54,5 @@ class App {
     fun logger(injectionPoint: InjectionPoint): Logger{
         return LogManager.getLogger(injectionPoint.field?.declaringClass)
     }
+
 }

@@ -33,7 +33,9 @@ class Aggregator(
     @Autowired
     val props: Properties,
     @Autowired
-    val stateChecker: EndpointStateChecker
+    val stateChecker: EndpointStateChecker,
+    @Autowired
+    val taskHandler: TaskHandler
 ) {
     @Autowired
     lateinit var logger: Logger
@@ -147,10 +149,14 @@ class Aggregator(
         val timePeriod = exch.getTimePeriod(period)
         val restExch = exch as RestExchange
         reqPairs.forEach {
-            exch.currentPrice(it, timePeriod)
-            if (it.updateTimes.priceChangeTimeElapsed(timePeriod)) restExch.updateSinglePriceChange(it, timePeriod, restExch.singlePriceChangeRequest(it, timePeriod))
-           //exch.priceChange(it, timePeriod, true) //todo needs try catch?
-            exch.priceHistory(it, period, 10)
+            with(taskHandler){
+                runTask { exch.currentPrice(it, timePeriod) }
+                if (it.updateTimes.priceChangeTimeElapsed(timePeriod))
+                    runTask { restExch.updateSinglePriceChange(it, timePeriod, restExch.singlePriceChangeRequest(it, timePeriod)) }
+                //exch.priceChange(it, timePeriod, true) //todo needs try catch?
+                runTask { exch.priceHistory(it, period, 10) }
+            }
+
         }
         currentMills = System.currentTimeMillis() - currentMills
         logger.debug("end reqPairs update: $currentMills")
@@ -178,10 +184,13 @@ class Aggregator(
             if (p != null){
                 p.exchange = exchange
                 // p = exchange.getPair(pair.symbol)!!
-                exchange.currentPrice(p, exchange.taskTimeOut)
-                exchange.priceChange(p, exchange.taskTimeOut)
-                exchange.priceHistory(p, historyInterval ?:
-                    exchange.historyPeriods.find { per -> per == "1h" } ?: exchange.historyPeriods[1], limit)
+                with(taskHandler){
+                    runTask { exchange.currentPrice(p, exchange.taskTimeOut) }
+                    runTask { exchange.priceChange(p, exchange.taskTimeOut) }
+                    runTask { exchange.priceHistory(p, historyInterval ?:
+                    exchange.historyPeriods.find { per -> per == "1h" } ?: exchange.historyPeriods[1], limit) }
+                }
+
                 p.historyPeriods = exchange.historyPeriods
                 curs.add(p)
             }
@@ -198,9 +207,12 @@ class Aggregator(
             pair = exchangeService.findPair(c1, c2, ex)
             ex.insertPair(pair!!)
         }
-        ex.currentPrice(pair, ex.taskTimeOut)
-        ex.priceChange(pair, ex.taskTimeOut)
-        ex.priceHistory(pair, currentInterval, 10) //todo right?
+        with(taskHandler){
+            runTask { ex.currentPrice(pair, ex.taskTimeOut) }
+            runTask { ex.priceChange(pair, ex.taskTimeOut) }
+            runTask { ex.priceHistory(pair, currentInterval, 10) } //todo right?
+        }
+
         return pair
     }
 
@@ -213,7 +225,7 @@ class Aggregator(
             pair = exchangeService.findPair(c1, c2, exchange) ?: throw NullPointerException("pair $c1 - $c2 not found in $exchange")
             exchange.insertPair(pair)
         }
-        exchange.priceHistory(pair, historyInterval, limit)
+        taskHandler.runTask { exchange.priceHistory(pair, historyInterval, limit) }
         return pair.priceHistory
     }
 
@@ -237,8 +249,11 @@ class Aggregator(
         }
 
         requests.forEach {
-            ex.currentPrice(it.key, timePeriod)
-            restEx.updateSinglePriceChange(it.key, timePeriod, it.value)
+            with(taskHandler){
+                runTask { ex.currentPrice(it.key, timePeriod) }
+                runTask { restEx.updateSinglePriceChange(it.key, timePeriod, it.value) }
+            }
+
             values[it.key.symbol] = it.key.getPriceChangeValue(ex.getTimePeriod(cursPayload.interval)) ?: Double.MAX_VALUE
         }
         return CursPeriod(cursPayload.interval, values)

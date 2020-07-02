@@ -18,6 +18,7 @@ import ru.exrates.entities.exchanges.secondary.ErrorCodeException
 import ru.exrates.entities.exchanges.secondary.Limit
 import ru.exrates.entities.exchanges.secondary.LimitExceededException
 import ru.exrates.func.EndpointStateChecker
+import ru.exrates.func.TaskHandler
 import ru.exrates.repos.TimePeriodConverter
 import ru.exrates.utils.ClientCodes
 import ru.exrates.utils.TimePeriodListSerializer
@@ -59,6 +60,10 @@ abstract class BasicExchange() : Exchange, Cloneable{
     @javax.persistence.Transient
     @Autowired
     lateinit var logger: Logger
+
+    @Autowired
+    @javax.persistence.Transient
+    lateinit var taskHandler: TaskHandler
 
     @Id @GeneratedValue
     var id: Int = 0
@@ -118,9 +123,12 @@ abstract class BasicExchange() : Exchange, Cloneable{
         /*synchronized(pairs){*/
             for (p in pairs){
                 try {
-                    currentPrice(p, taskTimeOut)
-                    priceChange(p, taskTimeOut)
-                    priceHistory(p, changePeriods[0].name, 10) //todo [0] right?
+                    with(taskHandler){
+                        runTask { currentPrice(p, taskTimeOut) }
+                        runTask { priceChange(p, taskTimeOut) }
+                        runTask { priceHistory(p, changePeriods[0].name, 10) } //todo [0] right?
+                    }
+
                 }catch (e: LimitExceededException){
                     logger.error(e.message)
                     sleepValueSeconds *= 2

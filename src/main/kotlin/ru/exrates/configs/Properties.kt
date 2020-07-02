@@ -16,11 +16,17 @@ class Properties {
     private lateinit var persistenceSize: String
     @Value("\${app.save.timer}")
     private lateinit var savingTimer: String
+    @Value("\${app.taskHandler.poolSize}")
+    private lateinit var initPoolSize: String
+    @Value("\${app.taskHandler.maxPollSize}")
+    private lateinit var maxPoolSize: String
 
     fun timerPeriod() = timerPeriod.toLong()
     fun maxSize() = maxSize.toInt()
     fun savingTimer() = savingTimer.toLong()
     fun isPersistenceStrategy() = persistenceSize.toBoolean()
+    fun initPoolSize() = initPoolSize.toInt()
+    fun maxPoolSize() = maxPoolSize.toInt()
 }
 
 
