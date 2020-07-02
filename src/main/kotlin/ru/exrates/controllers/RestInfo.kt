@@ -46,14 +46,6 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
                 aggregator.getExchange(exId, pairs, interval)
             }
         } else aggregator.getExchange(exchangePayload.exId)
-
-        if (ex.status == 400 ) {
-            response.status = 404 //todo replace with ex code
-            response.sendError(404, "Exchange not found")
-            //response.sendRedirect("/error?message=Exchange not found")
-            return ExchangeDTO(null)
-        }
-
         try {
             logger.debug("RESPONSE of /rest/exchange: ${objectMapper.writeValueAsString(ex)}")
             logger.debug("RESPONSE Pairs of /rest/exchange: $ex")
@@ -62,7 +54,6 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
             logger.error(e)
             logger.error(ex.toString())
         }
-
 
         return ex
     }
