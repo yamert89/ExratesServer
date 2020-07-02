@@ -1,5 +1,6 @@
 package ru.exrates.func
 
+import net.bytebuddy.asm.Advice
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
@@ -51,6 +52,7 @@ class RestCore(endPoint: String, private val banCode: Int, private val limitCode
 
     fun stringRequest(uri: String, connectionExceptionMessage: String = "Server error: $uri") = request(uri, String::class, connectionExceptionMessage)
 
+    @Suppress("UNCHECKED_CAST")
     fun <T : Any> blockingStringRequest(uri: String, jsonType: KClass<T>): T{
         val req = stringRequest(uri)
         val resp = req.block()
