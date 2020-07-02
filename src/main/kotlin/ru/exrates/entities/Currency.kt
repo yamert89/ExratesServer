@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import ru.exrates.entities.exchanges.BasicExchange
+import ru.exrates.utils.ClientCodes
 import ru.exrates.utils.ExchangeSerializer
 import ru.exrates.utils.TimePeriodSerializer
 import java.time.Duration
@@ -67,7 +68,7 @@ class CurrencyPair() : Comparable<CurrencyPair>{
         private set
 
     @javax.persistence.Transient
-    var status = 200
+    var status = ClientCodes.SUCCESS
 
     @javax.persistence.Transient
     var historyPeriods : List<String>? = null //todo delete

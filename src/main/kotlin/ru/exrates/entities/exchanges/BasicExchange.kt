@@ -182,7 +182,7 @@ abstract class BasicExchange() : Exchange, Cloneable{
 
 }
 
-class ExchangeDTO(exchange: BasicExchange?, stat: Int = 200){
+class ExchangeDTO(exchange: BasicExchange?, stat: Int = ClientCodes.SUCCESS){
     val exId = exchange?.exId ?: 0
     val name = exchange?.name ?: ""
     @JsonSerialize(using = TimePeriodListSerializer::class)
