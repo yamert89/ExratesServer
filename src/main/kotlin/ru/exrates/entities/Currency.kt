@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import ru.exrates.entities.exchanges.BasicExchange
+import ru.exrates.entities.exchanges.EmptyExchange
 import ru.exrates.utils.ClientCodes
 import ru.exrates.utils.ExchangeSerializer
 import ru.exrates.utils.TimePeriodSerializer
@@ -60,7 +61,7 @@ class CurrencyPair() : Comparable<CurrencyPair>{
     @ManyToOne(fetch = FetchType.EAGER)
     @JsonSerialize(using = ExchangeSerializer::class)
     @JsonProperty("exchangeName")
-    var exchange: BasicExchange? = null
+    lateinit var exchange: BasicExchange
 
     var exId: Int = 0
 
@@ -88,7 +89,7 @@ class CurrencyPair() : Comparable<CurrencyPair>{
         baseCurrency = ""
         quoteCurrency = ""
         this.symbol = ""
-        this.exchange = null
+        this.exchange = EmptyExchange()
         exId = 0
         updateTimes = UpdateTimes(TimePeriod(Duration.ZERO, ""))
         status = errorCode

@@ -167,7 +167,7 @@ abstract class BasicExchange() : Exchange, Cloneable{
     override fun insertPair(pair: CurrencyPair) {
         pairs.add(pair)
         if(pairs.size > props.maxSize()) {
-            pairs.last().exchange = null
+            pairs.last().exchange = EmptyExchange()
             pairs.remove(pairs.last())
         }
     }
