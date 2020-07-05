@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.konan.properties.saveToFile
+import java.util.Properties
 plugins {
     java
     kotlin("jvm") version "1.3.72"
@@ -38,12 +40,24 @@ configure<JavaPluginConvention> {
 }
 
 tasks {
+    register<Task>("updateVersion"){
+        val props = Properties()
+        val file = file("$projectDir/src/main/resources/application.properties")
+        val inS = file.inputStream()
+        props.load(inS)
+        val file2 = org.jetbrains.kotlin.konan.file.File("$projectDir/src/main/resources/application.properties")
+
+        props["app.version"] = version
+        props.saveToFile(file2)
+    }
     compileKotlin {
+        dependsOn("updateVersion")
         kotlinOptions.jvmTarget = "1.8"
     }
     compileTestKotlin {
         kotlinOptions.jvmTarget = "1.8"
     }
+
     bootJar{
         archiveFileName.set("exratesServer.jar")
         launchScript()
@@ -60,7 +74,6 @@ tasks {
         delete(file(startFolder.path + archieveName))
         from(file("$buildD/$archieveName"))
         into(startFolder)
-
     }
 
 }

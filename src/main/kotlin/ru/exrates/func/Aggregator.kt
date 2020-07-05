@@ -57,6 +57,7 @@ class Aggregator(
 
     @PostConstruct
     fun init(){
+        logger.trace("STARTING EXRATES VERSION ${props.appVersion()}")
         exchangeNames.entries.forEach {
             var exchange: BasicExchange? = exchangeService.find(it.key)
             var pairsSize = 0

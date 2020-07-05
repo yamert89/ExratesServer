@@ -20,6 +20,8 @@ class Properties {
     private lateinit var initPoolSize: String
     @Value("\${app.taskHandler.maxPollSize}")
     private lateinit var maxPoolSize: String
+    @Value("\${app.version}")
+    private lateinit var appVersion: String
 
     fun timerPeriod() = timerPeriod.toLong()
     fun maxSize() = maxSize.toInt()
@@ -27,6 +29,7 @@ class Properties {
     fun isPersistenceStrategy() = persistenceSize.toBoolean()
     fun initPoolSize() = initPoolSize.toInt()
     fun maxPoolSize() = maxPoolSize.toInt()
+    fun appVersion() = appVersion
 }
 
 
