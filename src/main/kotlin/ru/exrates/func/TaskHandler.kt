@@ -1,10 +1,12 @@
 package ru.exrates.func
 
+import kotlinx.coroutines.*
 import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.stereotype.Service
 import ru.exrates.configs.Properties
+import java.lang.Runnable
 import java.util.concurrent.*
 
 @Service
@@ -29,17 +31,17 @@ class TaskHandler {
     /**
      * run many tasks in sync block mode
      **/
-    fun awaitTasks(vararg task: () -> Unit){
-        val queue = LinkedBlockingQueue<Future<*>>()
-        task.forEach { queue.add(executor.submit(it))}
-        var condition = true
-        while (condition){
-            queue.forEach {
-                if (!it.isDone){
-                    condition = true
-                    return@forEach
+    fun awaitTasks(vararg task: () -> Unit) = runBlocking{
+        val queue = LinkedBlockingQueue<Deferred<Unit>>()
+        withContext(executor.asCoroutineDispatcher()){
+            task.forEach {
+                val job = async{
+                    it.invoke()
                 }
-                condition = false
+                queue.add(job)
+            }
+            queue.forEach {
+                logger.debug("awaiting task ${it.await()} done")
             }
         }
     }
