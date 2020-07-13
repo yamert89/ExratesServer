@@ -2,6 +2,9 @@ package ru.exrates.entities.exchanges
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.hibernate.annotations.Fetch
@@ -27,6 +30,7 @@ import java.time.Duration
 import java.util.*
 import javax.annotation.PostConstruct
 import javax.persistence.*
+import javax.xml.bind.JAXBElement
 import kotlin.NullPointerException
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
@@ -101,18 +105,15 @@ abstract class BasicExchange() : Exchange, Cloneable{
     fun init(){
         logger.debug("Postconstruct super $name")
         taskTimeOut = TimePeriod(Duration.ofMillis(props.timerPeriod()), "BaseTaskTimeOut")
-        val task = object : TimerTask() {
-            override fun run() {
-                try {
+        GlobalScope.launch {
+            launch(taskHandler.getExecutorContext()){
+                delay(10000)
+                repeat(Int.MAX_VALUE){
                     task()
-                }catch (e: RuntimeException) {
-                    logger.debug(e)
-                    this.cancel()
+                    delay(props.timerPeriod())
                 }
             }
-
         }
-        Timer().schedule(task, 10000, props.timerPeriod())
     }
 
     fun task(){

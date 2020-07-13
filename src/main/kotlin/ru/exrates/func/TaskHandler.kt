@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service
 import ru.exrates.configs.Properties
 import java.lang.Runnable
 import java.util.concurrent.*
+import javax.annotation.PostConstruct
 
 @Service
 class TaskHandler {
@@ -17,13 +18,16 @@ class TaskHandler {
     private lateinit var logger: Logger
     private lateinit var executor: ThreadPoolExecutor
 
+    @PostConstruct
+    fun init(){
+        executor = ThreadPoolExecutor(properties.initPoolSize(), properties.maxPoolSize(), 1, TimeUnit.MINUTES, LinkedBlockingQueue<Runnable>())
+    }
+
 
     /**
     * run single task in async mode
      * */
     fun runTask(name: String = "unnamed", task: () -> Unit){
-        if (!this::executor.isInitialized) executor =
-            ThreadPoolExecutor(properties.initPoolSize(), properties.maxPoolSize(), 1, TimeUnit.MINUTES, LinkedBlockingQueue<Runnable>() )
         executor.execute(task)
         logger.debug("Task $name started....")
     }
@@ -33,7 +37,7 @@ class TaskHandler {
      **/
     fun awaitTasks(vararg task: () -> Unit) = runBlocking{
         val queue = LinkedBlockingQueue<Deferred<Unit>>()
-        withContext(executor.asCoroutineDispatcher()){
+        withContext(getExecutorContext()){
             task.forEach {
                 val job = async{
                     it.invoke()
@@ -45,5 +49,7 @@ class TaskHandler {
             }
         }
     }
+
+    fun getExecutorContext() = executor.asCoroutineDispatcher()
     //todo pool size needs empiric tests
 }

@@ -1,5 +1,9 @@
 package ru.exrates.func
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.config.BeanDefinition
@@ -86,13 +90,17 @@ class Aggregator(
 
             exchange = genericApplicationContext.getBean(it.value.java)
             exchanges[exchange.exId] = exchange
-             val task = object: TimerTask(){
-                 override fun run() {
-                     save()
-                 }
-             }
-            Timer().schedule(task, 300000, props.savingTimer())
         }
+        GlobalScope.launch {
+            launch(taskHandler.getExecutorContext()){
+                repeat(Int.MAX_VALUE){
+                    delay(props.savingTimer())
+                    save()
+                }
+            }
+
+        }
+        logger.debug("exit from init")
     }
 
     /*
