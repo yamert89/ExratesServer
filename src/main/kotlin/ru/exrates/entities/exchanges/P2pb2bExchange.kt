@@ -1,5 +1,8 @@
 package ru.exrates.entities.exchanges
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import org.springframework.beans.factory.getBean
 import org.springframework.boot.configurationprocessor.json.JSONObject
 import org.springframework.web.reactive.function.client.WebClient
@@ -13,6 +16,7 @@ import java.time.Duration
 import javax.annotation.PostConstruct
 import javax.persistence.DiscriminatorValue
 import javax.persistence.Entity
+import javax.xml.bind.JAXBElement
 import kotlin.Exception
 
 @Entity
@@ -95,12 +99,13 @@ class P2pb2bExchange: RestExchange() {
         super.priceChange(pair, interval)
         val debMills = System.currentTimeMillis()
         try{
-            val list = hashMapOf<TimePeriod, Mono<String>>()
-            changePeriods.forEach {
-                list[it] = singlePriceChangeRequest(pair, it)
-            }
-            list.forEach {
-                updateSinglePriceChange(pair, it.key, it.value)
+            GlobalScope.launch {
+                changePeriods.forEach {
+                    launch(taskHandler.getExecutorContext()){
+                        val mono = singlePriceChangeRequest(pair, it)
+                        updateSinglePriceChange(pair, it, mono)
+                    }
+                }
             }
         }catch (e: Exception){
             logger.error("Connect exception") //todo wrong operate

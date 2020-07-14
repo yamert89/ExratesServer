@@ -1,5 +1,7 @@
 package ru.exrates.entities.exchanges
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.springframework.beans.factory.getBean
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
@@ -121,11 +123,14 @@ class BinanceExchange(): RestExchange() {
         super.priceChange(pair, interval)
         val list = hashMapOf<TimePeriod, Mono<String>>()
         val debMills = System.currentTimeMillis()
-        changePeriods.forEach {
-            list[it] = singlePriceChangeRequest(pair, it)
+        GlobalScope.launch {
+            changePeriods.forEach {
+                launch(taskHandler.getExecutorContext()){
+                    val mono = singlePriceChangeRequest(pair, it)
+                    updateSinglePriceChange(pair, it, mono)
+                }
+            }
         }
-
-        list.forEach { updateSinglePriceChange(pair, it.key, it.value)}
         logger.debug("price change ends with ${System.currentTimeMillis() - debMills}")
     }
 
