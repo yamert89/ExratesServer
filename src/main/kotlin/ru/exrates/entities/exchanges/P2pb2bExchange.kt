@@ -3,6 +3,7 @@ package ru.exrates.entities.exchanges
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.getBean
 import org.springframework.boot.configurationprocessor.json.JSONObject
 import org.springframework.web.reactive.function.client.WebClient
@@ -99,18 +100,22 @@ class P2pb2bExchange: RestExchange() {
         super.priceChange(pair, interval)
         val debMills = System.currentTimeMillis()
         try{
-            GlobalScope.launch {
-                changePeriods.forEach {
-                    launch(taskHandler.getExecutorContext()){
-                        val mono = singlePriceChangeRequest(pair, it)
-                        updateSinglePriceChange(pair, it, mono)
+            runBlocking {
+                val job = launch{
+                    changePeriods.forEach {
+                        launch(taskHandler.getExecutorContext()){
+                            val mono = singlePriceChangeRequest(pair, it)
+                            updateSinglePriceChange(pair, it, mono)
+                        }
                     }
                 }
+                job.join()
+                logger.debug("price change ends with ${System.currentTimeMillis() - debMills}")
             }
         }catch (e: Exception){
             logger.error("Connect exception") //todo wrong operate
         }
-        logger.debug("price change ends with ${System.currentTimeMillis() - debMills}")
+
     }
 
     override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int) {

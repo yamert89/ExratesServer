@@ -114,6 +114,7 @@ abstract class BasicExchange() : Exchange, Cloneable{
                 }
             }
         }
+        changePeriods.sortBy { it.period }
     }
 
     fun task(){

@@ -1,7 +1,9 @@
 package ru.exrates.entities.exchanges
 
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.getBean
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
@@ -121,16 +123,19 @@ class BinanceExchange(): RestExchange() {
 
     override fun priceChange(pair: CurrencyPair, interval: TimePeriod) {
         super.priceChange(pair, interval)
-        val list = hashMapOf<TimePeriod, Mono<String>>()
         val debMills = System.currentTimeMillis()
-        GlobalScope.launch {
-            changePeriods.forEach {
-                launch(taskHandler.getExecutorContext()){
-                    val mono = singlePriceChangeRequest(pair, it)
-                    updateSinglePriceChange(pair, it, mono)
-                }
-            }
+      runBlocking {
+           val job = launch{
+               changePeriods.forEach {
+                   launch(taskHandler.getExecutorContext()){
+                       val mono = singlePriceChangeRequest(pair, it)
+                       updateSinglePriceChange(pair, it, mono)
+                   }
+               }
+           }
+           job.join()
         }
+
         logger.debug("price change ends with ${System.currentTimeMillis() - debMills}")
     }
 
@@ -163,7 +168,7 @@ class BinanceExchange(): RestExchange() {
         if (stateChecker.checkEmptyJson(entity, exId)) return
         val array = entity.getJSONArray(0)
         val oldVal = (array.getDouble(2) + array.getDouble(3)) / 2
-        val changeVol = if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1
+        val changeVol = if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1 //fixme full logging
         pair.putInPriceChange(period, BigDecimal(changeVol, MathContext(2)).toDouble())
         logger.trace("Change period updated in ${System.currentTimeMillis() - curMills} ms on ${pair.symbol} pair $name exch, interval = ${period.name} | change = $changeVol")
     }
