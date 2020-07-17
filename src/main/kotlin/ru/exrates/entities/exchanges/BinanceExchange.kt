@@ -128,8 +128,8 @@ class BinanceExchange(): RestExchange() {
            val job = launch{
                changePeriods.forEach {
                    launch(taskHandler.getExecutorContext()){
-                       val mono = singlePriceChangeRequest(pair, it)
-                       updateSinglePriceChange(pair, it, mono)
+                       //val mono = singlePriceChangeRequest(pair, it)
+                       updateSinglePriceChange(pair, it)
                    }
                }
            }
@@ -161,22 +161,26 @@ class BinanceExchange(): RestExchange() {
     * ******************************************************************************************************************
     * */
 
-    override fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod, stringResponse: Mono<String>){
+    override fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod){
+        val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?symbol=${pair.symbol}&interval=${period.name}&limit=1"
+        val stringResponse = restCore.stringRequest(uri)
         val curMills = System.currentTimeMillis()
         val res = stringResponse.block()
+        logger.trace("Response of $uri \n$res")
         val entity = JSONArray(res)
         if (stateChecker.checkEmptyJson(entity, exId)) return
         val array = entity.getJSONArray(0)
         val oldVal = (array.getDouble(2) + array.getDouble(3)) / 2
         val changeVol = if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1 //fixme full logging
+        logger.trace("single price change calculating: price: ${pair.price}, period: ${period.name}, oldVal: $oldVal, changeVol: $changeVol")
         pair.putInPriceChange(period, BigDecimal(changeVol, MathContext(2)).toDouble())
         logger.trace("Change period updated in ${System.currentTimeMillis() - curMills} ms on ${pair.symbol} pair $name exch, interval = ${period.name} | change = $changeVol")
     }
 
-    override fun singlePriceChangeRequest(pair: CurrencyPair, interval: TimePeriod): Mono<String> {
+    /*override fun singlePriceChangeRequest(pair: CurrencyPair, interval: TimePeriod): Mono<String> {
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?symbol=${pair.symbol}&interval=${interval.name}&limit=1"
-        return restCore.stringRequest(uri)
-    }
+        return
+    }*/
 
     /*
     * ******************************************************************************************************************

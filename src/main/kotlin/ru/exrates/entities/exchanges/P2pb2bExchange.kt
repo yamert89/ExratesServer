@@ -104,8 +104,8 @@ class P2pb2bExchange: RestExchange() {
                 val job = launch{
                     changePeriods.forEach {
                         launch(taskHandler.getExecutorContext()){
-                            val mono = singlePriceChangeRequest(pair, it)
-                            updateSinglePriceChange(pair, it, mono)
+                            //val mono = singlePriceChangeRequest(pair, it)
+                            updateSinglePriceChange(pair, it)
                         }
                     }
                 }
@@ -144,9 +144,12 @@ class P2pb2bExchange: RestExchange() {
     * ******************************************************************************************************************
     * */
 
-    override fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod, stringResponse: Mono<String>){
+    override fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod){
+        val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=${period.name}&limit=50"
+        val stringResponse = restCore.stringRequest(uri)
         val curMills = System.currentTimeMillis()
         val response = stringResponse.block()
+        logger.trace("Response of $uri \n$response")
         val entity = JSONObject(response)
         if (stateChecker.checkEmptyJson(entity, exId)) return
         val array = entity.getJSONArray("result")
@@ -167,9 +170,5 @@ class P2pb2bExchange: RestExchange() {
         }
     }
 
-    override fun singlePriceChangeRequest(pair: CurrencyPair, interval: TimePeriod): Mono<String> {
-        val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=${interval.name}&limit=50"
-        return restCore.stringRequest(uri)
-    }
 
 }

@@ -129,9 +129,7 @@ abstract class RestExchange : BasicExchange(){
     * */
 
 
-    abstract fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod, stringResponse: Mono<String>)
-
-    abstract fun singlePriceChangeRequest(pair: CurrencyPair, interval: TimePeriod): Mono<String>
+    abstract fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod)
 
 
     override fun toString(): String {

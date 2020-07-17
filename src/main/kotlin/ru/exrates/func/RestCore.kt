@@ -53,6 +53,7 @@ class RestCore(endPoint: String, private val banCode: Int, private val limitCode
     fun <T : Any> blockingStringRequest(uri: String, jsonType: KClass<T>): T{
         val req = stringRequest(uri)
         val resp = req.block()
+        logger.trace("Response of $uri\n$resp")
         try{
             return when(jsonType){
                 JSONObject::class -> JSONObject(resp) as T

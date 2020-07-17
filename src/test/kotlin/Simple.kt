@@ -9,8 +9,9 @@ import java.math.MathContext
 
 fun main(){
     //round()
-    val my = My()
-    println(ObjectMapper().writeValueAsString(my))
+    //val my = My()
+    //println(ObjectMapper().writeValueAsString(my))
+    varargFun()
 
 }
 fun round(){
@@ -22,7 +23,15 @@ fun round(){
     println(BigDecimal(changeVol, MathContext(2)))
 }
 
-
+fun varargFun(){
+    val s1 = "1"
+    val s2 = "2"
+    val s3 = "3"
+    argFun(*arrayOf(s1, s2, s3))
+}
+fun argFun(vararg args: String){
+    println(args.joinToString())
+}
 
 class MySerializer: JsonSerializer<MutableList<Any>>(){
     override fun serialize(value: MutableList<Any>?, gen: JsonGenerator?, serializers: SerializerProvider?) {

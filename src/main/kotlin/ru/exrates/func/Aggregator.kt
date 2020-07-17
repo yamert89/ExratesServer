@@ -160,7 +160,7 @@ class Aggregator(
                     { exch.priceHistory(it, period, 10) }
                 )
                 if (it.updateTimes.priceChangeTimeElapsed(timePeriod))
-                   awaitTasks({ restExch.updateSinglePriceChange(it, timePeriod, restExch.singlePriceChangeRequest(it, timePeriod)) })
+                   awaitTasks({ restExch.updateSinglePriceChange(it, timePeriod)})
                 //exch.priceChange(it, timePeriod, true) //todo needs try catch?
             }
 
@@ -244,6 +244,7 @@ class Aggregator(
         val ex = exchanges[cursPayload.exId]!!
         val values = HashMap<String, Double>()
         val requests = HashMap<CurrencyPair, Mono<String>>()
+        val functions = mutableListOf<() -> Unit>()
         val restEx = ex as RestExchange
         val timePeriod = ex.getTimePeriod(cursPayload.interval)
 
@@ -253,20 +254,20 @@ class Aggregator(
                 pair = exchangeService.findPair(it, ex) ?: throw java.lang.NullPointerException("pair $it not found in $ex")
                 ex.insertPair(pair)
             }
-            if (pair.updateTimes.priceChangeTimeElapsed(timePeriod)) requests[pair] = restEx.singlePriceChangeRequest(pair, timePeriod)
+            if (pair.updateTimes.priceChangeTimeElapsed(timePeriod)) {
+                functions.add {ex.currentPrice(pair, timePeriod)}
+                functions.add {restEx.updateSinglePriceChange(pair, timePeriod)}
+            }
             else logger.debug("SKIPPED: price change for ${timePeriod.name} in $pair")
         }
+        taskHandler.awaitTasks(*functions.toTypedArray())
 
-        requests.forEach {
-            with(taskHandler){
-                awaitTasks(
-                    { ex.currentPrice(it.key, timePeriod) },
-                    { restEx.updateSinglePriceChange(it.key, timePeriod, it.value) }
-                )
-            }
 
+        cursPayload.pairs.forEach {
             values[it.key.symbol] = it.key.getPriceChangeValue(ex.getTimePeriod(cursPayload.interval)) ?: Double.MAX_VALUE
         }
+
+
         return CursPeriod(cursPayload.interval, values)
     }
 
