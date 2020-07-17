@@ -61,7 +61,7 @@ class Aggregator(
 
     @PostConstruct
     fun init(){
-        logger.trace("STARTING EXRATES VERSION ${props.appVersion()}")
+        logger.trace("\n\nSTARTING EXRATES VERSION ${props.appVersion()}\n\n")
         exchangeNames.entries.forEach {
             var exchange: BasicExchange? = exchangeService.find(it.key)
             var pairsSize = 0
@@ -243,10 +243,10 @@ class Aggregator(
         if (!stateChecker.accessible(cursPayload.exId)) return CursPeriod("", mapOf(), ClientCodes.EXCHANGE_NOT_ACCESSIBLE)
         val ex = exchanges[cursPayload.exId]!!
         val values = HashMap<String, Double>()
-        val requests = HashMap<CurrencyPair, Mono<String>>()
         val functions = mutableListOf<() -> Unit>()
         val restEx = ex as RestExchange
         val timePeriod = ex.getTimePeriod(cursPayload.interval)
+        val pairs = mutableListOf<CurrencyPair>()
 
         cursPayload.pairs.forEach {
             var pair = ex.getPair(it)
@@ -254,6 +254,7 @@ class Aggregator(
                 pair = exchangeService.findPair(it, ex) ?: throw java.lang.NullPointerException("pair $it not found in $ex")
                 ex.insertPair(pair)
             }
+            pairs.add(pair)
             if (pair.updateTimes.priceChangeTimeElapsed(timePeriod)) {
                 functions.add {ex.currentPrice(pair, timePeriod)}
                 functions.add {restEx.updateSinglePriceChange(pair, timePeriod)}
@@ -263,10 +264,9 @@ class Aggregator(
         taskHandler.awaitTasks(*functions.toTypedArray())
 
 
-        cursPayload.pairs.forEach {
-            values[it.key.symbol] = it.key.getPriceChangeValue(ex.getTimePeriod(cursPayload.interval)) ?: Double.MAX_VALUE
+        pairs.forEach {
+             values[it.symbol] = it.getPriceChangeValue(ex.getTimePeriod(cursPayload.interval)) ?: Double.MAX_VALUE
         }
-
 
         return CursPeriod(cursPayload.interval, values)
     }
