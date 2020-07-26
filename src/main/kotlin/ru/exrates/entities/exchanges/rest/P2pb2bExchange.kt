@@ -1,13 +1,9 @@
-package ru.exrates.entities.exchanges
+package ru.exrates.entities.exchanges.rest
 
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.getBean
 import org.springframework.boot.configurationprocessor.json.JSONObject
-import org.springframework.web.reactive.function.client.WebClient
-import reactor.core.publisher.Mono
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.TimePeriod
 import ru.exrates.func.RestCore
@@ -17,7 +13,6 @@ import java.time.Duration
 import javax.annotation.PostConstruct
 import javax.persistence.DiscriminatorValue
 import javax.persistence.Entity
-import javax.xml.bind.JAXBElement
 import kotlin.Exception
 
 @Entity
@@ -33,15 +28,10 @@ class P2pb2bExchange: RestExchange() {
     @PostConstruct
     override fun init() {
         super.init()
-        if (!temporary){
-            restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, banCode, limitCode, serverError)
-            fillTop()
-            return
-        }
         initVars()
         restCore = applicationContext.getBean(RestCore::class, URL_ENDPOINT, banCode, limitCode, serverError)
         val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONObject::class)
-        pairsFill(entity, "result", "stock", "money", "name", "_")
+        pairsFill(entity.getJSONArray("result"), "stock", "money", "name", "_")
         temporary = false
         fillTop()
         logger.debug("exchange " + name + " initialized with " + pairs.size + " pairs")
@@ -49,7 +39,6 @@ class P2pb2bExchange: RestExchange() {
     }
 
     override fun initVars() {
-        super.initVars()
         exId = 2
         delimiter = "_"
         URL_ENDPOINT = "https://api.p2pb2b.io"

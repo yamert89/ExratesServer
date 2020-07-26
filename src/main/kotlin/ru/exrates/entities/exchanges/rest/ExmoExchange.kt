@@ -1,4 +1,4 @@
-package ru.exrates.entities.exchanges
+package ru.exrates.entities.exchanges.rest
 
 /*
 import org.springframework.web.reactive.function.client.WebClient

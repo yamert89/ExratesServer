@@ -1,26 +1,18 @@
-package ru.exrates.entities.exchanges
+package ru.exrates.entities.exchanges.rest
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.configurationprocessor.json.JSONArray
-import org.springframework.boot.configurationprocessor.json.JSONException
 import org.springframework.boot.configurationprocessor.json.JSONObject
-import org.springframework.http.HttpStatus
-import reactor.core.publisher.Mono
 import ru.exrates.entities.CurrencyPair
-import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
-import ru.exrates.entities.exchanges.secondary.BanException
-import ru.exrates.entities.exchanges.secondary.LimitExceededException
+import ru.exrates.entities.exchanges.BasicExchange
 import ru.exrates.func.RestCore
-import java.net.ConnectException
 import java.util.*
 import javax.annotation.PostConstruct
 import javax.persistence.DiscriminatorColumn
 import javax.persistence.Entity
 import javax.persistence.Inheritance
 import javax.persistence.InheritanceType
-import kotlin.reflect.KClass
 
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE) @DiscriminatorColumn(name = "EXCHANGE_TYPE")
@@ -52,6 +44,11 @@ abstract class RestExchange : BasicExchange(){
         if (id == 0 && !temporary) return
         logger.debug("Postconstuct concrete ${this::class.simpleName} id = $id" )
         super.init()
+        if (!temporary){
+            restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, banCode, limitCode, serverError)
+            fillTop()
+            return
+        }
         //todo needs exceptions?
 
     }
@@ -73,14 +70,12 @@ abstract class RestExchange : BasicExchange(){
         topPairs.addAll(all.entries.sortedByDescending { it.value }.map { it.key }.subList(0, topSize))
     }
 
-    protected fun initVars(){}
+    abstract fun initVars()
 
     protected fun limitsFill(entity: JSONObject){}
 
-    protected fun pairsFill(entity: JSONObject, symbolsKey: String, baseCurKey: String, quoteCurKey: String, symbolKey: String, delimiterForRemoving: String = ""){
-       val symbols = entity.getJSONArray(symbolsKey)
+    protected fun pairsFill(symbols: JSONArray, baseCurKey: String, quoteCurKey: String, symbolKey: String, delimiterForRemoving: String = ""){
        for(i in 0 until symbols.length()){
-           //pairs.plus(CurrencyPair(symbols.getJSONObject(i).getString("symbol"), this))
            val baseCur = symbols.getJSONObject(i).getString(baseCurKey)
            val quoteCur = symbols.getJSONObject(i).getString(quoteCurKey)
            var symbol = symbols.getJSONObject(i).getString(symbolKey)

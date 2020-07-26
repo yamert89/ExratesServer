@@ -1,13 +1,10 @@
-package ru.exrates.entities.exchanges
+package ru.exrates.entities.exchanges.rest
 
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.getBean
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
-import reactor.core.publisher.Mono
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
@@ -32,17 +29,11 @@ class BinanceExchange(): RestExchange() {
     @PostConstruct
     override fun init() {
         super.init()
-        if (!temporary){
-            restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, banCode, limitCode, serverError)
-            fillTop()
-            return
-        }
-
         initVars()
         restCore = applicationContext.getBean(RestCore::class, URL_ENDPOINT, banCode, limitCode, serverError)
         val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONObject::class)
         limitsFill(entity)
-        pairsFill(entity, "symbols", "baseAsset", "quoteAsset", "symbol")
+        pairsFill(entity.getJSONArray("symbols"), "baseAsset", "quoteAsset", "symbol")
         temporary = false
         fillTop()
         logger.debug("exchange " + name + " initialized with " + pairs.size + " pairs")
@@ -51,7 +42,6 @@ class BinanceExchange(): RestExchange() {
     }
 
     override fun initVars() {
-        super.initVars()
         exId = 1
         URL_ENDPOINT = "https://api.binance.com"
         URL_CURRENT_AVG_PRICE = "/api/v3/avgPrice" //todo /api/v3/ticker/price ?
