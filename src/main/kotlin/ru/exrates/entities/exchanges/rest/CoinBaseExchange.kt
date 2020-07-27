@@ -2,6 +2,7 @@ package ru.exrates.entities.exchanges.rest
 
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
+import reactor.core.publisher.Mono
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.BasicExchange
@@ -13,6 +14,7 @@ import javax.annotation.PostConstruct
 
 
 class CoinBaseExchange: RestExchange() {
+    private val pathId = "<product-id>"
 
     /*
    * ******************************************************************************************************************
@@ -38,6 +40,8 @@ class CoinBaseExchange: RestExchange() {
         URL_INFO = "/products"
         URL_PRICE_CHANGE = "/products/<product-id>/candles"
         URL_PING = URL_ENDPOINT
+        URL_TOP_STATISTIC = "/products/<product-id>/stats"
+        TOP_COUNT_FIELD = "volume"
         name = "coinbase"
         changePeriods.addAll(listOf(
             TimePeriod(Duration.ofSeconds(60), "1m"),
@@ -52,7 +56,13 @@ class CoinBaseExchange: RestExchange() {
     }
 
     override fun fillTop() {
-        topPairs.addAll(listOf(""))
+        val reqs = mutableMapOf<String, Mono<String>>()
+        pairs.forEach {
+            reqs[it.symbol] = restCore.stringRequest("$URL_ENDPOINT${URL_TOP_STATISTIC.replace(pathId, it.symbol)}")
+        }
+        val topSize = if(props.maxSize() < pairs.size) props.maxSize() else pairs.size
+        topPairs.addAll(reqs.mapValues { JSONObject(it.value.block()).getDouble(TOP_COUNT_FIELD) }
+            .entries.sortedByDescending { it.value }.map { it.key }.subList(0, topSize))
     }
 
     override fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod) {
