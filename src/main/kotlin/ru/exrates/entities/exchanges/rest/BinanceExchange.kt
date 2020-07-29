@@ -111,24 +111,6 @@ class BinanceExchange(): RestExchange() {
         logger.trace("Price updated on ${pair.symbol} pair $name exch| = $price")
     }
 
-    override fun priceChange(pair: CurrencyPair, interval: TimePeriod) {
-        super.priceChange(pair, interval)
-        val debMills = System.currentTimeMillis()
-      runBlocking {
-           val job = launch{
-               changePeriods.forEach {
-                   launch(taskHandler.getExecutorContext()){
-                       //val mono = singlePriceChangeRequest(pair, it)
-                       updateSinglePriceChange(pair, it)
-                   }
-               }
-           }
-           job.join()
-        }
-
-        logger.debug("price change ends with ${System.currentTimeMillis() - debMills}")
-    }
-
     override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int){
         super.priceHistory(pair, interval, limit)
         val symbol = "?symbol=" + pair.symbol

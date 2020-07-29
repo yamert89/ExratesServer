@@ -85,28 +85,6 @@ class P2pb2bExchange: RestExchange() {
 
     }
 
-    override fun priceChange(pair: CurrencyPair, interval: TimePeriod) {
-        super.priceChange(pair, interval)
-        val debMills = System.currentTimeMillis()
-        try{
-            runBlocking {
-                val job = launch{
-                    changePeriods.forEach {
-                        launch(taskHandler.getExecutorContext()){
-                            //val mono = singlePriceChangeRequest(pair, it)
-                            updateSinglePriceChange(pair, it)
-                        }
-                    }
-                }
-                job.join()
-                logger.debug("price change ends with ${System.currentTimeMillis() - debMills}")
-            }
-        }catch (e: Exception){
-            logger.error("Connect exception") //todo wrong operate
-        }
-
-    }
-
     override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int) {
         super.priceHistory(pair, interval, limit)
         val lim = if (limit < 50) 50 else limit

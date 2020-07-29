@@ -1,6 +1,8 @@
 package ru.exrates.entities.exchanges.rest
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
 import ru.exrates.entities.CurrencyPair
@@ -115,6 +117,20 @@ abstract class RestExchange : BasicExchange(){
             logger.trace("price change $pair req skipped")
             return
         }
+        val debMills = System.currentTimeMillis()
+        runBlocking {
+            val job = launch{
+                changePeriods.forEach {
+                    launch(taskHandler.getExecutorContext()){
+                        //val mono = singlePriceChangeRequest(pair, it)
+                        updateSinglePriceChange(pair, it)
+                    }
+                }
+            }
+            job.join()
+        }
+
+        logger.debug("price change ends with ${System.currentTimeMillis() - debMills}")
     }
 
     /*

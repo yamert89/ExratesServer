@@ -6,7 +6,10 @@ import reactor.core.publisher.Mono
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.BasicExchange
+import java.math.BigDecimal
+import java.math.MathContext
 import java.time.Duration
+import java.time.Instant
 import javax.annotation.PostConstruct
 
 //https://docs.pro.coinbase.com/#get-trades
@@ -36,7 +39,7 @@ class CoinBaseExchange: RestExchange() {
     override fun initVars() {
        exId = 3
         URL_ENDPOINT = "https://api.pro.coinbase.com"
-        URL_CURRENT_AVG_PRICE = "/products/<product-id>/ticker"
+        URL_CURRENT_AVG_PRICE = "/products/<product-id>/book"
         URL_INFO = "/products"
         URL_PRICE_CHANGE = "/products/<product-id>/candles"
         URL_PING = URL_ENDPOINT
@@ -65,8 +68,33 @@ class CoinBaseExchange: RestExchange() {
             .entries.sortedByDescending { it.value }.map { it.key }.subList(0, topSize))
     }
 
+    override fun currentPrice(pair: CurrencyPair, period: TimePeriod) {
+        super.currentPrice(pair, period)
+        val uri = "$URL_ENDPOINT${URL_CURRENT_AVG_PRICE.replace(pathId, pair.symbol)}?level=1"
+        val entity = restCore.blockingStringRequest(uri, JSONObject::class)
+        if (stateChecker.checkEmptyJson(entity, exId)) return
+        val bidPrice = entity.getJSONArray("bids").getJSONArray(0)[0].toString().toDouble()
+        val asksPrice = entity.getJSONArray("asks").getJSONArray(0)[0].toString().toDouble()
+        pair.price = (bidPrice + asksPrice) / 2
+    }
+
+
     override fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val end = Instant.now().toString()
+        val start = Instant.now().minus(period.period)
+        val uri = "$URL_ENDPOINT${URL_PRICE_CHANGE.replace(pathId, pair.symbol)}?start=$start&end=$end&granularity=${period.period.seconds}"
+        val stringResponse = restCore.stringRequest(uri)
+        val curMills = System.currentTimeMillis()
+        val res = stringResponse.block()
+        logger.trace("Response of $uri \n$res")
+        val entity = JSONArray(res)
+        if (stateChecker.checkEmptyJson(entity, exId)) return
+        val arr = entity.getJSONArray(0)
+        val oldVal = (arr.getDouble(1) + arr.getDouble(2)) / 2
+        val changeVol = if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1 //fixme full logging
+        logger.trace("single price change calculating: price: ${pair.price}, period: ${period.name}, oldVal: $oldVal, changeVol: $changeVol")
+        pair.putInPriceChange(period, BigDecimal(changeVol, MathContext(2)).toDouble())
+        logger.trace("Change period updated in ${System.currentTimeMillis() - curMills} ms on ${pair.symbol} pair $name exch, interval = ${period.name} | change = $changeVol")
     }
 
 
