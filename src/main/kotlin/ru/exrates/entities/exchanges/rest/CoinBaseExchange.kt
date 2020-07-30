@@ -78,6 +78,25 @@ class CoinBaseExchange: RestExchange() {
         pair.price = (bidPrice + asksPrice) / 2
     }
 
+    override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int) {
+        super.priceHistory(pair, interval, limit)
+        val end = Instant.now().toString()
+        val per = changePeriods.find { it.name == interval }!!.period
+        val start = Instant.now().minus(per.multipliedBy(limit.toLong()))
+        val uri = "$URL_ENDPOINT${URL_PRICE_CHANGE.replace(pathId, pair.symbol)}?start=$start&end=$end&granularity=${per.seconds}"
+        try{
+            val array = restCore.blockingStringRequest(uri, JSONArray::class)
+            if (stateChecker.checkEmptyJson(array, exId)) return
+
+            pair.priceHistory.clear()
+            for (i in 0 until limit){
+                val arr = array.getJSONArray(i)
+                pair.priceHistory.add((arr.getDouble(1) + arr.getDouble(2)) / 2)
+            }
+            logger.trace("price history updated on ${pair.symbol} pair $name exch")
+        }catch (e: Exception){logger.error("Connect exception")} //todo wrong operate
+    }
+
 
     override fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod) {
         val end = Instant.now().toString()
