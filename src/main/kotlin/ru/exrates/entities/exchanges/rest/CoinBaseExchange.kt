@@ -1,11 +1,15 @@
 package ru.exrates.entities.exchanges.rest
 
+import org.springframework.beans.factory.getBean
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
+import org.springframework.data.mapping.PreferredConstructor
+import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.BasicExchange
+import ru.exrates.func.RestCore
 import java.math.BigDecimal
 import java.math.MathContext
 import java.time.Duration
@@ -14,7 +18,7 @@ import javax.annotation.PostConstruct
 
 //https://docs.pro.coinbase.com/#get-trades
 //76019C0m0YLw0511 - coin base
-
+//fixme 3 request per second
 
 class CoinBaseExchange: RestExchange() {
     private val pathId = "<product-id>"
@@ -29,8 +33,9 @@ class CoinBaseExchange: RestExchange() {
     override fun init() {
         super.init()
         initVars()
+        restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, banCode, limitCode, serverError)
         val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONArray::class)
-        pairsFill(entity, "base_currency", "quote_currency", "id", "-")
+        pairsFill(entity, "base_currency", "quote_currency", "id")
         temporary = false
         fillTop()
         logger.debug("exchange " + name + " initialized with " + pairs.size + " pairs")

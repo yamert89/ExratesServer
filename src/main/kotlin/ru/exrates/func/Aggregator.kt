@@ -13,6 +13,7 @@ import ru.exrates.configs.Properties
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.exchanges.*
 import ru.exrates.entities.exchanges.rest.BinanceExchange
+import ru.exrates.entities.exchanges.rest.CoinBaseExchange
 import ru.exrates.entities.exchanges.rest.P2pb2bExchange
 import ru.exrates.entities.exchanges.rest.RestExchange
 import ru.exrates.entities.exchanges.secondary.ExchangeNamesObject
@@ -48,6 +49,7 @@ class Aggregator(
     init {
         exchangeNames["binance"] = BinanceExchange::class
         exchangeNames["p2pb2b"] = P2pb2bExchange::class
+        exchangeNames["coinbase"] = CoinBaseExchange::class
         //exchangeNames["exmoExchange"] = ExmoExchange::class
     }
 
@@ -61,45 +63,52 @@ class Aggregator(
     @PostConstruct
     fun init(){
         logger.trace("\n\nSTARTING EXRATES VERSION ${props.appVersion()}\n\n")
-        exchangeNames.entries.forEach {
-            var exchange: BasicExchange? = exchangeService.find(it.key)
-            var pairsSize = 0
-            if(exchange == null){
-                exchange = genericApplicationContext.getBean(it.value.java)
-                exchange = exchangeService.persist(exchange)
-                pairsSize = calculatePairsSize(exchange)
-                val pairs = TreeSet(exchange.pairs)
-                while(pairs.size > pairsSize) pairs.pollLast()
-                exchange.pairs.clear()
-                exchange.pairs.addAll(pairs)
-            }else{
-                pairsSize = calculatePairsSize(exchange)
-                if(exchange.pairs.size > pairsSize) {
-                    val pairs = exchangeService.fillPairs(pairsSize, exchange)
+        try {
+            exchangeNames.entries.forEach {
+                var exchange: BasicExchange? = exchangeService.find(it.key)
+                var pairsSize = 0
+                if(exchange == null){
+                    exchange = genericApplicationContext.getBean(it.value.java)
+                    exchange = exchangeService.persist(exchange)
+                    pairsSize = calculatePairsSize(exchange)
+                    val pairs = TreeSet(exchange.pairs)
+                    while(pairs.size > pairsSize) pairs.pollLast()
                     exchange.pairs.clear()
                     exchange.pairs.addAll(pairs)
+                }else{
+                    pairsSize = calculatePairsSize(exchange)
+                    if(exchange.pairs.size > pairsSize) {
+                        val pairs = exchangeService.fillPairs(pairsSize, exchange)
+                        exchange.pairs.clear()
+                        exchange.pairs.addAll(pairs)
+                    }
                 }
+
+                val finalExchange = exchange
+                val clazz: KClass<BasicExchange> = it.value as KClass<BasicExchange>
+                genericApplicationContext.registerBean(
+                    clazz.java, {finalExchange},
+                    arrayOf(BeanDefinitionCustomizer { def: BeanDefinition -> def.isPrimary = true }))
+
+                exchange = genericApplicationContext.getBean(it.value.java)
+                exchanges[exchange.exId] = exchange
             }
-
-            val finalExchange = exchange
-            val clazz: KClass<BasicExchange> = it.value as KClass<BasicExchange>
-            genericApplicationContext.registerBean(
-                clazz.java, {finalExchange},
-                arrayOf(BeanDefinitionCustomizer { def: BeanDefinition -> def.isPrimary = true }))
-
-            exchange = genericApplicationContext.getBean(it.value.java)
-            exchanges[exchange.exId] = exchange
-        }
-        GlobalScope.launch {
-            launch(taskHandler.getExecutorContext()){
-                repeat(Int.MAX_VALUE){
-                    delay(props.savingTimer())
-                    save()
+            GlobalScope.launch {
+                launch(taskHandler.getExecutorContext()){
+                    repeat(Int.MAX_VALUE){
+                        delay(props.savingTimer())
+                        save()
+                    }
                 }
-            }
 
+            }
+            logger.trace("Initialization succes")
+        }catch (e: Exception){
+            logger.error(e)
+            logger.error("Failed initialization")
         }
-        logger.debug("exit from init")
+
+
     }
 
     /*

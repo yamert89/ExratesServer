@@ -9,7 +9,9 @@ import org.springframework.context.annotation.*
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.transaction.annotation.EnableTransactionManagement
 import ru.exrates.entities.exchanges.rest.BinanceExchange
+import ru.exrates.entities.exchanges.rest.CoinBaseExchange
 import ru.exrates.entities.exchanges.rest.P2pb2bExchange
+import ru.exrates.func.RestCore
 
 /*import ru.exrates.entities.exchanges.ExmoExchange*/
 
@@ -27,6 +29,14 @@ class App {
     @Lazy
     fun p2pb2bExchange() : P2pb2bExchange =
         P2pb2bExchange()
+
+    @Bean
+    @Lazy
+    fun coinbaseExchange() = CoinBaseExchange()
+
+    @Bean
+    @Scope(value = "prototype")
+    fun restCore(endPoint: String, banCode: Int, l: Int, s:Int ) = RestCore(endPoint, banCode, l, s)
 
     /*@Bean
     @Lazy

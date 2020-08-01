@@ -20,9 +20,9 @@ import java.net.ConnectException
 import javax.persistence.Transient
 import kotlin.reflect.KClass
 
-@Service
-@Scope("prototype")
-class RestCore(endPoint: String, private val banCode: Int, private val limitCode: Int, private val serverError: Int) {
+/*@Service
+@Scope("prototype")*/
+class RestCore(private val endPoint: String, private val banCode: Int, private val limitCode: Int, private val serverError: Int) {
 
     var webClient: WebClient = WebClient.create(endPoint)
 

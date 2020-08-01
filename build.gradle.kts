@@ -3,8 +3,8 @@ import java.util.Properties
 plugins {
     java
     kotlin("jvm") version "1.3.72"
-    id("org.springframework.boot") version "2.1.9.RELEASE"
-    id("io.spring.dependency-management") version "1.0.8.RELEASE"
+    id("org.springframework.boot") version "2.3.2.RELEASE"
+    id("io.spring.dependency-management") version "1.0.9.RELEASE"
     //id("org.jetbrains.kotlin.plugin.allopen") version "1.3.61"
     id("org.jetbrains.kotlin.plugin.spring") version "1.3.72"
 }
