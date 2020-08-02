@@ -1,23 +1,23 @@
 package ru.exrates.func
 
-import net.bytebuddy.asm.Advice
-import org.apache.logging.log4j.LogManager
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONException
 import org.springframework.boot.configurationprocessor.json.JSONObject
-import org.springframework.context.annotation.Scope
 import org.springframework.http.HttpStatus
-import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import reactor.core.publisher.toFlux
 import ru.exrates.entities.LimitType
-import ru.exrates.entities.exchanges.BasicExchange
 import ru.exrates.entities.exchanges.secondary.BanException
 import ru.exrates.entities.exchanges.secondary.LimitExceededException
 import java.net.ConnectException
-import javax.persistence.Transient
+import java.time.Duration
 import kotlin.reflect.KClass
 
 /*@Service
@@ -30,7 +30,7 @@ class RestCore(private val endPoint: String, private val banCode: Int, private v
     protected lateinit var logger: Logger
 
 
-    fun <T: Any> request(uri: String, clazz: KClass<T>, connectionExceptionMessage: String = "Server error: $uri") : Mono<T> {
+    private fun <T: Any> monoRequest(uri: String, clazz: KClass<T>, connectionExceptionMessage: String = "Server error: $uri") : Mono<T> {
         logger.trace("Try request to : $uri")
         val resp = webClient.get().uri(uri).retrieve()
             .onStatus(HttpStatus::is4xxClientError) { resp ->
@@ -46,8 +46,18 @@ class RestCore(private val endPoint: String, private val banCode: Int, private v
         return resp
     }
 
+    fun <T: Any> patchRequests(uries: List<String>, clazz: KClass<T>): Flux<T> {
+        return uries.toFlux().delayElements(Duration.ofMillis(300)).flatMap {
+            webClient.get().uri(it).retrieve().bodyToMono(clazz.java).doOnEach {p ->
+                logger.debug("patch request element: $it")
+            }
+        }.doOnNext { logger.debug("Patch response: $it") }
+    }
 
-    fun stringRequest(uri: String, connectionExceptionMessage: String = "Server error: $uri") = request(uri, String::class, connectionExceptionMessage)
+    fun patchStringRequests(uries: List<String>) = patchRequests(uries, String::class)
+
+
+    fun stringRequest(uri: String, connectionExceptionMessage: String = "Server error: $uri") = monoRequest(uri, String::class, connectionExceptionMessage)
 
     @Suppress("UNCHECKED_CAST")
     fun <T : Any> blockingStringRequest(uri: String, jsonType: KClass<T>): T{

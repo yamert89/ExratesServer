@@ -64,13 +64,25 @@ class CoinBaseExchange: RestExchange() {
     }
 
     override fun fillTop() {
-        val reqs = mutableMapOf<String, Mono<String>>()
+        val list = pairs.map { it.symbol }
+        /*val reqs = mutableMapOf<String, Mono<String>>()
         pairs.forEach {
             reqs[it.symbol] = restCore.stringRequest("$URL_ENDPOINT${URL_TOP_STATISTIC.replace(pathId, it.symbol)}")
         }
         val topSize = if(props.maxSize() < pairs.size) props.maxSize() else pairs.size
         topPairs.addAll(reqs.mapValues { JSONObject(it.value.block()).getDouble(TOP_COUNT_FIELD) }
-            .entries.sortedByDescending { it.value }.map { it.key }.subList(0, topSize))
+            .entries.sortedByDescending { it.value }.map { it.key }.subList(0, topSize))*/
+        val topSize = if(props.maxSize() < pairs.size) props.maxSize() else pairs.size
+
+        val flux = restCore.patchStringRequests(pairs.map { "$URL_ENDPOINT${URL_TOP_STATISTIC.replace(pathId, it.symbol)}" })
+        flux.subscribe()
+        val vList = flux.collectList().block().map {JSONObject(it).getDouble(TOP_COUNT_FIELD)  }
+        val map = mutableMapOf<String, Double>()
+        for(i in list.indices){
+            map[list[i]] = vList[i]
+        }
+       topPairs.addAll(map.entries.sortedByDescending { it.value }.map { it.key }.subList(0, topSize))
+
     }
 
     override fun currentPrice(pair: CurrencyPair, period: TimePeriod) {
