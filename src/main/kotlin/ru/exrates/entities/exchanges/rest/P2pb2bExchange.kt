@@ -28,8 +28,13 @@ class P2pb2bExchange: RestExchange() {
     @PostConstruct
     override fun init() {
         super.init()
+        if (!temporary){
+            restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, banCode, limitCode, serverError)
+            fillTop()
+            return
+        }
         initVars()
-        restCore = applicationContext.getBean(RestCore::class, URL_ENDPOINT, banCode, limitCode, serverError)
+        restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, banCode, limitCode, serverError)
         val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONObject::class)
         pairsFill(entity.getJSONArray("result"), "stock", "money", "name", "_")
         temporary = false
@@ -45,7 +50,7 @@ class P2pb2bExchange: RestExchange() {
         URL_CURRENT_AVG_PRICE = "/api/v2/public/ticker"
         URL_INFO = "/api/v2/public/markets"
         URL_PRICE_CHANGE = "/api/v2/public/market/kline"
-        URL_PING = "/api/v2/public/ticker?market=ETH_BTC"
+        URL_PING = "$URL_ENDPOINT/api/v2/public/ticker?market=ETH_BTC"
         URL_TOP_STATISTIC = ""
         TOP_COUNT_FIELD = ""
         TOP_SYMBOL_FIELD = ""

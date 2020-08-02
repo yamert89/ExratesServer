@@ -2,6 +2,7 @@ package ru.exrates.func
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.newFixedThreadPoolContext
 import kotlinx.coroutines.runBlocking
 import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
@@ -9,22 +10,33 @@ import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONException
 import org.springframework.boot.configurationprocessor.json.JSONObject
 import org.springframework.http.HttpStatus
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.publisher.toFlux
+import reactor.core.scheduler.Schedulers
 import ru.exrates.entities.LimitType
 import ru.exrates.entities.exchanges.secondary.BanException
 import ru.exrates.entities.exchanges.secondary.LimitExceededException
 import java.net.ConnectException
 import java.time.Duration
+import java.util.concurrent.Executors
+import java.util.concurrent.ThreadPoolExecutor
 import kotlin.reflect.KClass
 
 /*@Service
 @Scope("prototype")*/
 class RestCore(private val endPoint: String, private val banCode: Int, private val limitCode: Int, private val serverError: Int) {
 
-    var webClient: WebClient = WebClient.create(endPoint)
+    var webClient: WebClient =  WebClient.builder()
+        .baseUrl(endPoint)
+        .exchangeStrategies { builder ->
+            builder.codecs {
+                it.defaultCodecs().maxInMemorySize(2 * 1024 * 1024)
+            }
+        }
+        .build()
 
     @Autowired
     protected lateinit var logger: Logger
@@ -47,9 +59,9 @@ class RestCore(private val endPoint: String, private val banCode: Int, private v
     }
 
     fun <T: Any> patchRequests(uries: List<String>, clazz: KClass<T>): Flux<T> {
-        return uries.toFlux().delayElements(Duration.ofMillis(300)).flatMap {
+        return uries.toFlux().delayElements(Duration.ofMillis(1000), Schedulers.single()).flatMap {
             webClient.get().uri(it).retrieve().bodyToMono(clazz.java).doOnEach {p ->
-                logger.debug("patch request element: $it")
+                if(p.isOnNext) logger.debug("patch request element: $it")
             }
         }.doOnNext { logger.debug("Patch response: $it") }
     }

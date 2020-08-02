@@ -29,8 +29,13 @@ class BinanceExchange(): RestExchange() {
     @PostConstruct
     override fun init() {
         super.init()
+        if (!temporary){
+            restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, banCode, limitCode, serverError)
+            fillTop()
+            return
+        }
         initVars()
-        restCore = applicationContext.getBean(RestCore::class, URL_ENDPOINT, banCode, limitCode, serverError)
+        restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, banCode, limitCode, serverError)
         val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONObject::class)
         limitsFill(entity)
         pairsFill(entity.getJSONArray("symbols"), "baseAsset", "quoteAsset", "symbol")
@@ -47,7 +52,7 @@ class BinanceExchange(): RestExchange() {
         URL_CURRENT_AVG_PRICE = "/api/v3/avgPrice" //todo /api/v3/ticker/price ?
         URL_INFO = "/api/v1/exchangeInfo"
         URL_PRICE_CHANGE = "/api/v1/klines"
-        URL_PING = "/api/v1/ping"
+        URL_PING = "$URL_ENDPOINT/api/v1/ping"
         URL_ORDER = "/api/v3/depth"
         URL_TOP_STATISTIC = "/api/v3/ticker/24hr"
         TOP_COUNT_FIELD = "count"

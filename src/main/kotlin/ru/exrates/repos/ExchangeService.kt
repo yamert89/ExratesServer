@@ -1,6 +1,5 @@
 package ru.exrates.repos
 
-import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.PageRequest
@@ -70,8 +69,9 @@ class ExchangeService(@Autowired private val exchangeRepository: ExchangeReposit
         val curPairs = currencyRepository.findByExchangeAndSymbolIn(exchange, reqPairs)
         if (curPairs.size < amount){
             val diffNumb = amount - curPairs.size
-            curPairs.addAll(currencyRepository.findTopBySymbolNotIn(exchange.topPairs, PageRequest.of(1, diffNumb)))
+            curPairs.addAll(currencyRepository.f(exchange, exchange.topPairs, PageRequest.of(0, diffNumb)))
         }
+
         return curPairs
     }
 

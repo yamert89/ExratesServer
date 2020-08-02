@@ -46,11 +46,7 @@ abstract class RestExchange : BasicExchange(){
         if (id == 0 && !temporary) return
         logger.debug("Postconstuct concrete ${this::class.simpleName} id = $id" )
         super.init()
-        if (!temporary){
-            restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, banCode, limitCode, serverError)
-            fillTop()
-            return
-        }
+
         //todo needs exceptions?
 
     }
@@ -94,8 +90,8 @@ abstract class RestExchange : BasicExchange(){
         if(id == 0) {
             return
         }
-        logger.debug("task ping try...$URL_ENDPOINT$URL_PING")
-        restCore.stringRequest("$URL_ENDPOINT$URL_PING").block()
+        logger.debug("task ping try...$URL_PING")
+        restCore.stringRequest(URL_PING).block()
         super.task()
     }
 

@@ -15,11 +15,15 @@ import java.math.MathContext
 import java.time.Duration
 import java.time.Instant
 import javax.annotation.PostConstruct
+import javax.persistence.DiscriminatorValue
+import javax.persistence.Entity
 
 //https://docs.pro.coinbase.com/#get-trades
 //76019C0m0YLw0511 - coin base
 //fixme 3 request per second
 
+@Entity
+@DiscriminatorValue("coinbase")
 class CoinBaseExchange: RestExchange() {
     private val pathId = "<product-id>"
 
@@ -32,6 +36,11 @@ class CoinBaseExchange: RestExchange() {
     @PostConstruct
     override fun init() {
         super.init()
+        if (!temporary){
+            restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, banCode, limitCode, serverError)
+            fillTop()
+            return
+        }
         initVars()
         restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, banCode, limitCode, serverError)
         val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONArray::class)
@@ -44,10 +53,10 @@ class CoinBaseExchange: RestExchange() {
     override fun initVars() {
        exId = 3
         URL_ENDPOINT = "https://api.pro.coinbase.com"
+        URL_PING = "/time"
         URL_CURRENT_AVG_PRICE = "/products/<product-id>/book"
         URL_INFO = "/products"
         URL_PRICE_CHANGE = "/products/<product-id>/candles"
-        URL_PING = URL_ENDPOINT
         URL_TOP_STATISTIC = "/products/<product-id>/stats"
         TOP_COUNT_FIELD = "volume"
         name = "coinbase"
@@ -73,8 +82,9 @@ class CoinBaseExchange: RestExchange() {
         topPairs.addAll(reqs.mapValues { JSONObject(it.value.block()).getDouble(TOP_COUNT_FIELD) }
             .entries.sortedByDescending { it.value }.map { it.key }.subList(0, topSize))*/
         val topSize = if(props.maxSize() < pairs.size) props.maxSize() else pairs.size
+        val urls = pairs.map { "$URL_ENDPOINT${URL_TOP_STATISTIC.replace(pathId, it.symbol)}" }
 
-        val flux = restCore.patchStringRequests(pairs.map { "$URL_ENDPOINT${URL_TOP_STATISTIC.replace(pathId, it.symbol)}" })
+        val flux = restCore.patchStringRequests(urls)
         flux.subscribe()
         val vList = flux.collectList().block().map {JSONObject(it).getDouble(TOP_COUNT_FIELD)  }
         val map = mutableMapOf<String, Double>()

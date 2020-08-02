@@ -63,35 +63,42 @@ class Aggregator(
     @PostConstruct
     fun init(){
         logger.trace("\n\nSTARTING EXRATES VERSION ${props.appVersion()}\n\n")
-        try {
+        var key = ""
+
             exchangeNames.entries.forEach {
-                var exchange: BasicExchange? = exchangeService.find(it.key)
-                var pairsSize = 0
-                if(exchange == null){
-                    exchange = genericApplicationContext.getBean(it.value.java)
-                    exchange = exchangeService.persist(exchange)
-                    pairsSize = calculatePairsSize(exchange)
-                    val pairs = TreeSet(exchange.pairs)
-                    while(pairs.size > pairsSize) pairs.pollLast()
-                    exchange.pairs.clear()
-                    exchange.pairs.addAll(pairs)
-                }else{
-                    pairsSize = calculatePairsSize(exchange)
-                    if(exchange.pairs.size > pairsSize) {
+                try {
+                    var exchange: BasicExchange? = exchangeService.find(it.key)
+                    key = it.key
+                    var pairsSize = 0
+                    if(exchange == null){
+                        exchange = genericApplicationContext.getBean(it.value.java)
+                        exchange = exchangeService.persist(exchange)
+                        pairsSize = calculatePairsSize(exchange)
+                        val pairs = TreeSet(exchange.pairs)
+                        while(pairs.size > pairsSize) pairs.pollLast()
+                        exchange.pairs.clear()
+                        exchange.pairs.addAll(pairs)
+                    }else{
+                        pairsSize = calculatePairsSize(exchange)
                         val pairs = exchangeService.fillPairs(pairsSize, exchange)
                         exchange.pairs.clear()
                         exchange.pairs.addAll(pairs)
                     }
+
+                    val finalExchange = exchange
+                    val clazz: KClass<BasicExchange> = it.value as KClass<BasicExchange>
+                    genericApplicationContext.registerBean(
+                        clazz.java, {finalExchange},
+                        arrayOf(BeanDefinitionCustomizer { def: BeanDefinition -> def.isPrimary = true }))
+
+                    exchange = genericApplicationContext.getBean(it.value.java)
+                    exchanges[exchange.exId] = exchange
+                    logger.trace("Initialization $key success")
+                }catch (e: Exception){
+                    logger.error(e)
+                    logger.error("Failed $key initialization")
                 }
 
-                val finalExchange = exchange
-                val clazz: KClass<BasicExchange> = it.value as KClass<BasicExchange>
-                genericApplicationContext.registerBean(
-                    clazz.java, {finalExchange},
-                    arrayOf(BeanDefinitionCustomizer { def: BeanDefinition -> def.isPrimary = true }))
-
-                exchange = genericApplicationContext.getBean(it.value.java)
-                exchanges[exchange.exId] = exchange
             }
             GlobalScope.launch {
                 launch(taskHandler.getExecutorContext()){
@@ -102,12 +109,6 @@ class Aggregator(
                 }
 
             }
-            logger.trace("Initialization succes")
-        }catch (e: Exception){
-            logger.error(e)
-            logger.error("Failed initialization")
-        }
-
 
     }
 
