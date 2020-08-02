@@ -20,7 +20,7 @@ import javax.persistence.Entity
 
 //https://docs.pro.coinbase.com/#get-trades
 //76019C0m0YLw0511 - coin base
-//fixme 3 request per second
+//fixme 3 request per second !!! limit requests
 
 @Entity
 @DiscriminatorValue("coinbase")
