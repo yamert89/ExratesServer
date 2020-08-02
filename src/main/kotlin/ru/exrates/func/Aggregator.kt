@@ -93,7 +93,7 @@ class Aggregator(
 
                     exchange = genericApplicationContext.getBean(it.value.java)
                     exchanges[exchange.exId] = exchange
-                    logger.trace("Initialization $key success")
+                    logger.trace("Initialization $key success with ${exchange.pairs.size} pairs")
                 }catch (e: Exception){
                     logger.error(e)
                     logger.error("Failed $key initialization")

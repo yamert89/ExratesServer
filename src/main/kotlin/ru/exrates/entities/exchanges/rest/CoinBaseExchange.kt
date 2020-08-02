@@ -73,6 +73,7 @@ class CoinBaseExchange: RestExchange() {
     }
 
     override fun fillTop() {
+        if (props.skipTop()) return
         val list = pairs.map { it.symbol }
         /*val reqs = mutableMapOf<String, Mono<String>>()
         pairs.forEach {

@@ -59,7 +59,7 @@ class RestCore(private val endPoint: String, private val banCode: Int, private v
     }
 
     fun <T: Any> patchRequests(uries: List<String>, clazz: KClass<T>): Flux<T> {
-        return uries.toFlux().delayElements(Duration.ofMillis(1000), Schedulers.single()).flatMap {
+        return uries.toFlux().delayElements(Duration.ofMillis((1000 / 3) * 2), Schedulers.single()).flatMap {//todo limit period
             webClient.get().uri(it).retrieve().bodyToMono(clazz.java).doOnEach {p ->
                 if(p.isOnNext) logger.debug("patch request element: $it")
             }

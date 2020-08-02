@@ -36,7 +36,7 @@ class P2pb2bExchange: RestExchange() {
         initVars()
         restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, banCode, limitCode, serverError)
         val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONObject::class)
-        pairsFill(entity.getJSONArray("result"), "stock", "money", "name", "_")
+        pairsFill(entity.getJSONArray("result"), "stock", "money", "name")
         temporary = false
         fillTop()
         logger.debug("exchange " + name + " initialized with " + pairs.size + " pairs")

@@ -52,6 +52,7 @@ abstract class RestExchange : BasicExchange(){
     }
 
     override fun fillTop() {
+        if (props.skipTop()) return
         val pairs = restCore.blockingStringRequest(URL_TOP_STATISTIC, JSONArray::class)
         if (pairs.length() == 0) return
         val all = HashMap<String, Int>()
@@ -72,12 +73,11 @@ abstract class RestExchange : BasicExchange(){
 
     protected fun limitsFill(entity: JSONObject){}
 
-    protected fun pairsFill(symbols: JSONArray, baseCurKey: String, quoteCurKey: String, symbolKey: String, delimiterForRemoving: String = ""){
+    protected fun pairsFill(symbols: JSONArray, baseCurKey: String, quoteCurKey: String, symbolKey: String){
        for(i in 0 until symbols.length()){
            val baseCur = symbols.getJSONObject(i).getString(baseCurKey)
            val quoteCur = symbols.getJSONObject(i).getString(quoteCurKey)
            var symbol = symbols.getJSONObject(i).getString(symbolKey)
-           if(delimiterForRemoving.isNotEmpty()) symbol = symbol.replace(delimiterForRemoving, "")
            pairs.add(CurrencyPair(baseCur, quoteCur, symbol, this))
        }
     }
