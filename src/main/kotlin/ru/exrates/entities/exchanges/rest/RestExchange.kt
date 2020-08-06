@@ -1,14 +1,17 @@
 package ru.exrates.entities.exchanges.rest
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
 import ru.exrates.entities.CurrencyPair
+import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.BasicExchange
 import ru.exrates.func.RestCore
+import java.time.Duration
 import java.util.*
 import javax.annotation.PostConstruct
 import javax.persistence.DiscriminatorColumn
@@ -121,6 +124,7 @@ abstract class RestExchange : BasicExchange(){
                         //val mono = singlePriceChangeRequest(pair, it)
                         updateSinglePriceChange(pair, it)
                     }
+                    delay(requestDelay())
                 }
             }
             job.join()
@@ -138,10 +142,15 @@ abstract class RestExchange : BasicExchange(){
 
     abstract fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod)
 
+    fun limited() = limits.any { it.type == LimitType.REQUEST }
+
+    fun requestDelay(): Long{
+        val l = limits.find { it.type == LimitType.REQUEST } ?: return 0
+        return l.interval.toMillis() / l.limitValue
+    }
 
     override fun toString(): String {
         return "${this::class.simpleName} exId = $exId pairs: ${pairs.joinToString{it.symbol}}\n"
     }
-
 
 }

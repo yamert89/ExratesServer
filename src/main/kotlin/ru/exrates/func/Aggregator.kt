@@ -164,7 +164,7 @@ class Aggregator(
         val restExch = exch as RestExchange
         reqPairs.forEach {
             with(taskHandler){
-                awaitTasks(
+                awaitTasks( exch.requestDelay(),
                     { exch.currentPrice(it, timePeriod) },
                     { exch.priceHistory(it, period, 10) }
                 )
@@ -199,7 +199,7 @@ class Aggregator(
                 p.exchange = exchange
                 // p = exchange.getPair(pair.symbol)!!
                 with(taskHandler){
-                    awaitTasks(
+                    awaitTasks(exchange.castToRestExchange().requestDelay(),
                         { exchange.currentPrice(p, exchange.taskTimeOut) },
                         { exchange.priceChange(p, exchange.taskTimeOut) },
                         { exchange.priceHistory(p, historyInterval ?:
@@ -224,7 +224,7 @@ class Aggregator(
             ex.insertPair(pair!!)
         }
         with(taskHandler){
-            awaitTasks(
+            awaitTasks(ex.castToRestExchange().requestDelay(),
                 {ex.currentPrice(pair, ex.taskTimeOut)},
                 {ex.priceChange(pair, ex.taskTimeOut)},
                 {ex.priceHistory(pair, currentInterval, 10)}  //todo right?

@@ -71,6 +71,8 @@ class P2pb2bExchange: RestExchange() {
             "LTC_BTC", "XLM_BTC", "WAVES_BTC", "WTC_BTC", "GAS_BTC", "YAP_BTC", "DOGE_BTC", "ENJ_BTC", "HNC_BTC"))
     }
 
+
+
     /*
     * ******************************************************************************************************************
     *       Update methods
@@ -106,7 +108,10 @@ class P2pb2bExchange: RestExchange() {
                 pair.priceHistory.add((arr.getDouble(1) + arr.getDouble(2)) / 2)
             }
             logger.trace("price history updated on ${pair.symbol} pair $name exch")
-        }catch (e: Exception){logger.error("Connect exception")} //todo wrong operate
+        }catch (e: Exception){
+            logger.error("Connect exception")
+            logger.error(e)
+        } //todo wrong operate
 
     }
 

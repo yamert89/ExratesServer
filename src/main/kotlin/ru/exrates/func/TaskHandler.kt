@@ -32,16 +32,18 @@ class TaskHandler {
         logger.debug("Task $name started....")
     }
 
+
     /**
      * run many tasks in sync block mode
      **/
-    fun awaitTasks(vararg task: () -> Unit) = runBlocking{
+    fun awaitTasks(delay: Long, vararg task: () -> Unit) = runBlocking{
         val queue = LinkedBlockingQueue<Deferred<Unit>>()
         withContext(getExecutorContext()){
             task.forEach {
                 val job = async{
                     it.invoke()
                 }
+                if (delay > 0) delay(delay)
                 queue.add(job)
             }
             queue.forEach {
@@ -49,6 +51,8 @@ class TaskHandler {
             }
         }
     }
+
+    fun awaitTasks(vararg task: () -> Unit) = awaitTasks(0L, *task)
 
     fun getExecutorContext() = executor.asCoroutineDispatcher()
     //todo pool size needs empiric tests

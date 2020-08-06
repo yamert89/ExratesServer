@@ -10,7 +10,7 @@ import javax.persistence.*
 class Limit(){
     lateinit var name: String
     @Column(length = 20) @Enumerated(value = EnumType.STRING)
-    private lateinit var type: LimitType
+    lateinit var type: LimitType
     @Convert(converter = DurationConverter::class) @Column(name = "_interval")
     lateinit var interval: Duration
     var limitValue: Int = 0

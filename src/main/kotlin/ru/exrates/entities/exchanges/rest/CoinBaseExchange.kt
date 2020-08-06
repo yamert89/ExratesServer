@@ -7,8 +7,10 @@ import org.springframework.data.mapping.PreferredConstructor
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
 import ru.exrates.entities.CurrencyPair
+import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.BasicExchange
+import ru.exrates.entities.exchanges.secondary.Limit
 import ru.exrates.func.RestCore
 import java.math.BigDecimal
 import java.math.MathContext
@@ -96,6 +98,13 @@ class CoinBaseExchange: RestExchange() {
 
     }
 
+    override fun limitsFill(entity: JSONObject) {
+        super.limitsFill(entity)
+        limits.add(
+            Limit("SECOND", LimitType.REQUEST, Duration.ofSeconds(1), 3)
+        )
+    }
+
     override fun currentPrice(pair: CurrencyPair, period: TimePeriod) {
         super.currentPrice(pair, period)
         val uri = "$URL_ENDPOINT${URL_CURRENT_AVG_PRICE.replace(pathId, pair.symbol)}?level=1"
@@ -117,12 +126,15 @@ class CoinBaseExchange: RestExchange() {
             if (stateChecker.checkEmptyJson(array, exId)) return
 
             pair.priceHistory.clear()
-            for (i in 0 until limit){
+            for (i in 0 until array.length()){ //fixme data is incomplete
                 val arr = array.getJSONArray(i)
                 pair.priceHistory.add((arr.getDouble(1) + arr.getDouble(2)) / 2)
             }
             logger.trace("price history updated on ${pair.symbol} pair $name exch")
-        }catch (e: Exception){logger.error("Connect exception")} //todo wrong operate
+        }catch (e: Exception){
+            logger.error("Connect exception")
+            logger.error(e)
+        } //todo wrong operate
     }
 
 
