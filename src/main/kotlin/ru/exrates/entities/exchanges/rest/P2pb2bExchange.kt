@@ -4,6 +4,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.getBean
 import org.springframework.boot.configurationprocessor.json.JSONObject
+import org.springframework.http.ReactiveHttpInputMessage
+import org.springframework.web.reactive.function.BodyExtractor
+import org.springframework.web.reactive.function.client.ClientResponse
+import org.springframework.web.reactive.function.client.bodyToMono
+import reactor.core.publisher.Mono
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.TimePeriod
 import ru.exrates.func.RestCore
@@ -28,13 +33,21 @@ class P2pb2bExchange: RestExchange() {
     @PostConstruct
     override fun init() {
         super.init()
+        val errorHandler: (ClientResponse) -> Mono<Throwable> = {resp ->
+
+            resp.bodyToMono(String::class.java).flatMap {  }
+
+
+            Mono.error(Exception(JSONObject(errBody).getString("message")))
+        }
         if (!temporary){
-            restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, banCode, limitCode, serverError)
+            restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, errorHandler)
             fillTop()
             return
         }
         initVars()
-        restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, banCode, limitCode, serverError)
+
+        restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, errorHandler)
         val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONObject::class)
         pairsFill(entity.getJSONArray("result"), "stock", "money", "name")
         temporary = false

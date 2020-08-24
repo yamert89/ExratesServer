@@ -10,7 +10,9 @@ import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONException
 import org.springframework.boot.configurationprocessor.json.JSONObject
 import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
+import org.springframework.web.reactive.function.client.ClientResponse
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -27,7 +29,7 @@ import kotlin.reflect.KClass
 
 /*@Service
 @Scope("prototype")*/
-class RestCore(private val endPoint: String, private val banCode: Int, private val limitCode: Int, private val serverError: Int) {
+class RestCore(endPoint: String, private val errorHandler: (ClientResponse) -> Mono<Throwable>) {
 
     var webClient: WebClient =  WebClient.builder()
         .baseUrl(endPoint)
@@ -41,20 +43,20 @@ class RestCore(private val endPoint: String, private val banCode: Int, private v
     @Autowired
     protected lateinit var logger: Logger
 
-
-    private fun <T: Any> monoRequest(uri: String, clazz: KClass<T>, connectionExceptionMessage: String = "Server error: $uri") : Mono<T> {
+   /* private fun <T: Any> monoRequest(uri: String, clazz: KClass<T>) : Mono<T> {
         logger.trace("Try request to : $uri")
         val resp = webClient.get().uri(uri).retrieve()
-            .onStatus(HttpStatus::is4xxClientError) { resp ->
-                logger.trace("RESPONSE of $uri: ${resp}")
-                val ex = when(resp.statusCode().value()){
-                    banCode -> BanException()
-                    limitCode -> LimitExceededException(LimitType.WEIGHT) //todo add server error code p2p error 4001 / 503
-                    serverError -> ConnectException(connectionExceptionMessage)
-                    else -> IllegalStateException("Unexpected value: ${resp.statusCode().value()}")
-                }
-                Mono.error(ex) }
+            .onStatus(HttpStatus::is4xxClientError) { errorHandler(it) }
             .bodyToMono(clazz.java) //todo 1 - null compile notif? // 2 - FIXMe operate exception !!!
+        return resp
+    }*/
+
+    private fun <T: Any> monoRequest(uri: String, clazz: KClass<T>) : Mono<T> {
+        logger.trace("Try request to : $uri")
+        val resp = webClient.get().uri(uri).exchange()
+            .flatMap { resp ->
+                resp.bodyToMono(clazz.java)
+            }
         return resp
     }
 
@@ -69,7 +71,8 @@ class RestCore(private val endPoint: String, private val banCode: Int, private v
     fun patchStringRequests(uries: List<String>) = patchRequests(uries, String::class)
 
 
-    fun stringRequest(uri: String, connectionExceptionMessage: String = "Server error: $uri") = monoRequest(uri, String::class, connectionExceptionMessage)
+    fun stringRequest(uri: String) = monoRequest(uri, String::class)
+
 
     @Suppress("UNCHECKED_CAST")
     fun <T : Any> blockingStringRequest(uri: String, jsonType: KClass<T>): T{

@@ -5,6 +5,7 @@ import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
 import org.springframework.data.mapping.PreferredConstructor
 import org.springframework.stereotype.Component
+import org.springframework.web.reactive.function.client.ClientResponse
 import reactor.core.publisher.Mono
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.LimitType
@@ -38,13 +39,19 @@ class CoinBaseExchange: RestExchange() {
     @PostConstruct
     override fun init() {
         super.init()
+        val errorHandler: (ClientResponse) -> Mono<Throwable> = { resp ->
+            //val errBody = JSONObject(resp.bodyToMono(String::class.java).block())
+
+            Mono.error(Exception("exception with ${resp.statusCode()}"))
+        }
         if (!temporary){
-            restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, banCode, limitCode, serverError)
+            restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, errorHandler)
             fillTop()
             return
         }
         initVars()
-        restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, banCode, limitCode, serverError)
+
+        restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, errorHandler)
         val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONArray::class)
         pairsFill(entity, "base_currency", "quote_currency", "id")
         temporary = false

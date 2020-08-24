@@ -5,6 +5,8 @@ import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.getBean
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
+import org.springframework.web.reactive.function.client.ClientResponse
+import reactor.core.publisher.Mono
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
@@ -29,13 +31,19 @@ class BinanceExchange(): RestExchange() {
     @PostConstruct
     override fun init() {
         super.init()
+        val errorHandler: (ClientResponse) -> Mono<Throwable> = { resp ->
+            // val errBody = JSONObject(resp.bodyToMono(String::class.java).block())
+
+            Mono.error(Exception("exception with ${resp.statusCode()}"))
+        }
         if (!temporary){
-            restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, banCode, limitCode, serverError)
+            restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, errorHandler)
             fillTop()
             return
         }
         initVars()
-        restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, banCode, limitCode, serverError)
+
+        restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, errorHandler)
         val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONObject::class)
         limitsFill(entity)
         pairsFill(entity.getJSONArray("symbols"), "baseAsset", "quoteAsset", "symbol")
