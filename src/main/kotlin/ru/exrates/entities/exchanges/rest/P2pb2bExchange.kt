@@ -138,11 +138,12 @@ class P2pb2bExchange: RestExchange() {
 
     override fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod){
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=${period.name}&limit=50"
-        val stringResponse = restCore.stringRequest(uri)
-        val response = stringResponse.block()
-        logger.trace("Response of $uri \n$response")
-        val entity = JSONObject(response)
+        val entity = restCore.blockingStringRequest(uri, JSONObject::class)
         if (stateChecker.checkEmptyJson(entity, exId)) return
+        val error = entity.getError()
+        if (error != 0){
+
+        }
         val array = entity.getJSONArray("result")
         if(array.length() == 0){
             pair.putInPriceChange(period, Double.MAX_VALUE)

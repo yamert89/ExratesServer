@@ -1,30 +1,18 @@
 package ru.exrates.func
 
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.newFixedThreadPoolContext
-import kotlinx.coroutines.runBlocking
 import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONException
 import org.springframework.boot.configurationprocessor.json.JSONObject
 import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import org.springframework.web.reactive.function.client.ClientResponse
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.publisher.toFlux
 import reactor.core.scheduler.Schedulers
-import ru.exrates.entities.LimitType
-import ru.exrates.entities.exchanges.secondary.BanException
-import ru.exrates.entities.exchanges.secondary.LimitExceededException
-import java.net.ConnectException
 import java.time.Duration
-import java.util.concurrent.Executors
-import java.util.concurrent.ThreadPoolExecutor
 import kotlin.reflect.KClass
 
 /*@Service
@@ -51,17 +39,17 @@ class RestCore(endPoint: String, private val errorHandler: (ClientResponse) -> M
         return resp
     }*/
 
-    private fun <T: Any> monoRequest(uri: String, clazz: KClass<T>) : Mono<T> {
+    private fun <T: Any> monoRequest(uri: String, clazz: KClass<T>) : Pair<HttpStatus, Mono<T>> {
         logger.trace("Try request to : $uri")
-        val resp = webClient.get().uri(uri).exchange()
+        var code = HttpStatus.BAD_REQUEST
+        return code to webClient.get().uri(uri).exchange()
             .flatMap { resp ->
-                if (resp.statusCode() != HttpStatus.OK) errorHandler(resp)
+                code = resp.statusCode()
                 resp.bodyToMono(clazz.java)
             }
-        return resp
     }
 
-    fun <T: Any> patchRequests(uries: List<String>, clazz: KClass<T>): Flux<T> {
+    private fun <T: Any> patchRequests(uries: List<String>, clazz: KClass<T>): Flux<T> {
         return uries.toFlux().delayElements(Duration.ofMillis((1000 / 3) * 2), Schedulers.single()).flatMap {//todo limit period
             webClient.get().uri(it).retrieve().bodyToMono(clazz.java).doOnEach {p ->
                 if(p.isOnNext) logger.debug("patch request element: $it")
@@ -71,21 +59,17 @@ class RestCore(endPoint: String, private val errorHandler: (ClientResponse) -> M
 
     fun patchStringRequests(uries: List<String>) = patchRequests(uries, String::class)
 
-
-    fun stringRequest(uri: String) = monoRequest(uri, String::class)
+    private fun stringRequest(uri: String) = monoRequest(uri, String::class)
 
 
     @Suppress("UNCHECKED_CAST")
     fun <T : Any> blockingStringRequest(uri: String, jsonType: KClass<T>): T{
         val req = stringRequest(uri)
-        val resp = req.block()
+        val resp = req.second.block()
         logger.trace("Response of $uri\n$resp")
-        try{
-            return when(jsonType){
-                JSONObject::class -> JSONObject(resp) as T
-                JSONArray::class -> JSONArray(resp) as T
-                else -> throw IllegalArgumentException("unsupported json object")
-            }
+        try {
+            return if (req.first != HttpStatus.OK || jsonType == JSONObject::class) JSONObject(resp) as T
+            else JSONArray(resp) as T
         }catch (e: JSONException){
             logger.error("json create exception with body: $resp")
         }
