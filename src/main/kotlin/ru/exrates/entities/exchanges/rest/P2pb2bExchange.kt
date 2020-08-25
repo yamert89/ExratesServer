@@ -40,6 +40,8 @@ class P2pb2bExchange: RestExchange() {
 
             Mono.error(Exception(JSONObject(errBody).getString("message")))
         }
+
+
         if (!temporary){
             restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, errorHandler)
             fillTop()
@@ -137,7 +139,6 @@ class P2pb2bExchange: RestExchange() {
     override fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod){
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=${period.name}&limit=50"
         val stringResponse = restCore.stringRequest(uri)
-        val curMills = System.currentTimeMillis()
         val response = stringResponse.block()
         logger.trace("Response of $uri \n$response")
         val entity = JSONObject(response)
@@ -150,10 +151,7 @@ class P2pb2bExchange: RestExchange() {
         try {
             val array2 = array.getJSONArray(0)
             val oldVal = (array2.getDouble(1) + array2.getDouble(2)) / 2
-            val changeVol =
-                if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1
-            pair.putInPriceChange(period, BigDecimal(changeVol, MathContext(2)).toDouble())
-            logger.trace("Change period updated in ${System.currentTimeMillis() - curMills} ms on ${pair.symbol} pair $name exch, interval = ${period.name} | change = $changeVol")
+            writePriceChange(pair, period, oldVal)
         }catch (e: Exception){
             logger.error(e)
             logger.error("Response: $response")

@@ -150,17 +150,13 @@ class CoinBaseExchange: RestExchange() {
         val start = Instant.now().minus(period.period)
         val uri = "$URL_ENDPOINT${URL_PRICE_CHANGE.replace(pathId, pair.symbol)}?start=$start&end=$end&granularity=${period.period.seconds}"
         val stringResponse = restCore.stringRequest(uri)
-        val curMills = System.currentTimeMillis()
         val res = stringResponse.block()
         logger.trace("Response of $uri \n$res")
         val entity = JSONArray(res)
         if (stateChecker.checkEmptyJson(entity, exId)) return
         val arr = entity.getJSONArray(0)
         val oldVal = (arr.getDouble(1) + arr.getDouble(2)) / 2
-        val changeVol = if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1 //fixme full logging
-        logger.trace("single price change calculating: price: ${pair.price}, period: ${period.name}, oldVal: $oldVal, changeVol: $changeVol")
-        pair.putInPriceChange(period, BigDecimal(changeVol, MathContext(2)).toDouble())
-        logger.trace("Change period updated in ${System.currentTimeMillis() - curMills} ms on ${pair.symbol} pair $name exch, interval = ${period.name} | change = $changeVol")
+        writePriceChange(pair, period, oldVal)
     }
 
 

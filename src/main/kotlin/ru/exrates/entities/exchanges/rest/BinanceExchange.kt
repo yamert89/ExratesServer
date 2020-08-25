@@ -156,10 +156,7 @@ class BinanceExchange(): RestExchange() {
         if (stateChecker.checkEmptyJson(entity, exId)) return
         val array = entity.getJSONArray(0)
         val oldVal = (array.getDouble(2) + array.getDouble(3)) / 2
-        val changeVol = if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1 //fixme full logging
-        logger.trace("single price change calculating: price: ${pair.price}, period: ${period.name}, oldVal: $oldVal, changeVol: $changeVol")
-        pair.putInPriceChange(period, BigDecimal(changeVol, MathContext(2)).toDouble())
-        logger.trace("Change period updated in ${System.currentTimeMillis() - curMills} ms on ${pair.symbol} pair $name exch, interval = ${period.name} | change = $changeVol")
+        writePriceChange(pair, period, oldVal)
     }
 
     /*override fun singlePriceChangeRequest(pair: CurrencyPair, interval: TimePeriod): Mono<String> {

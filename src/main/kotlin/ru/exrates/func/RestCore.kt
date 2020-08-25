@@ -55,6 +55,7 @@ class RestCore(endPoint: String, private val errorHandler: (ClientResponse) -> M
         logger.trace("Try request to : $uri")
         val resp = webClient.get().uri(uri).exchange()
             .flatMap { resp ->
+                if (resp.statusCode() != HttpStatus.OK) errorHandler(resp)
                 resp.bodyToMono(clazz.java)
             }
         return resp
