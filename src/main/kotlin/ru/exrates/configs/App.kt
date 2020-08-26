@@ -36,9 +36,9 @@ class App {
     @Lazy
     fun coinbaseExchange() = CoinBaseExchange()
 
-    @Bean
-    @Scope(value = "prototype")
-    fun restCore(endPoint: String, errorHandler: (ClientResponse) -> Mono<Throwable>) = RestCore(endPoint,errorHandler)
+    /*@Bean
+    //@Scope(value = "prototype")
+    fun restCore() = RestCore()*/
 
     /*@Bean
     @Lazy

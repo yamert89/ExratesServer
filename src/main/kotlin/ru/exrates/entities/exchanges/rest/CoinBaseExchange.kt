@@ -4,6 +4,7 @@ import org.springframework.beans.factory.getBean
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
 import org.springframework.data.mapping.PreferredConstructor
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.ClientResponse
 import reactor.core.publisher.Mono
@@ -13,6 +14,7 @@ import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.BasicExchange
 import ru.exrates.entities.exchanges.secondary.Limit
 import ru.exrates.func.RestCore
+import ru.exrates.utils.ClientCodes
 import java.math.BigDecimal
 import java.math.MathContext
 import java.time.Duration
@@ -50,10 +52,9 @@ class CoinBaseExchange: RestExchange() {
             return
         }
         initVars()
-
-        restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, errorHandler)
         val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONArray::class)
-        pairsFill(entity, "base_currency", "quote_currency", "id")
+        if (entity.hasErrors()) throw IllegalStateException("Failed info initialization")
+        pairsFill(entity.second, "base_currency", "quote_currency", "id")
         temporary = false
         fillTop()
         logger.debug("exchange " + name + " initialized with " + pairs.size + " pairs")
@@ -116,9 +117,9 @@ class CoinBaseExchange: RestExchange() {
         super.currentPrice(pair, period)
         val uri = "$URL_ENDPOINT${URL_CURRENT_AVG_PRICE.replace(pathId, pair.symbol)}?level=1"
         val entity = restCore.blockingStringRequest(uri, JSONObject::class)
-        if (stateChecker.checkEmptyJson(entity, exId)) return
-        val bidPrice = entity.getJSONArray("bids").getJSONArray(0)[0].toString().toDouble()
-        val asksPrice = entity.getJSONArray("asks").getJSONArray(0)[0].toString().toDouble()
+        if (stateChecker.checkEmptyJson(entity, exId) || entity.operateError(pair)) return
+        val bidPrice = entity.second.getJSONArray("bids").getJSONArray(0)[0].toString().toDouble()
+        val asksPrice = entity.second.getJSONArray("asks").getJSONArray(0)[0].toString().toDouble()
         pair.price = (bidPrice + asksPrice) / 2
     }
 
@@ -130,11 +131,10 @@ class CoinBaseExchange: RestExchange() {
         val uri = "$URL_ENDPOINT${URL_PRICE_CHANGE.replace(pathId, pair.symbol)}?start=$start&end=$end&granularity=${per.seconds}"
         try{
             val array = restCore.blockingStringRequest(uri, JSONArray::class)
-            if (stateChecker.checkEmptyJson(array, exId)) return
-
+            if (stateChecker.checkEmptyJson(array, exId) || array.operateError(pair)) return
             pair.priceHistory.clear()
-            for (i in 0 until array.length()){ //fixme data is incomplete
-                val arr = array.getJSONArray(i)
+            for (i in 0 until array.second.length()){ //fixme data is incomplete
+                val arr = array.second.getJSONArray(i)
                 pair.priceHistory.add((arr.getDouble(1) + arr.getDouble(2)) / 2)
             }
             logger.trace("price history updated on ${pair.symbol} pair $name exch")
@@ -149,14 +149,20 @@ class CoinBaseExchange: RestExchange() {
         val end = Instant.now().toString()
         val start = Instant.now().minus(period.period)
         val uri = "$URL_ENDPOINT${URL_PRICE_CHANGE.replace(pathId, pair.symbol)}?start=$start&end=$end&granularity=${period.period.seconds}"
-        val stringResponse = restCore.stringRequest(uri)
-        val res = stringResponse.block()
-        logger.trace("Response of $uri \n$res")
-        val entity = JSONArray(res)
-        if (stateChecker.checkEmptyJson(entity, exId)) return
-        val arr = entity.getJSONArray(0)
+        val array = restCore.blockingStringRequest(uri, JSONArray::class)
+        logger.trace("Response of $uri \n$array")
+        if (stateChecker.checkEmptyJson(array, exId) || array.operateError(pair)) return
+        val arr = array.second.getJSONArray(0)
         val oldVal = (arr.getDouble(1) + arr.getDouble(2)) / 2
         writePriceChange(pair, period, oldVal)
+    }
+
+    override fun <T: Any> Pair<HttpStatus, T>.getError(): Int {
+        TODO()
+    }
+
+    override fun <T: Any> Pair<HttpStatus, T>.operateError(pair: CurrencyPair): Boolean {
+        TODO()
     }
 
 

@@ -6,6 +6,7 @@ import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONException
 import org.springframework.boot.configurationprocessor.json.JSONObject
 import org.springframework.http.HttpStatus
+import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.ClientResponse
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Flux
@@ -15,12 +16,10 @@ import reactor.core.scheduler.Schedulers
 import java.time.Duration
 import kotlin.reflect.KClass
 
-/*@Service
-@Scope("prototype")*/
-class RestCore(endPoint: String, private val errorHandler: (ClientResponse) -> Mono<Throwable>) {
+@Service
+class RestCore() {
 
     var webClient: WebClient =  WebClient.builder()
-        .baseUrl(endPoint)
         .exchangeStrategies { builder ->
             builder.codecs {
                 it.defaultCodecs().maxInMemorySize(2 * 1024 * 1024)
@@ -63,19 +62,19 @@ class RestCore(endPoint: String, private val errorHandler: (ClientResponse) -> M
 
 
     @Suppress("UNCHECKED_CAST")
-    fun <T : Any> blockingStringRequest(uri: String, jsonType: KClass<T>): T{
+    fun <T : Any> blockingStringRequest(uri: String, jsonType: KClass<T>): Pair<HttpStatus, T> {
         val req = stringRequest(uri)
         val resp = req.second.block()
         logger.trace("Response of $uri\n$resp")
         try {
-            return if (req.first != HttpStatus.OK || jsonType == JSONObject::class) JSONObject(resp) as T
-            else JSONArray(resp) as T
+            return if (req.first != HttpStatus.OK || jsonType == JSONObject::class) req.first to JSONObject(resp) as T
+            else req.first to JSONArray(resp) as T
         }catch (e: JSONException){
             logger.error("json create exception with body: $resp")
         }
         return when(jsonType){
-            JSONObject::class -> JSONObject() as T
-            else -> JSONArray() as T
+            JSONObject::class -> req.first to JSONObject() as T
+            else -> req.first to JSONArray() as T
         }
     }
 

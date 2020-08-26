@@ -3,7 +3,9 @@ package ru.exrates.entities.exchanges.rest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.getBean
+import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
+import org.springframework.http.HttpStatus
 import org.springframework.http.ReactiveHttpInputMessage
 import org.springframework.web.reactive.function.BodyExtractor
 import org.springframework.web.reactive.function.client.ClientResponse
@@ -12,6 +14,7 @@ import reactor.core.publisher.Mono
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.TimePeriod
 import ru.exrates.func.RestCore
+import ru.exrates.utils.ClientCodes
 import java.math.BigDecimal
 import java.math.MathContext
 import java.time.Duration
@@ -33,25 +36,14 @@ class P2pb2bExchange: RestExchange() {
     @PostConstruct
     override fun init() {
         super.init()
-        val errorHandler: (ClientResponse) -> Mono<Throwable> = {resp ->
-
-            resp.bodyToMono(String::class.java).flatMap {  }
-
-
-            Mono.error(Exception(JSONObject(errBody).getString("message")))
-        }
-
-
         if (!temporary){
-            restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, errorHandler)
             fillTop()
             return
         }
         initVars()
-
-        restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, errorHandler)
         val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONObject::class)
-        pairsFill(entity.getJSONArray("result"), "stock", "money", "name")
+        if (entity.hasErrors()) throw IllegalStateException("Failed info initialization")
+        pairsFill(entity.second.getJSONArray("result"), "stock", "money", "name")
         temporary = false
         fillTop()
         logger.debug("exchange " + name + " initialized with " + pairs.size + " pairs")
@@ -98,8 +90,8 @@ class P2pb2bExchange: RestExchange() {
         super.currentPrice(pair, period)
         val uri = "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?market=${pair.symbol}"
         val entity = restCore.blockingStringRequest(uri, JSONObject::class)
-        if (stateChecker.checkEmptyJson(entity, exId)) return
-        val result = entity.getJSONObject("result")
+        if (stateChecker.checkEmptyJson(entity, exId) || entity.operateError(pair)) return
+        val result = entity.second.getJSONObject("result")
         val bid = result.getDouble("bid")
         val ask = result.getDouble("ask")
         pair.price = (ask + bid) / 2
@@ -114,9 +106,8 @@ class P2pb2bExchange: RestExchange() {
 
         try{
             val entity = restCore.blockingStringRequest(uri, JSONObject::class)
-            if (stateChecker.checkEmptyJson(entity, exId)) return
-            val array = entity.getJSONArray("result")
-
+            if (stateChecker.checkEmptyJson(entity, exId) || entity.operateError(pair)) return
+            val array = entity.second.getJSONArray("result")
             pair.priceHistory.clear()
             for (i in 0 until limit){
                 val arr = array.getJSONArray(i)
@@ -139,12 +130,8 @@ class P2pb2bExchange: RestExchange() {
     override fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod){
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=${period.name}&limit=50"
         val entity = restCore.blockingStringRequest(uri, JSONObject::class)
-        if (stateChecker.checkEmptyJson(entity, exId)) return
-        val error = entity.getError()
-        if (error != 0){
-
-        }
-        val array = entity.getJSONArray("result")
+        if (stateChecker.checkEmptyJson(entity, exId) || entity.operateError(pair)) return
+        val array = entity.second.getJSONArray("result")
         if(array.length() == 0){
             pair.putInPriceChange(period, Double.MAX_VALUE)
             return
@@ -155,9 +142,31 @@ class P2pb2bExchange: RestExchange() {
             writePriceChange(pair, period, oldVal)
         }catch (e: Exception){
             logger.error(e)
-            logger.error("Response: $response")
+            logger.error("Response: ${entity.second}")
         }
     }
 
+    override fun <T: Any> Pair<HttpStatus, T>.getError(): Int {
+        return when{
+            first == HttpStatus.OK || second is JSONArray -> ClientCodes.SUCCESS
+            first == HttpStatus.INTERNAL_SERVER_ERROR -> ClientCodes.EXCHANGE_NOT_ACCESSIBLE
+            (second as JSONObject).getInt("errorCode") == 2021 || (second as JSONObject).getInt("errorCode") == 2020 -> ClientCodes.CURRENCY_NOT_FOUND
+            else -> throw IllegalStateException("Unexpected response code of json: ${this.second}")
+        }
+    }
+
+    override fun <T: Any> Pair<HttpStatus, T>.operateError(pair: CurrencyPair) :Boolean {
+        val error = getError()
+        if (error != ClientCodes.SUCCESS){
+            when(error){
+                ClientCodes.CURRENCY_NOT_FOUND -> {
+                    pair.unvailable = true
+                    return true
+                };
+                ClientCodes.EXCHANGE_NOT_ACCESSIBLE -> return true
+            }
+        }
+        return false
+    }
 
 }

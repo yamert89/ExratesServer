@@ -5,6 +5,7 @@ import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.getBean
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
+import org.springframework.http.HttpStatus
 import org.springframework.web.reactive.function.client.ClientResponse
 import reactor.core.publisher.Mono
 import ru.exrates.entities.CurrencyPair
@@ -12,6 +13,7 @@ import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.secondary.Limit
 import ru.exrates.func.RestCore
+import ru.exrates.utils.ClientCodes
 import java.math.BigDecimal
 import java.math.MathContext
 import java.time.Duration
@@ -42,11 +44,10 @@ class BinanceExchange(): RestExchange() {
             return
         }
         initVars()
-
-        restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, errorHandler)
         val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONObject::class)
-        limitsFill(entity)
-        pairsFill(entity.getJSONArray("symbols"), "baseAsset", "quoteAsset", "symbol")
+        if (entity.hasErrors()) throw IllegalStateException("Failed info initialization")
+        limitsFill(entity.second)
+        pairsFill(entity.second.getJSONArray("symbols"), "baseAsset", "quoteAsset", "symbol")
         temporary = false
         fillTop()
         logger.debug("exchange " + name + " initialized with " + pairs.size + " pairs")
@@ -118,8 +119,8 @@ class BinanceExchange(): RestExchange() {
         super.currentPrice(pair, period)
         val uri = "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?symbol=${pair.symbol}"
         val entity = restCore.blockingStringRequest(uri, JSONObject::class)
-        if (stateChecker.checkEmptyJson(entity, exId)) return
-        val price = entity.getString("price").toDouble()
+        if (stateChecker.checkEmptyJson(entity, exId) || entity.operateError(pair)) return
+        val price = entity.second.getString("price").toDouble()
         pair.price = price
         logger.trace("Price updated on ${pair.symbol} pair $name exch| = $price")
     }
@@ -130,10 +131,10 @@ class BinanceExchange(): RestExchange() {
         val period = "&interval=$interval"
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE$symbol$period&limit=$limit"
         val entity = restCore.blockingStringRequest(uri, JSONArray::class)
-        if (stateChecker.checkEmptyJson(entity, exId)) return
+        if (stateChecker.checkEmptyJson(entity, exId) || entity.operateError(pair)) return
         pair.priceHistory.clear()
-        for (i in 0 until entity.length()){
-            val array = entity.getJSONArray(i)
+        for (i in 0 until entity.second.length()){
+            val array = entity.second.getJSONArray(i)
             pair.priceHistory.add((array.getDouble(2) + array.getDouble(3)) / 2)
         }
         logger.trace("price history updated on ${pair.symbol} pair $name exch")
@@ -148,15 +149,20 @@ class BinanceExchange(): RestExchange() {
 
     override fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod){
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?symbol=${pair.symbol}&interval=${period.name}&limit=1"
-        val stringResponse = restCore.stringRequest(uri)
-        val curMills = System.currentTimeMillis()
-        val res = stringResponse.block()
-        logger.trace("Response of $uri \n$res")
-        val entity = JSONArray(res)
-        if (stateChecker.checkEmptyJson(entity, exId)) return
-        val array = entity.getJSONArray(0)
+        val entity = restCore.blockingStringRequest(uri, JSONArray::class)
+        logger.trace("Response of $uri \n$entity")
+        if (stateChecker.checkEmptyJson(entity, exId) || entity.operateError(pair)) return
+        val array = entity.second.getJSONArray(0)
         val oldVal = (array.getDouble(2) + array.getDouble(3)) / 2
         writePriceChange(pair, period, oldVal)
+    }
+
+    override fun <T : Any> Pair<HttpStatus, T>.getError(): Int {
+        TODO()
+    }
+
+    override fun <T : Any> Pair<HttpStatus, T>.operateError(pair: CurrencyPair): Boolean {
+        TODO()
     }
 
     /*override fun singlePriceChangeRequest(pair: CurrencyPair, interval: TimePeriod): Mono<String> {

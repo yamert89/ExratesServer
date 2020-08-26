@@ -4,14 +4,17 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
+import org.springframework.http.HttpStatus
 import reactor.core.publisher.Mono
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.BasicExchange
 import ru.exrates.func.RestCore
+import ru.exrates.utils.ClientCodes
 import java.math.BigDecimal
 import java.math.MathContext
 import java.time.Duration
@@ -39,6 +42,7 @@ abstract class RestExchange : BasicExchange(){
     lateinit var TOP_COUNT_FIELD: String
     lateinit var TOP_SYMBOL_FIELD: String
     @Transient
+    @Autowired
     lateinit var restCore: RestCore
 
     /*
@@ -60,15 +64,16 @@ abstract class RestExchange : BasicExchange(){
 
     override fun fillTop() {
         if (props.skipTop()) return
-        val pairs = restCore.blockingStringRequest(URL_TOP_STATISTIC, JSONArray::class)
-        if (pairs.length() == 0) return
+        val pairs = restCore.blockingStringRequest(URL_ENDPOINT + URL_TOP_STATISTIC, JSONArray::class)
+        if (pairs.hasErrors()) throw IllegalStateException("Failed fill top (base in rest) from $URL_ENDPOINT")
+        if (pairs.second.length() == 0) return
         val all = HashMap<String, Int>()
-        val topSize = if(props.maxSize() < pairs.length()) props.maxSize() else pairs.length()
+        val topSize = if(props.maxSize() < pairs.second.length()) props.maxSize() else pairs.second.length()
         var count = 0
         var pairName = ""
         var jsonObject: JSONObject
-        for (i in 0 until pairs.length()){
-            jsonObject = pairs.getJSONObject(i)
+        for (i in 0 until pairs.second.length()){
+            jsonObject = pairs.second.getJSONObject(i)
             count = jsonObject.getInt(TOP_COUNT_FIELD)
             pairName = jsonObject.getString(TOP_SYMBOL_FIELD)
             all[pairName] = count
@@ -97,8 +102,9 @@ abstract class RestExchange : BasicExchange(){
         if(id == 0) {
             return
         }
-        logger.debug("task ping try...$URL_PING")
-        restCore.stringRequest(URL_PING).block()
+        logger.debug("task ping try...$URL_ENDPOINT$URL_PING")
+        val resp = restCore.blockingStringRequest(URL_ENDPOINT + URL_PING, JSONObject::class)
+        if (resp.hasErrors()) throw IllegalStateException("Failed ping $URL_ENDPOINT, resp: ${resp.second}")
         super.task()
     }
 
@@ -159,6 +165,12 @@ abstract class RestExchange : BasicExchange(){
         val l = limits.find { it.type == LimitType.REQUEST } ?: return 0
         return l.interval.toMillis() / l.limitValue
     }
+
+    abstract fun <T: Any> Pair<HttpStatus, T>.getError(): Int
+
+    abstract fun <T: Any>  Pair<HttpStatus, T>.operateError(pair: CurrencyPair): Boolean
+
+    protected fun <T: Any> Pair<HttpStatus, T>.hasErrors() = getError() != ClientCodes.SUCCESS
 
     override fun toString(): String {
         return "${this::class.simpleName} exId = $exId pairs: ${pairs.joinToString{it.symbol}}\n"
