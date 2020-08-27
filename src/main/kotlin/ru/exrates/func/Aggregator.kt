@@ -62,7 +62,7 @@ class Aggregator(
 
     @PostConstruct
     fun init(){
-        logger.trace("\n\nSTARTING EXRATES VERSION ${props.appVersion()}\n\n")
+        logger.trace("\n\n\t\t\t\tSTARTING EXRATES VERSION ${props.appVersion()}\n\n")
         var key = ""
 
             exchangeNames.entries.forEach {
@@ -79,10 +79,12 @@ class Aggregator(
                         exchange.pairs.clear()
                         exchange.pairs.addAll(pairs)
                     }else{
-                        pairsSize = calculatePairsSize(exchange)
-                        val pairs = exchangeService.fillPairs(pairsSize, exchange)
-                        exchange.pairs.clear()
-                        exchange.pairs.addAll(pairs)
+                        if (!props.skipTop()) {
+                            pairsSize = calculatePairsSize(exchange)
+                            val pairs = exchangeService.fillPairs(pairsSize, exchange)
+                            exchange.pairs.clear()
+                            exchange.pairs.addAll(pairs)
+                        }
                     }
 
                     val finalExchange = exchange

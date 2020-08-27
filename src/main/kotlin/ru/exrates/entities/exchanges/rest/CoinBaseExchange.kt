@@ -25,7 +25,7 @@ import javax.persistence.Entity
 
 //https://docs.pro.coinbase.com/#get-trades
 //76019C0m0YLw0511 - coin base
-
+//fixme 429
 @Entity
 @DiscriminatorValue("coinbase")
 class CoinBaseExchange: RestExchange() {
@@ -108,7 +108,7 @@ class CoinBaseExchange: RestExchange() {
     override fun limitsFill(entity: JSONObject) {
         super.limitsFill(entity)
         limits.add(
-            Limit("SECOND", LimitType.REQUEST, Duration.ofSeconds(1), 3)
+            Limit("SECOND", LimitType.REQUEST, Duration.ofSeconds(1), 2)
         )
     }
 
