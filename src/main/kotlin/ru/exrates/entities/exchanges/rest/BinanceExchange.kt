@@ -158,12 +158,30 @@ class BinanceExchange(): RestExchange() {
     }
 
     override fun <T : Any> Pair<HttpStatus, T>.getError(): Int {
-        TODO()
+        logger.error("Request has error: $second")
+        return when(first){
+            HttpStatus.OK -> ClientCodes.SUCCESS
+            HttpStatus.INTERNAL_SERVER_ERROR  -> ClientCodes.EXCHANGE_NOT_ACCESSIBLE
+            HttpStatus.TOO_MANY_REQUESTS -> ClientCodes.EXCHANGE_NOT_ACCESSIBLE
+            HttpStatus.I_AM_A_TEAPOT -> ClientCodes.EXCHANGE_NOT_ACCESSIBLE
+            else -> {
+                val status = (second as JSONObject).getInt("code")
+                when(status){
+                    -1000 -> ClientCodes.TEMPORARY_UNAVAILABLE
+                    -1007 -> ClientCodes.EXCHANGE_NOT_ACCESSIBLE
+                    -1016 -> {
+                        ClientCodes.EXCHANGE_NOT_FOUND
+                    }
+                    else -> {
+                        logger.error("Unknown remote server error: $status")
+                        ClientCodes.TEMPORARY_UNAVAILABLE
+                    }
+                }
+            }
+
+        }
     }
 
-    override fun <T : Any> Pair<HttpStatus, T>.operateError(pair: CurrencyPair): Boolean {
-        TODO()
-    }
 
     /*override fun singlePriceChangeRequest(pair: CurrencyPair, interval: TimePeriod): Mono<String> {
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?symbol=${pair.symbol}&interval=${interval.name}&limit=1"

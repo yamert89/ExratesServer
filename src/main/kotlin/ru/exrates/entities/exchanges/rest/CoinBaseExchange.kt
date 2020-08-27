@@ -158,12 +158,20 @@ class CoinBaseExchange: RestExchange() {
     }
 
     override fun <T: Any> Pair<HttpStatus, T>.getError(): Int {
-        TODO()
+        logger.error("Request has error: $second")
+        return when(first){
+            HttpStatus.OK -> ClientCodes.SUCCESS
+            HttpStatus.INTERNAL_SERVER_ERROR -> ClientCodes.EXCHANGE_NOT_ACCESSIBLE
+            HttpStatus.BAD_REQUEST -> {
+                logger.error("Bad Request")
+                ClientCodes.TEMPORARY_UNAVAILABLE
+            }
+            HttpStatus.NOT_FOUND -> ClientCodes.EXCHANGE_NOT_FOUND
+            else -> {
+                logger.error("Unknown remote server error: $first")
+                ClientCodes.TEMPORARY_UNAVAILABLE
+            }
+        }
     }
-
-    override fun <T: Any> Pair<HttpStatus, T>.operateError(pair: CurrencyPair): Boolean {
-        TODO()
-    }
-
 
 }

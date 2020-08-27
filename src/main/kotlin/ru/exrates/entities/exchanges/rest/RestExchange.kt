@@ -168,7 +168,20 @@ abstract class RestExchange : BasicExchange(){
 
     abstract fun <T: Any> Pair<HttpStatus, T>.getError(): Int
 
-    abstract fun <T: Any>  Pair<HttpStatus, T>.operateError(pair: CurrencyPair): Boolean
+    protected fun <T: Any>  Pair<HttpStatus, T>.operateError(pair: CurrencyPair): Boolean{
+        val error = getError()
+        if (error != ClientCodes.SUCCESS){
+            when(error){
+                ClientCodes.CURRENCY_NOT_FOUND -> {
+                    pair.unvailable = true
+                    return true
+                }
+                ClientCodes.EXCHANGE_NOT_ACCESSIBLE -> return true
+                ClientCodes.TEMPORARY_UNAVAILABLE -> return true
+            }
+        }
+        return false
+    }
 
     protected fun <T: Any> Pair<HttpStatus, T>.hasErrors() = getError() != ClientCodes.SUCCESS
 

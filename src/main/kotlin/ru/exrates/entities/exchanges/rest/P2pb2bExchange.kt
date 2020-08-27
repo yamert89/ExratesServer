@@ -147,6 +147,7 @@ class P2pb2bExchange: RestExchange() {
     }
 
     override fun <T: Any> Pair<HttpStatus, T>.getError(): Int {
+        logger.error("Request has error: $second")
         return when{
             first == HttpStatus.OK || second is JSONArray -> ClientCodes.SUCCESS
             first == HttpStatus.INTERNAL_SERVER_ERROR -> ClientCodes.EXCHANGE_NOT_ACCESSIBLE
@@ -155,18 +156,5 @@ class P2pb2bExchange: RestExchange() {
         }
     }
 
-    override fun <T: Any> Pair<HttpStatus, T>.operateError(pair: CurrencyPair) :Boolean {
-        val error = getError()
-        if (error != ClientCodes.SUCCESS){
-            when(error){
-                ClientCodes.CURRENCY_NOT_FOUND -> {
-                    pair.unvailable = true
-                    return true
-                };
-                ClientCodes.EXCHANGE_NOT_ACCESSIBLE -> return true
-            }
-        }
-        return false
-    }
 
 }
