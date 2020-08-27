@@ -90,7 +90,7 @@ class P2pb2bExchange: RestExchange() {
         super.currentPrice(pair, period)
         val uri = "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?market=${pair.symbol}"
         val entity = restCore.blockingStringRequest(uri, JSONObject::class)
-        if (stateChecker.checkEmptyJson(entity, exId) || entity.operateError(pair)) return
+        if (stateChecker.checkEmptyJson(entity.second, exId) || entity.operateError(pair)) return
         val result = entity.second.getJSONObject("result")
         val bid = result.getDouble("bid")
         val ask = result.getDouble("ask")
@@ -103,11 +103,16 @@ class P2pb2bExchange: RestExchange() {
         super.priceHistory(pair, interval, limit)
         val lim = if (limit < 50) 50 else limit
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=$interval&limit=$lim"
+        var entity :Pair<HttpStatus, JSONObject>? = null
 
         try{
-            val entity = restCore.blockingStringRequest(uri, JSONObject::class)
-            if (stateChecker.checkEmptyJson(entity, exId) || entity.operateError(pair)) return
+            entity = restCore.blockingStringRequest(uri, JSONObject::class)
+            if (stateChecker.checkEmptyJson(entity.second, exId) || entity.operateError(pair)) return
             val array = entity.second.getJSONArray("result")
+            if (array.length() == 0) {
+                logger.warn("Price history result array is empty")
+                return
+            }
             pair.priceHistory.clear()
             for (i in 0 until limit){
                 val arr = array.getJSONArray(i)
@@ -115,7 +120,7 @@ class P2pb2bExchange: RestExchange() {
             }
             logger.trace("price history updated on ${pair.symbol} pair $name exch")
         }catch (e: Exception){
-            logger.error("Connect exception")
+            logger.error("Exception in priceHistory. entity = $entity")
             logger.error(e)
         } //todo wrong operate
 
@@ -130,7 +135,7 @@ class P2pb2bExchange: RestExchange() {
     override fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod){
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=${period.name}&limit=50"
         val entity = restCore.blockingStringRequest(uri, JSONObject::class)
-        if (stateChecker.checkEmptyJson(entity, exId) || entity.operateError(pair)) return
+        if (stateChecker.checkEmptyJson(entity.second, exId) || entity.operateError(pair)) return
         val array = entity.second.getJSONArray("result")
         if(array.length() == 0){
             pair.putInPriceChange(period, Double.MAX_VALUE)
@@ -147,7 +152,6 @@ class P2pb2bExchange: RestExchange() {
     }
 
     override fun <T: Any> Pair<HttpStatus, T>.getError(): Int {
-        logger.error("Response has error: $second")
         return when{
             first == HttpStatus.OK || second is JSONArray -> ClientCodes.SUCCESS
             first == HttpStatus.INTERNAL_SERVER_ERROR -> ClientCodes.EXCHANGE_NOT_ACCESSIBLE

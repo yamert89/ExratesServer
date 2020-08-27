@@ -26,7 +26,7 @@ class EndpointStateChecker() {
         when(jsonObject){
             is JSONObject -> res = jsonObject.length() == 0
             is JSONArray -> res = jsonObject.length() == 0
-            else -> throw IllegalArgumentException("unsupported json type")
+            else -> throw IllegalArgumentException("unsupported json type $jsonObject")
         }
 
         if (res) {

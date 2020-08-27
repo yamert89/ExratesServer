@@ -32,18 +32,33 @@ class TaskHandler {
         logger.debug("Task $name started....")
     }
 
+    /**
+     * run many tasks in async mode with interval
+     **/
+
+    fun runTasks(interval: Long = 0L, vararg tasks: () -> Unit) = runBlocking {
+        withContext(getExecutorContext()){
+            tasks.forEach {
+                launch { it()}
+                logger.trace("delay of $interval")
+                delay(interval)
+            }
+        }
+
+    }
+
 
     /**
-     * run many tasks in sync block mode
+     * run many tasks in sync block mode with interval
      **/
-    fun awaitTasks(delay: Long, vararg task: () -> Unit) = runBlocking{
+    fun awaitTasks(interval: Long, vararg task: () -> Unit) = runBlocking{
         val queue = LinkedBlockingQueue<Deferred<Unit>>()
         withContext(getExecutorContext()){
             task.forEach {
                 val job = async{
-                    it.invoke()
+                    it()
                 }
-                if (delay > 0) delay(delay)
+                if (interval > 0) delay(interval)
                 queue.add(job)
             }
             queue.forEach {

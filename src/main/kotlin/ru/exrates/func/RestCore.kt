@@ -38,14 +38,10 @@ class RestCore() {
         return resp
     }*/
 
-    private fun <T: Any> monoRequest(uri: String, clazz: KClass<T>) : Pair<HttpStatus, Mono<T>> {
+    private fun <T: Any> monoRequest(uri: String, clazz: KClass<T>) : Pair<Mono<ClientResponse>, Mono<T>> {
         logger.trace("Try request to : $uri")
-        var code = HttpStatus.BAD_REQUEST
-        return code to webClient.get().uri(uri).exchange()
-            .flatMap { resp ->
-                code = resp.statusCode()
-                resp.bodyToMono(clazz.java)
-            }
+        val resp = webClient.get().uri(uri).exchange()
+        return resp to resp.flatMap { r -> r.bodyToMono(clazz.java) }
     }
 
     private fun <T: Any> patchRequests(uries: List<String>, clazz: KClass<T>): Flux<T> {
@@ -66,15 +62,17 @@ class RestCore() {
         val req = stringRequest(uri)
         val resp = req.second.block()
         logger.trace("Response of $uri\n$resp")
+        val status = req.first.block()!!.statusCode()
+        logger.trace("Response status of $uri : ${status}")
         try {
-            return if (req.first != HttpStatus.OK || jsonType == JSONObject::class) req.first to JSONObject(resp) as T
-            else req.first to JSONArray(resp) as T
+            return if (status != HttpStatus.OK || jsonType == JSONObject::class) status to JSONObject(resp) as T
+            else  status to JSONArray(resp) as T
         }catch (e: JSONException){
             logger.error("json create exception with body: $resp")
         }
         return when(jsonType){
-            JSONObject::class -> req.first to JSONObject() as T
-            else -> req.first to JSONArray() as T
+            JSONObject::class -> status to JSONObject() as T
+            else -> status to JSONArray() as T
         }
     }
 

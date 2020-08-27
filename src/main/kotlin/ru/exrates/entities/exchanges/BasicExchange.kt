@@ -124,9 +124,11 @@ abstract class BasicExchange() : Exchange, Cloneable{
             for (p in pairs){
                 try {
                     with(taskHandler){
-                        runTask { currentPrice(p, taskTimeOut) }
-                        runTask { priceChange(p, taskTimeOut) }
-                        runTask { priceHistory(p, changePeriods[0].name, 10) } //todo [0] right?
+                        runTasks((this@BasicExchange as RestExchange).requestDelay(),
+                            { currentPrice(p, taskTimeOut) },
+                            { priceChange(p, taskTimeOut) },
+                            { priceHistory(p, changePeriods[0].name, 10) } //todo [0] right?
+                        )
                     }
 
                 }catch (e: LimitExceededException){

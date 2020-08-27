@@ -118,7 +118,7 @@ class BinanceExchange(): RestExchange() {
         super.currentPrice(pair, period)
         val uri = "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?symbol=${pair.symbol}"
         val entity = restCore.blockingStringRequest(uri, JSONObject::class)
-        if (stateChecker.checkEmptyJson(entity, exId) || entity.operateError(pair)) return
+        if (stateChecker.checkEmptyJson(entity.second, exId) || entity.operateError(pair)) return
         val price = entity.second.getString("price").toDouble()
         pair.price = price
         logger.trace("Price updated on ${pair.symbol} pair $name exch| = $price")
@@ -130,7 +130,7 @@ class BinanceExchange(): RestExchange() {
         val period = "&interval=$interval"
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE$symbol$period&limit=$limit"
         val entity = restCore.blockingStringRequest(uri, JSONArray::class)
-        if (stateChecker.checkEmptyJson(entity, exId) || entity.operateError(pair)) return
+        if (stateChecker.checkEmptyJson(entity.second, exId) || entity.operateError(pair)) return
         pair.priceHistory.clear()
         for (i in 0 until entity.second.length()){
             val array = entity.second.getJSONArray(i)
@@ -150,14 +150,13 @@ class BinanceExchange(): RestExchange() {
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?symbol=${pair.symbol}&interval=${period.name}&limit=1"
         val entity = restCore.blockingStringRequest(uri, JSONArray::class)
         logger.trace("Response of $uri \n$entity")
-        if (stateChecker.checkEmptyJson(entity, exId) || entity.operateError(pair)) return
+        if (stateChecker.checkEmptyJson(entity.second, exId) || entity.operateError(pair)) return
         val array = entity.second.getJSONArray(0)
         val oldVal = (array.getDouble(2) + array.getDouble(3)) / 2
         writePriceChange(pair, period, oldVal)
     }
 
     override fun <T : Any> Pair<HttpStatus, T>.getError(): Int {
-        logger.error("Response has error: $second")
         return when(first){
             HttpStatus.OK -> ClientCodes.SUCCESS
             HttpStatus.INTERNAL_SERVER_ERROR  -> ClientCodes.EXCHANGE_NOT_ACCESSIBLE

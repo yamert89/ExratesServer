@@ -102,8 +102,8 @@ abstract class RestExchange : BasicExchange(){
         if(id == 0) {
             return
         }
-        logger.debug("task ping try...$URL_ENDPOINT$URL_PING")
-        val resp = restCore.blockingStringRequest(URL_ENDPOINT + URL_PING, JSONObject::class)
+        logger.debug("task ping try...$URL_PING")
+        val resp = restCore.blockingStringRequest(URL_PING, JSONObject::class)
         if (resp.hasErrors()) throw IllegalStateException("Failed ping $URL_ENDPOINT, resp: ${resp.second}")
         super.task()
     }
@@ -171,6 +171,7 @@ abstract class RestExchange : BasicExchange(){
     protected fun <T: Any>  Pair<HttpStatus, T>.operateError(pair: CurrencyPair): Boolean{
         val error = getError()
         if (error != ClientCodes.SUCCESS){
+            logger.error("Response has error: $first $second")
             when(error){
                 ClientCodes.CURRENCY_NOT_FOUND -> {
                     pair.unvailable = true

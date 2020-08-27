@@ -53,6 +53,7 @@ class CoinBaseExchange: RestExchange() {
         val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONArray::class)
         if (entity.hasErrors()) throw IllegalStateException("Failed info initialization")
         pairsFill(entity.second, "base_currency", "quote_currency", "id")
+        limitsFill(JSONObject())
         temporary = false
         fillTop()
         logger.debug("exchange " + name + " initialized with " + pairs.size + " pairs")
@@ -61,7 +62,7 @@ class CoinBaseExchange: RestExchange() {
     override fun initVars() {
        exId = 3
         URL_ENDPOINT = "https://api.pro.coinbase.com"
-        URL_PING = "/time"
+        URL_PING = "$URL_ENDPOINT/time"
         URL_CURRENT_AVG_PRICE = "/products/<product-id>/book"
         URL_INFO = "/products"
         URL_PRICE_CHANGE = "/products/<product-id>/candles"
@@ -115,7 +116,7 @@ class CoinBaseExchange: RestExchange() {
         super.currentPrice(pair, period)
         val uri = "$URL_ENDPOINT${URL_CURRENT_AVG_PRICE.replace(pathId, pair.symbol)}?level=1"
         val entity = restCore.blockingStringRequest(uri, JSONObject::class)
-        if (stateChecker.checkEmptyJson(entity, exId) || entity.operateError(pair)) return
+        if (stateChecker.checkEmptyJson(entity.second, exId) || entity.operateError(pair)) return
         val bidPrice = entity.second.getJSONArray("bids").getJSONArray(0)[0].toString().toDouble()
         val asksPrice = entity.second.getJSONArray("asks").getJSONArray(0)[0].toString().toDouble()
         pair.price = (bidPrice + asksPrice) / 2
@@ -129,7 +130,7 @@ class CoinBaseExchange: RestExchange() {
         val uri = "$URL_ENDPOINT${URL_PRICE_CHANGE.replace(pathId, pair.symbol)}?start=$start&end=$end&granularity=${per.seconds}"
         try{
             val array = restCore.blockingStringRequest(uri, JSONArray::class)
-            if (stateChecker.checkEmptyJson(array, exId) || array.operateError(pair)) return
+            if (stateChecker.checkEmptyJson(array.second, exId) || array.operateError(pair)) return
             pair.priceHistory.clear()
             for (i in 0 until array.second.length()){ //fixme data is incomplete
                 val arr = array.second.getJSONArray(i)
@@ -149,14 +150,13 @@ class CoinBaseExchange: RestExchange() {
         val uri = "$URL_ENDPOINT${URL_PRICE_CHANGE.replace(pathId, pair.symbol)}?start=$start&end=$end&granularity=${period.period.seconds}"
         val array = restCore.blockingStringRequest(uri, JSONArray::class)
         logger.trace("Response of $uri \n$array")
-        if (stateChecker.checkEmptyJson(array, exId) || array.operateError(pair)) return
+        if (stateChecker.checkEmptyJson(array.second, exId) || array.operateError(pair)) return
         val arr = array.second.getJSONArray(0)
         val oldVal = (arr.getDouble(1) + arr.getDouble(2)) / 2
         writePriceChange(pair, period, oldVal)
     }
 
     override fun <T: Any> Pair<HttpStatus, T>.getError(): Int {
-        logger.error("Response has error: $second")
         return when(first){
             HttpStatus.OK -> ClientCodes.SUCCESS
             HttpStatus.INTERNAL_SERVER_ERROR -> ClientCodes.EXCHANGE_NOT_ACCESSIBLE
@@ -165,6 +165,7 @@ class CoinBaseExchange: RestExchange() {
                 ClientCodes.SUCCESS//fixme
             }
             HttpStatus.NOT_FOUND -> ClientCodes.EXCHANGE_NOT_FOUND
+            HttpStatus.TOO_MANY_REQUESTS -> ClientCodes.TEMPORARY_UNAVAILABLE
             else -> {
                 logger.error("Unknown remote server error: $first")
                 ClientCodes.TEMPORARY_UNAVAILABLE
