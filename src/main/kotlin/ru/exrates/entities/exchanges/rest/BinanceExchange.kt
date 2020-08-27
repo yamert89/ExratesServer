@@ -39,7 +39,6 @@ class BinanceExchange(): RestExchange() {
             Mono.error(Exception("exception with ${resp.statusCode()}"))
         }
         if (!temporary){
-            restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, errorHandler)
             fillTop()
             return
         }
@@ -158,7 +157,7 @@ class BinanceExchange(): RestExchange() {
     }
 
     override fun <T : Any> Pair<HttpStatus, T>.getError(): Int {
-        logger.error("Request has error: $second")
+        logger.error("Response has error: $second")
         return when(first){
             HttpStatus.OK -> ClientCodes.SUCCESS
             HttpStatus.INTERNAL_SERVER_ERROR  -> ClientCodes.EXCHANGE_NOT_ACCESSIBLE

@@ -25,7 +25,6 @@ import javax.persistence.Entity
 
 //https://docs.pro.coinbase.com/#get-trades
 //76019C0m0YLw0511 - coin base
-//fixme 3 request per second !!! limit requests
 
 @Entity
 @DiscriminatorValue("coinbase")
@@ -47,7 +46,6 @@ class CoinBaseExchange: RestExchange() {
             Mono.error(Exception("exception with ${resp.statusCode()}"))
         }
         if (!temporary){
-            restCore = applicationContext.getBean(RestCore::class.java, URL_ENDPOINT, errorHandler)
             fillTop()
             return
         }
@@ -158,13 +156,13 @@ class CoinBaseExchange: RestExchange() {
     }
 
     override fun <T: Any> Pair<HttpStatus, T>.getError(): Int {
-        logger.error("Request has error: $second")
+        logger.error("Response has error: $second")
         return when(first){
             HttpStatus.OK -> ClientCodes.SUCCESS
             HttpStatus.INTERNAL_SERVER_ERROR -> ClientCodes.EXCHANGE_NOT_ACCESSIBLE
             HttpStatus.BAD_REQUEST -> {
                 logger.error("Bad Request")
-                ClientCodes.TEMPORARY_UNAVAILABLE
+                ClientCodes.SUCCESS//fixme
             }
             HttpStatus.NOT_FOUND -> ClientCodes.EXCHANGE_NOT_FOUND
             else -> {
