@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONException
 import org.springframework.boot.configurationprocessor.json.JSONObject
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.ClientResponse
@@ -14,6 +15,7 @@ import reactor.core.publisher.Mono
 import reactor.core.publisher.toFlux
 import reactor.core.scheduler.Schedulers
 import java.time.Duration
+import java.util.function.Consumer
 import kotlin.reflect.KClass
 
 @Service
@@ -38,9 +40,9 @@ class RestCore() {
         return resp
     }*/
 
-    private fun <T: Any> monoRequest(uri: String, clazz: KClass<T>) : Pair<Mono<ClientResponse>, Mono<T>> {
+    private fun <T: Any> monoRequest(uri: String, clazz: KClass<T>, headers: HttpHeaders) : Pair<Mono<ClientResponse>, Mono<T>> {
         logger.trace("Try request to : $uri")
-        val resp = webClient.get().uri(uri).exchange()
+        val resp = webClient.get().uri(uri).headers{h-> h.addAll(headers)}.exchange()
         return resp to resp.flatMap { r -> r.bodyToMono(clazz.java) }
     }
 
@@ -54,12 +56,12 @@ class RestCore() {
 
     fun patchStringRequests(uries: List<String>) = patchRequests(uries, String::class)
 
-    private fun stringRequest(uri: String) = monoRequest(uri, String::class)
+    private fun stringRequest(uri: String, headers: HttpHeaders) = monoRequest(uri, String::class, headers)
 
 
     @Suppress("UNCHECKED_CAST")
-    fun <T : Any> blockingStringRequest(uri: String, jsonType: KClass<T>): Pair<HttpStatus, T> {
-        val req = stringRequest(uri)
+    fun <T : Any> blockingStringRequest(uri: String, jsonType: KClass<T>, headers: HttpHeaders = HttpHeaders.EMPTY): Pair<HttpStatus, T> {
+        val req = stringRequest(uri, headers)
         val resp = req.second.block()
         logger.trace("Response of $uri\n$resp")
         val status = req.first.block()!!.statusCode()

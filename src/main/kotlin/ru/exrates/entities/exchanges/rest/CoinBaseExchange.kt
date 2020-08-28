@@ -4,10 +4,14 @@ import org.springframework.beans.factory.getBean
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
 import org.springframework.data.mapping.PreferredConstructor
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
+import org.springframework.util.Base64Utils
+import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.reactive.function.client.ClientResponse
 import reactor.core.publisher.Mono
+import reactor.util.MultiValueMap
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
@@ -17,14 +21,24 @@ import ru.exrates.func.RestCore
 import ru.exrates.utils.ClientCodes
 import java.math.BigDecimal
 import java.math.MathContext
+import java.security.Key
 import java.time.Duration
 import java.time.Instant
 import javax.annotation.PostConstruct
+import javax.crypto.Mac
+import javax.crypto.spec.SecretKeySpec
 import javax.persistence.DiscriminatorValue
 import javax.persistence.Entity
+import javax.xml.crypto.dsig.Transform
 
 //https://docs.pro.coinbase.com/#get-trades
 //76019C0m0YLw0511 - coin base
+//aNkU6H4acoGiEEPf
+//8ReDUltcDsoYO1zExv1xP7N3dJE6PmIh
+
+/*
+* jqKBHoPTJhQW4cgW
+* 5tHxAgfF4jc9nDBt7LyOWFPcq91shidF*/
 //fixme 429
 @Entity
 @DiscriminatorValue("coinbase")
@@ -171,6 +185,24 @@ class CoinBaseExchange: RestExchange() {
                 ClientCodes.TEMPORARY_UNAVAILABLE
             }
         }
+    }
+
+    private fun generateHeaders(uri: String): HttpHeaders{
+        return HttpHeaders(LinkedMultiValueMap<String, String>().apply {
+            //timestamp + method + requestPath + body;
+            val timestamp = Instant.now().toEpochMilli().toString()
+            this["CB-ACCESS-KEY"] = "aNkU6H4acoGiEEPf"
+            this["CB-ACCESS-TIMESTAMP"] = timestamp
+            val secret = "8ReDUltcDsoYO1zExv1xP7N3dJE6PmIh"
+            val key = Base64Utils.decode(secret.toByteArray())
+            Mac.getInstance("HmacSHA256").run {
+                init(SecretKeySpec(key, Transform.BASE64))
+                update(key)
+                doFinal()
+            }.
+            this["CB-ACCESS-SIGN"] = Base64Utils.encode("${timestamp}GET$uri")
+            //this["CB-ACCESS-PASSPHRASE"] = ""
+        } )
     }
 
 }

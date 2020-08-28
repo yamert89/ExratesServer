@@ -7,6 +7,7 @@ import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import reactor.core.publisher.Mono
 import ru.exrates.entities.CurrencyPair
@@ -41,6 +42,7 @@ abstract class RestExchange : BasicExchange(){
     lateinit var URL_TOP_STATISTIC: String
     lateinit var TOP_COUNT_FIELD: String
     lateinit var TOP_SYMBOL_FIELD: String
+    lateinit var headers: HttpHeaders
     @Transient
     @Autowired
     lateinit var restCore: RestCore
