@@ -79,11 +79,13 @@ class Aggregator(
                         exchange.pairs.clear()
                         exchange.pairs.addAll(pairs)
                     }else{
+                        pairsSize = calculatePairsSize(exchange)
                         if (!props.skipTop()) {
-                            pairsSize = calculatePairsSize(exchange)
                             val pairs = exchangeService.fillPairs(pairsSize, exchange)
                             exchange.pairs.clear()
                             exchange.pairs.addAll(pairs)
+                        }else{
+                            while (exchange.pairs.size > pairsSize) exchange.pairs.remove(exchange.pairs.last())
                         }
                     }
 

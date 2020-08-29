@@ -129,14 +129,17 @@ abstract class RestExchange : BasicExchange(){
             return
         }
         val debMills = System.currentTimeMillis()
+
+
         runBlocking {
             val job = launch{
                 changePeriods.forEach {
+                    logger.debug("CHANGE")
+                    delay(requestDelay())
                     launch(taskHandler.getExecutorContext()){
                         //val mono = singlePriceChangeRequest(pair, it)
                         updateSinglePriceChange(pair, it)
                     }
-                    delay(requestDelay())
                 }
             }
             job.join()
