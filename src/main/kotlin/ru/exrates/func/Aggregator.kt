@@ -47,8 +47,8 @@ class Aggregator(
     val exchangeNames: MutableMap<String, KClass<out BasicExchange>> = HashMap()
 
     init {
-        exchangeNames["binance"] = BinanceExchange::class
-        exchangeNames["p2pb2b"] = P2pb2bExchange::class
+        //exchangeNames["binance"] = BinanceExchange::class
+        //exchangeNames["p2pb2b"] = P2pb2bExchange::class
         exchangeNames["coinbase"] = CoinBaseExchange::class
         //exchangeNames["exmoExchange"] = ExmoExchange::class
     }

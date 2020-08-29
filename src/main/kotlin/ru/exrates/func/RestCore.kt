@@ -41,20 +41,20 @@ class RestCore() {
     }*/
 
     private fun <T: Any> monoRequest(uri: String, clazz: KClass<T>, headers: HttpHeaders) : Pair<Mono<ClientResponse>, Mono<T>> {
-        logger.trace("Try request to : $uri")
+        logger.trace("Try request to : $uri with headers: $headers")
         val resp = webClient.get().uri(uri).headers{h-> h.addAll(headers)}.exchange()
         return resp to resp.flatMap { r -> r.bodyToMono(clazz.java) }
     }
 
-    private fun <T: Any> patchRequests(uries: List<String>, clazz: KClass<T>): Flux<T> {
-        return uries.toFlux().delayElements(Duration.ofMillis((1000 / 3) * 2), Schedulers.single()).flatMap {//todo limit period
-            webClient.get().uri(it).retrieve().bodyToMono(clazz.java).doOnEach {p ->
+    private fun <T: Any> patchRequests(uries: List<String>, clazz: KClass<T>, interval : Duration = Duration.ZERO, headers: HttpHeaders = HttpHeaders.EMPTY): Flux<T> {
+        return uries.toFlux().delayElements(interval, Schedulers.single()).flatMap {
+            webClient.get().uri(it).headers { h -> h.addAll(headers) }.retrieve().bodyToMono(clazz.java).doOnEach {p ->
                 if(p.isOnNext) logger.debug("patch request element: $it")
             }
         }.doOnNext { logger.debug("Patch response: $it") }
     }
 
-    fun patchStringRequests(uries: List<String>) = patchRequests(uries, String::class)
+    fun patchStringRequests(uries: List<String>, interval : Duration = Duration.ZERO, headers: HttpHeaders = HttpHeaders.EMPTY) = patchRequests(uries, String::class, interval, headers)
 
     private fun stringRequest(uri: String, headers: HttpHeaders) = monoRequest(uri, String::class, headers)
 

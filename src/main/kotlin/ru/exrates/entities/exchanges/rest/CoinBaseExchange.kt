@@ -64,7 +64,7 @@ class CoinBaseExchange: RestExchange() {
             return
         }
         initVars()
-        val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONArray::class)
+        val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONArray::class, generateHeaders(URL_ENDPOINT + URL_INFO))
         if (entity.hasErrors()) throw IllegalStateException("Failed info initialization")
         pairsFill(entity.second, "base_currency", "quote_currency", "id")
         limitsFill(JSONObject())
@@ -108,7 +108,7 @@ class CoinBaseExchange: RestExchange() {
         val topSize = if(props.maxSize() < pairs.size) props.maxSize() else pairs.size
         val urls = pairs.map { "$URL_ENDPOINT${URL_TOP_STATISTIC.replace(pathId, it.symbol)}" }
 
-        val flux = restCore.patchStringRequests(urls)
+        val flux = restCore.patchStringRequests(urls, Duration.ofMillis(requestDelay()))
         flux.subscribe()
         val vList = flux.collectList().block().map {JSONObject(it).getDouble(TOP_COUNT_FIELD)  }
         val map = mutableMapOf<String, Double>()
@@ -122,14 +122,15 @@ class CoinBaseExchange: RestExchange() {
     override fun limitsFill(entity: JSONObject) {
         super.limitsFill(entity)
         limits.add(
-            Limit("SECOND", LimitType.REQUEST, Duration.ofSeconds(1), 2)
+            Limit("SECOND", LimitType.REQUEST, Duration.ofSeconds(1), 1)
         )
     }
 
     override fun currentPrice(pair: CurrencyPair, period: TimePeriod) {
         super.currentPrice(pair, period)
+        logger.debug("update current price for $period ${pair.symbol}")
         val uri = "$URL_ENDPOINT${URL_CURRENT_AVG_PRICE.replace(pathId, pair.symbol)}?level=1"
-        val entity = restCore.blockingStringRequest(uri, JSONObject::class)
+        val entity = restCore.blockingStringRequest(uri, JSONObject::class, generateHeaders(uri))
         if (stateChecker.checkEmptyJson(entity.second, exId) || entity.operateError(pair)) return
         val bidPrice = entity.second.getJSONArray("bids").getJSONArray(0)[0].toString().toDouble()
         val asksPrice = entity.second.getJSONArray("asks").getJSONArray(0)[0].toString().toDouble()
@@ -138,12 +139,13 @@ class CoinBaseExchange: RestExchange() {
 
     override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int) {
         super.priceHistory(pair, interval, limit)
+        logger.debug("update price history for $interval ${pair.symbol}")
         val end = Instant.now().toString()
         val per = changePeriods.find { it.name == interval }!!.period
         val start = Instant.now().minus(per.multipliedBy(limit.toLong()))
         val uri = "$URL_ENDPOINT${URL_PRICE_CHANGE.replace(pathId, pair.symbol)}?start=$start&end=$end&granularity=${per.seconds}"
         try{
-            val array = restCore.blockingStringRequest(uri, JSONArray::class)
+            val array = restCore.blockingStringRequest(uri, JSONArray::class, generateHeaders(uri))
             if (stateChecker.checkEmptyJson(array.second, exId) || array.operateError(pair)) return
             pair.priceHistory.clear()
             for (i in 0 until array.second.length()){ //fixme data is incomplete
@@ -159,10 +161,11 @@ class CoinBaseExchange: RestExchange() {
 
 
     override fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod) {
+        logger.debug("update price change ${period.name} for ${pair.symbol}")
         val end = Instant.now().toString()
         val start = Instant.now().minus(period.period)
         val uri = "$URL_ENDPOINT${URL_PRICE_CHANGE.replace(pathId, pair.symbol)}?start=$start&end=$end&granularity=${period.period.seconds}"
-        val array = restCore.blockingStringRequest(uri, JSONArray::class)
+        val array = restCore.blockingStringRequest(uri, JSONArray::class, generateHeaders(uri))
         logger.trace("Response of $uri \n$array")
         if (stateChecker.checkEmptyJson(array.second, exId) || array.operateError(pair)) return
         val arr = array.second.getJSONArray(0)
@@ -195,12 +198,13 @@ class CoinBaseExchange: RestExchange() {
             this["CB-ACCESS-TIMESTAMP"] = timestamp
             val secret = "8ReDUltcDsoYO1zExv1xP7N3dJE6PmIh"
             val key = Base64Utils.decode(secret.toByteArray())
-            Mac.getInstance("HmacSHA256").run {
+            val what = "${timestamp}GET$uri"
+            val mac = Mac.getInstance("HmacSHA256").run {
                 init(SecretKeySpec(key, Transform.BASE64))
-                update(key)
+                update(what.toByteArray())
                 doFinal()
-            }.
-            this["CB-ACCESS-SIGN"] = Base64Utils.encode("${timestamp}GET$uri")
+            }
+            this["CB-ACCESS-SIGN"] = Base64Utils.encodeToString(mac)
             //this["CB-ACCESS-PASSPHRASE"] = ""
         } )
     }
