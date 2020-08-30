@@ -9,7 +9,6 @@ import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
-import reactor.core.publisher.Mono
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
@@ -18,14 +17,12 @@ import ru.exrates.func.RestCore
 import ru.exrates.utils.ClientCodes
 import java.math.BigDecimal
 import java.math.MathContext
-import java.time.Duration
 import java.util.*
 import javax.annotation.PostConstruct
 import javax.persistence.DiscriminatorColumn
 import javax.persistence.Entity
 import javax.persistence.Inheritance
 import javax.persistence.InheritanceType
-import kotlin.reflect.KClass
 
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE) @DiscriminatorColumn(name = "EXCHANGE_TYPE")
@@ -179,7 +176,7 @@ abstract class RestExchange : BasicExchange(){
             logger.error("Response has error: $first $second")
             when(error){
                 ClientCodes.CURRENCY_NOT_FOUND -> {
-                    pair.unvailable = true
+                    pair.unavailable = true
                     return true
                 }
                 ClientCodes.EXCHANGE_NOT_ACCESSIBLE -> return true

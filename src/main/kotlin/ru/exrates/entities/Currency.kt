@@ -75,7 +75,7 @@ class CurrencyPair() : Comparable<CurrencyPair>{
     var historyPeriods : List<String>? = null //todo delete
 
     @javax.persistence.Transient
-    var unvailable: Boolean = false
+    var unavailable: Boolean = false
 
 
 
