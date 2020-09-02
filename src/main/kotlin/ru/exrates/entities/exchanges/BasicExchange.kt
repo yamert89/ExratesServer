@@ -16,6 +16,7 @@ import org.springframework.web.reactive.function.client.WebClient
 import ru.exrates.configs.Properties
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.TimePeriod
+import ru.exrates.entities.exchanges.rest.RestExchange
 import ru.exrates.entities.exchanges.secondary.BanException
 import ru.exrates.entities.exchanges.secondary.ErrorCodeException
 import ru.exrates.entities.exchanges.secondary.Limit
@@ -123,9 +124,11 @@ abstract class BasicExchange() : Exchange, Cloneable{
             for (p in pairs){
                 try {
                     with(taskHandler){
-                        runTask { currentPrice(p, taskTimeOut) }
-                        runTask { priceChange(p, taskTimeOut) }
-                        runTask { priceHistory(p, changePeriods[0].name, 10) } //todo [0] right?
+                        runTasks((this@BasicExchange as RestExchange).requestDelay(),
+                            { currentPrice(p, taskTimeOut) },
+                            { priceChange(p, taskTimeOut) },
+                            { priceHistory(p, changePeriods[0].name, 10) } //todo [0] right?
+                        )
                     }
 
                 }catch (e: LimitExceededException){
@@ -185,6 +188,8 @@ abstract class BasicExchange() : Exchange, Cloneable{
     fun getTimePeriod(period: String) = changePeriods.find { it.name == period } ?: throw NullPointerException("period in ${this.name} for $period not found")
 
     fun getTimePeriod(duration: Duration) = changePeriods.find { it.period == duration } ?: throw NullPointerException("period in ${this.name} for $duration not found")
+
+    fun castToRestExchange() = this as RestExchange
 
 }
 

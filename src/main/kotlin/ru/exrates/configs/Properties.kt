@@ -22,6 +22,8 @@ class Properties {
     private lateinit var maxPoolSize: String
     @Value("\${app.version}")
     private lateinit var appVersion: String
+    @Value("\${app.exchanges.skipTop}")
+    private lateinit var skipTop: String
 
     fun timerPeriod() = timerPeriod.toLong()
     fun maxSize() = maxSize.toInt()
@@ -30,6 +32,7 @@ class Properties {
     fun initPoolSize() = initPoolSize.toInt()
     fun maxPoolSize() = maxPoolSize.toInt()
     fun appVersion() = appVersion
+    fun skipTop() = skipTop.toBoolean()
 }
 
 

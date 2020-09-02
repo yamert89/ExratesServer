@@ -1,6 +1,7 @@
 package ru.exrates.repos
 
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.NoRepositoryBean
@@ -17,7 +18,8 @@ interface CurrencyRepository : JpaRepository<CurrencyPair, Int> {
 
     fun findByExchangeAndSymbolIn(exchange: BasicExchange, pairs: List<String>): MutableList<CurrencyPair>
 
-    fun findTopBySymbolNotIn(pairs: List<String>, page: PageRequest): MutableList<CurrencyPair>
+    @Query("select pair from CurrencyPair pair where pair.exchange = :exchange and pair.symbol not in(:pairs)")
+    fun f(exchange: BasicExchange, pairs: List<String>, page: Pageable): MutableList<CurrencyPair>
 
     @Query("select c.symbol from CurrencyPair c")
     fun getAll(): List<String>

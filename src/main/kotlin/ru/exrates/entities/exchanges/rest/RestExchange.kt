@@ -1,26 +1,28 @@
-package ru.exrates.entities.exchanges
+package ru.exrates.entities.exchanges.rest
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.configurationprocessor.json.JSONArray
-import org.springframework.boot.configurationprocessor.json.JSONException
 import org.springframework.boot.configurationprocessor.json.JSONObject
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
-import reactor.core.publisher.Mono
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
-import ru.exrates.entities.exchanges.secondary.BanException
-import ru.exrates.entities.exchanges.secondary.LimitExceededException
+import ru.exrates.entities.exchanges.BasicExchange
 import ru.exrates.func.RestCore
-import java.net.ConnectException
+import ru.exrates.utils.ClientCodes
+import java.math.BigDecimal
+import java.math.MathContext
 import java.util.*
 import javax.annotation.PostConstruct
 import javax.persistence.DiscriminatorColumn
 import javax.persistence.Entity
 import javax.persistence.Inheritance
 import javax.persistence.InheritanceType
-import kotlin.reflect.KClass
 
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE) @DiscriminatorColumn(name = "EXCHANGE_TYPE")
@@ -37,7 +39,9 @@ abstract class RestExchange : BasicExchange(){
     lateinit var URL_TOP_STATISTIC: String
     lateinit var TOP_COUNT_FIELD: String
     lateinit var TOP_SYMBOL_FIELD: String
+    lateinit var headers: HttpHeaders
     @Transient
+    @Autowired
     lateinit var restCore: RestCore
 
     /*
@@ -52,20 +56,23 @@ abstract class RestExchange : BasicExchange(){
         if (id == 0 && !temporary) return
         logger.debug("Postconstuct concrete ${this::class.simpleName} id = $id" )
         super.init()
+
         //todo needs exceptions?
 
     }
 
     override fun fillTop() {
-        val pairs = restCore.blockingStringRequest(URL_TOP_STATISTIC, JSONArray::class)
-        if (pairs.length() == 0) return
+        if (props.skipTop()) return
+        val pairs = restCore.blockingStringRequest(URL_ENDPOINT + URL_TOP_STATISTIC, JSONArray::class)
+        if (pairs.hasErrors()) throw IllegalStateException("Failed fill top (base in rest) from $URL_ENDPOINT")
+        if (pairs.second.length() == 0) return
         val all = HashMap<String, Int>()
-        val topSize = if(props.maxSize() < pairs.length()) props.maxSize() else pairs.length()
+        val topSize = if(props.maxSize() < pairs.second.length()) props.maxSize() else pairs.second.length()
         var count = 0
         var pairName = ""
         var jsonObject: JSONObject
-        for (i in 0 until pairs.length()){
-            jsonObject = pairs.getJSONObject(i)
+        for (i in 0 until pairs.second.length()){
+            jsonObject = pairs.second.getJSONObject(i)
             count = jsonObject.getInt(TOP_COUNT_FIELD)
             pairName = jsonObject.getString(TOP_SYMBOL_FIELD)
             all[pairName] = count
@@ -73,18 +80,15 @@ abstract class RestExchange : BasicExchange(){
         topPairs.addAll(all.entries.sortedByDescending { it.value }.map { it.key }.subList(0, topSize))
     }
 
-    protected fun initVars(){}
+    abstract fun initVars()
 
     protected fun limitsFill(entity: JSONObject){}
 
-    protected fun pairsFill(entity: JSONObject, symbolsKey: String, baseCurKey: String, quoteCurKey: String, symbolKey: String, delimiterForRemoving: String = ""){
-       val symbols = entity.getJSONArray(symbolsKey)
+    protected fun pairsFill(symbols: JSONArray, baseCurKey: String, quoteCurKey: String, symbolKey: String){
        for(i in 0 until symbols.length()){
-           //pairs.plus(CurrencyPair(symbols.getJSONObject(i).getString("symbol"), this))
            val baseCur = symbols.getJSONObject(i).getString(baseCurKey)
            val quoteCur = symbols.getJSONObject(i).getString(quoteCurKey)
            var symbol = symbols.getJSONObject(i).getString(symbolKey)
-           if(delimiterForRemoving.isNotEmpty()) symbol = symbol.replace(delimiterForRemoving, "")
            pairs.add(CurrencyPair(baseCur, quoteCur, symbol, this))
        }
     }
@@ -97,8 +101,9 @@ abstract class RestExchange : BasicExchange(){
         if(id == 0) {
             return
         }
-        logger.debug("task ping try...$URL_ENDPOINT$URL_PING")
-        restCore.stringRequest("$URL_ENDPOINT$URL_PING").block()
+        logger.debug("task ping try...$URL_PING")
+        val resp = restCore.blockingStringRequest(URL_PING, JSONObject::class)
+        if (resp.hasErrors()) throw IllegalStateException("Failed ping $URL_ENDPOINT, resp: ${resp.second}")
         super.task()
     }
 
@@ -120,6 +125,24 @@ abstract class RestExchange : BasicExchange(){
             logger.trace("price change $pair req skipped")
             return
         }
+        val debMills = System.currentTimeMillis()
+
+
+        runBlocking {
+            val job = launch{
+                changePeriods.forEach {
+                    logger.debug("CHANGE")
+                    delay(requestDelay())
+                    launch(taskHandler.getExecutorContext()){
+                        //val mono = singlePriceChangeRequest(pair, it)
+                        updateSinglePriceChange(pair, it)
+                    }
+                }
+            }
+            job.join()
+        }
+
+        logger.debug("price change ends with ${System.currentTimeMillis() - debMills}")
     }
 
     /*
@@ -131,10 +154,42 @@ abstract class RestExchange : BasicExchange(){
 
     abstract fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod)
 
+    protected fun writePriceChange(pair: CurrencyPair, period: TimePeriod, oldVal: Double){
+        val changeVol = if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1 //fixme full logging
+        logger.trace("single price change calculating: price: ${pair.price}, period: ${period.name}, oldVal: $oldVal, changeVol: $changeVol")
+        pair.putInPriceChange(period, BigDecimal(changeVol, MathContext(2)).toDouble())
+        logger.trace("Change period updated on ${pair.symbol} pair $name exch, interval = ${period.name} | change = $changeVol")
+    }
+
+    fun limited() = limits.any { it.type == LimitType.REQUEST }
+
+    fun requestDelay(): Long{
+        val l = limits.find { it.type == LimitType.REQUEST } ?: return 0
+        return l.interval.toMillis() / l.limitValue
+    }
+
+    abstract fun <T: Any> Pair<HttpStatus, T>.getError(): Int
+
+    protected fun <T: Any>  Pair<HttpStatus, T>.operateError(pair: CurrencyPair): Boolean{
+        val error = getError()
+        if (error != ClientCodes.SUCCESS){
+            logger.error("Response has error: $first $second")
+            when(error){
+                ClientCodes.CURRENCY_NOT_FOUND -> {
+                    pair.unavailable = true
+                    return true
+                }
+                ClientCodes.EXCHANGE_NOT_ACCESSIBLE -> return true
+                ClientCodes.TEMPORARY_UNAVAILABLE -> return true
+            }
+        }
+        return false
+    }
+
+    protected fun <T: Any> Pair<HttpStatus, T>.hasErrors() = getError() != ClientCodes.SUCCESS
 
     override fun toString(): String {
         return "${this::class.simpleName} exId = $exId pairs: ${pairs.joinToString{it.symbol}}\n"
     }
-
 
 }

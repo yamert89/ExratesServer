@@ -1,10 +1,10 @@
 package ru.exrates.repos
 
-import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
+import ru.exrates.configs.Properties
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.exchanges.BasicExchange
 import ru.exrates.entities.exchanges.secondary.ExchangeNamesObject
@@ -16,6 +16,9 @@ class ExchangeService(@Autowired private val exchangeRepository: ExchangeReposit
                       @Autowired private val currencyRepository: CurrencyRepository) {
     @Autowired
     private lateinit var logger: Logger
+
+    @Autowired
+    lateinit var props: Properties
 
     @Transactional
     fun find(id: Int): BasicExchange? = exchangeRepository.findById(id).orElse(null)
@@ -64,14 +67,15 @@ class ExchangeService(@Autowired private val exchangeRepository: ExchangeReposit
     fun fillPairs(amount: Int, exchange: BasicExchange): List<CurrencyPair>{
 
         val reqPairs = if (amount < exchange.topPairs.size) {
-            exchange.topPairs.subList(0, amount)
+            exchange.topPairs.subList(0, amount - 1)
         } else exchange.topPairs
 
         val curPairs = currencyRepository.findByExchangeAndSymbolIn(exchange, reqPairs)
         if (curPairs.size < amount){
             val diffNumb = amount - curPairs.size
-            curPairs.addAll(currencyRepository.findTopBySymbolNotIn(exchange.topPairs, PageRequest.of(1, diffNumb)))
+            curPairs.addAll(currencyRepository.f(exchange, exchange.topPairs, PageRequest.of(0, diffNumb)))
         }
+
         return curPairs
     }
 

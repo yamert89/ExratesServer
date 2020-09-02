@@ -33,15 +33,32 @@ class TaskHandler {
     }
 
     /**
-     * run many tasks in sync block mode
+     * run many tasks in async mode with interval
      **/
-    fun awaitTasks(vararg task: () -> Unit) = runBlocking{
+
+    fun runTasks(interval: Long = 0L, vararg tasks: () -> Unit) = runBlocking {
+        withContext(getExecutorContext()){
+            tasks.forEach {
+                launch { it()}
+                logger.trace("delay of $interval")
+                delay(interval)
+            }
+        }
+
+    }
+
+
+    /**
+     * run many tasks in sync block mode with interval
+     **/
+    fun awaitTasks(interval: Long, vararg task: () -> Unit) = runBlocking{
         val queue = LinkedBlockingQueue<Deferred<Unit>>()
         withContext(getExecutorContext()){
             task.forEach {
                 val job = async{
-                    it.invoke()
+                    it()
                 }
+                if (interval > 0) delay(interval)
                 queue.add(job)
             }
             queue.forEach {
@@ -49,6 +66,8 @@ class TaskHandler {
             }
         }
     }
+
+    fun awaitTasks(vararg task: () -> Unit) = awaitTasks(0L, *task)
 
     fun getExecutorContext() = executor.asCoroutineDispatcher()
     //todo pool size needs empiric tests

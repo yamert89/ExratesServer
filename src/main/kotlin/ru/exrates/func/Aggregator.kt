@@ -3,25 +3,25 @@ package ru.exrates.func
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.config.BeanDefinition
 import org.springframework.beans.factory.config.BeanDefinitionCustomizer
 import org.springframework.context.support.GenericApplicationContext
 import org.springframework.stereotype.Component
-import reactor.core.publisher.Mono
 import ru.exrates.configs.Properties
 import ru.exrates.entities.CurrencyPair
-import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.*
+import ru.exrates.entities.exchanges.rest.BinanceExchange
+import ru.exrates.entities.exchanges.rest.CoinBaseExchange
+import ru.exrates.entities.exchanges.rest.P2pb2bExchange
+import ru.exrates.entities.exchanges.rest.RestExchange
 import ru.exrates.entities.exchanges.secondary.ExchangeNamesObject
 /*import ru.exrates.entities.exchanges.ExmoExchange*/
 import ru.exrates.repos.ExchangeService
 import ru.exrates.utils.ClientCodes
 import ru.exrates.utils.CursPeriod
 import ru.exrates.utils.ExchangePayload
-import java.time.Duration
 import java.util.*
 import javax.annotation.PostConstruct
 import kotlin.collections.HashMap
@@ -47,8 +47,9 @@ class Aggregator(
     val exchangeNames: MutableMap<String, KClass<out BasicExchange>> = HashMap()
 
     init {
-        exchangeNames["binance"] = BinanceExchange::class
-        exchangeNames["p2pb2b"] = P2pb2bExchange::class
+        //exchangeNames["binance"] = BinanceExchange::class
+        //exchangeNames["p2pb2b"] = P2pb2bExchange::class
+        exchangeNames["coinbase"] = CoinBaseExchange::class
         //exchangeNames["exmoExchange"] = ExmoExchange::class
     }
 
@@ -61,46 +62,58 @@ class Aggregator(
 
     @PostConstruct
     fun init(){
-        logger.trace("\n\nSTARTING EXRATES VERSION ${props.appVersion()}\n\n")
-        exchangeNames.entries.forEach {
-            var exchange: BasicExchange? = exchangeService.find(it.key)
-            var pairsSize = 0
-            if(exchange == null){
-                exchange = genericApplicationContext.getBean(it.value.java)
-                exchange = exchangeService.persist(exchange)
-                pairsSize = calculatePairsSize(exchange)
-                val pairs = TreeSet(exchange.pairs)
-                while(pairs.size > pairsSize) pairs.pollLast()
-                exchange.pairs.clear()
-                exchange.pairs.addAll(pairs)
-            }else{
-                pairsSize = calculatePairsSize(exchange)
-                if(exchange.pairs.size > pairsSize) {
-                    val pairs = exchangeService.fillPairs(pairsSize, exchange)
-                    exchange.pairs.clear()
-                    exchange.pairs.addAll(pairs)
+        logger.trace("\n\n\t\t\t\tSTARTING EXRATES VERSION ${props.appVersion()}\n\n")
+        var key = ""
+
+            exchangeNames.entries.forEach {
+                try {
+                    var exchange: BasicExchange? = exchangeService.find(it.key)
+                    key = it.key
+                    var pairsSize = 0
+                    if(exchange == null){
+                        exchange = genericApplicationContext.getBean(it.value.java)
+                        exchange = exchangeService.persist(exchange)
+                        pairsSize = calculatePairsSize(exchange)
+                        val pairs = TreeSet(exchange.pairs)
+                        while(pairs.size > pairsSize) pairs.pollLast()
+                        exchange.pairs.clear()
+                        exchange.pairs.addAll(pairs)
+                    }else{
+                        pairsSize = calculatePairsSize(exchange)
+                        if (!props.skipTop()) {
+                            val pairs = exchangeService.fillPairs(pairsSize, exchange)
+                            exchange.pairs.clear()
+                            exchange.pairs.addAll(pairs)
+                        }else{
+                            while (exchange.pairs.size > pairsSize) exchange.pairs.remove(exchange.pairs.last())
+                        }
+                    }
+
+                    val finalExchange = exchange
+                    val clazz: KClass<BasicExchange> = it.value as KClass<BasicExchange>
+                    genericApplicationContext.registerBean(
+                        clazz.java, {finalExchange},
+                        arrayOf(BeanDefinitionCustomizer { def: BeanDefinition -> def.isPrimary = true }))
+
+                    exchange = genericApplicationContext.getBean(it.value.java)
+                    exchanges[exchange.exId] = exchange
+                    logger.trace("Initialization $key success with ${exchange.pairs.size} pairs")
+                }catch (e: Exception){
+                    logger.error(e)
+                    logger.error("Failed $key initialization")
                 }
+
+            }
+            GlobalScope.launch {
+                launch(taskHandler.getExecutorContext()){
+                    repeat(Int.MAX_VALUE){
+                        delay(props.savingTimer())
+                        save()
+                    }
+                }
+
             }
 
-            val finalExchange = exchange
-            val clazz: KClass<BasicExchange> = it.value as KClass<BasicExchange>
-            genericApplicationContext.registerBean(
-                clazz.java, {finalExchange},
-                arrayOf(BeanDefinitionCustomizer { def: BeanDefinition -> def.isPrimary = true }))
-
-            exchange = genericApplicationContext.getBean(it.value.java)
-            exchanges[exchange.exId] = exchange
-        }
-        GlobalScope.launch {
-            launch(taskHandler.getExecutorContext()){
-                repeat(Int.MAX_VALUE){
-                    delay(props.savingTimer())
-                    save()
-                }
-            }
-
-        }
-        logger.debug("exit from init")
     }
 
     /*
@@ -155,7 +168,7 @@ class Aggregator(
         val restExch = exch as RestExchange
         reqPairs.forEach {
             with(taskHandler){
-                awaitTasks(
+                awaitTasks( exch.requestDelay(),
                     { exch.currentPrice(it, timePeriod) },
                     { exch.priceHistory(it, period, 10) }
                 )
@@ -190,7 +203,7 @@ class Aggregator(
                 p.exchange = exchange
                 // p = exchange.getPair(pair.symbol)!!
                 with(taskHandler){
-                    awaitTasks(
+                    awaitTasks(exchange.castToRestExchange().requestDelay(),
                         { exchange.currentPrice(p, exchange.taskTimeOut) },
                         { exchange.priceChange(p, exchange.taskTimeOut) },
                         { exchange.priceHistory(p, historyInterval ?:
@@ -215,7 +228,7 @@ class Aggregator(
             ex.insertPair(pair!!)
         }
         with(taskHandler){
-            awaitTasks(
+            awaitTasks(ex.castToRestExchange().requestDelay(),
                 {ex.currentPrice(pair, ex.taskTimeOut)},
                 {ex.priceChange(pair, ex.taskTimeOut)},
                 {ex.priceHistory(pair, currentInterval, 10)}  //todo right?
