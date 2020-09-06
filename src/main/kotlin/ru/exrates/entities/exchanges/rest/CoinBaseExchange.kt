@@ -51,26 +51,12 @@ class CoinBaseExchange: RestExchange() {
    * ******************************************************************************************************************
    * */
 
-    @PostConstruct
-    override fun init() {
-        super.init()
-        val errorHandler: (ClientResponse) -> Mono<Throwable> = { resp ->
-            //val errBody = JSONObject(resp.bodyToMono(String::class.java).block())
 
-            Mono.error(Exception("exception with ${resp.statusCode()}"))
-        }
-        if (!temporary){
-            fillTop()
-            return
-        }
-        initVars()
+    override fun extractInfo() {
         val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONArray::class, generateHeaders(URL_ENDPOINT + URL_INFO))
         if (entity.hasErrors()) throw IllegalStateException("Failed info initialization")
         pairsFill(entity.second, "base_currency", "quote_currency", "id")
         limitsFill(JSONObject())
-        temporary = false
-        fillTop()
-        logger.debug("exchange " + name + " initialized with " + pairs.size + " pairs")
     }
 
     override fun initVars() {

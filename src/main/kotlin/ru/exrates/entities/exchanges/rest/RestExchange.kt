@@ -13,6 +13,7 @@ import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.BasicExchange
+import ru.exrates.entities.exchanges.secondary.InfoFieldsObject
 import ru.exrates.func.RestCore
 import ru.exrates.utils.ClientCodes
 import java.math.BigDecimal
@@ -52,14 +53,23 @@ abstract class RestExchange : BasicExchange(){
 
     @PostConstruct
     override fun init() {
-
         if (id == 0 && !temporary) return
-        logger.debug("Postconstuct concrete ${this::class.simpleName} id = $id" )
+        if (!temporary){
+            fillTop()
+            super.init()
+            return
+        }
+        initVars()
+        extractInfo()
+        temporary = false
+        fillTop()
+        logger.debug("exchange " + name + " initialized with " + pairs.size + " pairs")
         super.init()
 
         //todo needs exceptions?
 
     }
+
 
     override fun fillTop() {
         if (props.skipTop()) return
@@ -83,6 +93,8 @@ abstract class RestExchange : BasicExchange(){
     abstract fun initVars()
 
     protected fun limitsFill(entity: JSONObject){}
+
+    abstract fun extractInfo()
 
     protected fun pairsFill(symbols: JSONArray, baseCurKey: String, quoteCurKey: String, symbolKey: String){
        for(i in 0 until symbols.length()){

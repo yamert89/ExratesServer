@@ -33,21 +33,11 @@ class P2pb2bExchange: RestExchange() {
     * ******************************************************************************************************************
     * */
 
-    @PostConstruct
-    override fun init() {
-        super.init()
-        if (!temporary){
-            fillTop()
-            return
-        }
-        initVars()
+
+    override fun extractInfo() {
         val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONObject::class)
         if (entity.hasErrors()) throw IllegalStateException("Failed info initialization")
         pairsFill(entity.second.getJSONArray("result"), "stock", "money", "name")
-        temporary = false
-        fillTop()
-        logger.debug("exchange " + name + " initialized with " + pairs.size + " pairs")
-
     }
 
     override fun initVars() {

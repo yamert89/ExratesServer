@@ -15,6 +15,10 @@ class HuobiExchange: RestExchange() {
         }
         initVars()
     }
+
+    override fun extractInfo() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
     override fun initVars() {
         exId = 4
         name = "huobi"

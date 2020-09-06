@@ -11,6 +11,7 @@ import reactor.core.publisher.Mono
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
+import ru.exrates.entities.exchanges.secondary.InfoFieldsObject
 import ru.exrates.entities.exchanges.secondary.Limit
 import ru.exrates.func.RestCore
 import ru.exrates.utils.ClientCodes
@@ -30,28 +31,12 @@ class BinanceExchange(): RestExchange() {
     * ******************************************************************************************************************
     * */
 
-    @PostConstruct
-    override fun init() {
-        super.init()
-        val errorHandler: (ClientResponse) -> Mono<Throwable> = { resp ->
-            // val errBody = JSONObject(resp.bodyToMono(String::class.java).block())
 
-            Mono.error(Exception("exception with ${resp.statusCode()}"))
-        }
-        if (!temporary){
-            fillTop()
-            return
-        }
-        initVars()
+    override fun extractInfo() {
         val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONObject::class)
         if (entity.hasErrors()) throw IllegalStateException("Failed info initialization")
         limitsFill(entity.second)
         pairsFill(entity.second.getJSONArray("symbols"), "baseAsset", "quoteAsset", "symbol")
-        temporary = false
-        fillTop()
-        logger.debug("exchange " + name + " initialized with " + pairs.size + " pairs")
-
-
     }
 
     override fun initVars() {
