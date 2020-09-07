@@ -1,30 +1,29 @@
 package ru.exrates.entities.exchanges.rest
 
+import org.springframework.boot.configurationprocessor.json.JSONObject
 import org.springframework.http.HttpStatus
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.TimePeriod
 import java.time.Duration
+import kotlin.IllegalStateException
 
 class HuobiExchange: RestExchange() {
 
-    override fun init(){
-        super.init()
-        if (!temporary){
-            fillTop()
-            return
-        }
-        initVars()
-    }
 
     override fun extractInfo() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONObject::class)
+        if (entity.hasErrors()) throw IllegalStateException("Failed info initialization")
+        pairsFill(entity.second.getJSONArray("data"), "base-currency", "quote-currency", "symbol")
     }
+
     override fun initVars() {
         exId = 4
         name = "huobi"
         URL_ENDPOINT = "https://api.huobi.pro"
         URL_PING = "$URL_ENDPOINT/v2/market-status"
         URL_INFO = "/v1/common/symbols"
+        URL_PRICE_CHANGE = "/market/history/kline"
+        URL_CURRENT_AVG_PRICE = "/market/depth"
         /*
         * 1min, 5min, 15min, 30min, 60min, 4hour, 1day, 1mon, 1week, 1year*/
         changePeriods.addAll(listOf(
@@ -39,10 +38,32 @@ class HuobiExchange: RestExchange() {
             TimePeriod(Duration.ofDays(7), "1week"),
             TimePeriod(Duration.ofDays(364), "1year")
         ))
+
+        historyPeriods = changePeriods.map { it.name }
     }
 
+    override fun currentPrice(pair: CurrencyPair, period: TimePeriod) {
+        super.currentPrice(pair, period)
+        val uri = "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?symbol=${pair.symbol}&type=step0&depth=5"
+        val entity = restCore.blockingStringRequest(uri, JSONObject::class)
+        if (stateChecker.checkEmptyJson(entity.second, exId) || entity.operateError(pair)) return
+        val tick = entity.second.getJSONObject("tick")
+        val bids = tick.getJSONArray("bids")
+        val asks = tick.getJSONArray("asks")
+        var bPrice = 0.0
+        for (i in 0 until bids.length()){
+            bPrice += bids.getJSONArray(i).getDouble(0)
+        }
+        var askPrice = 0.0
+        for(i in 0 until asks.length()){
+            askPrice += asks.getJSONArray(i).getDouble(0)
+        }
+        pair.price = (bPrice / bids.length() + askPrice / asks.length()) / 2
+    }
+
+
     override fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+
     }
 
     override fun <T : Any> Pair<HttpStatus, T>.getError(): Int {
