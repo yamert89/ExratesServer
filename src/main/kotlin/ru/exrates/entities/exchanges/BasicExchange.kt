@@ -5,14 +5,12 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.hibernate.annotations.Fetch
 import org.hibernate.annotations.FetchMode
 import org.hibernate.annotations.SortComparator
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
-import org.springframework.web.reactive.function.client.WebClient
 import ru.exrates.configs.Properties
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.TimePeriod
@@ -31,11 +29,8 @@ import java.time.Duration
 import java.util.*
 import javax.annotation.PostConstruct
 import javax.persistence.*
-import javax.xml.bind.JAXBElement
-import kotlin.NullPointerException
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
-import kotlin.jvm.Transient
 
 @Entity @Inheritance(strategy = InheritanceType.SINGLE_TABLE) @DiscriminatorColumn(name = "EXCHANGE_TYPE")
 @JsonIgnoreProperties("id", "limits", "limitCode", "banCode", "sleepValueSeconds", "taskTimeOut", "temporary",

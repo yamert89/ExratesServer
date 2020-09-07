@@ -1,6 +1,5 @@
 package ru.exrates.entities.exchanges
 
-import org.springframework.web.reactive.socket.WebSocketHandler
 import org.springframework.web.reactive.socket.client.StandardWebSocketClient
 import org.springframework.web.reactive.socket.client.WebSocketClient
 import ru.exrates.entities.CurrencyPair

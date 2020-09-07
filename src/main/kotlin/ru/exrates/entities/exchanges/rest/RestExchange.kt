@@ -13,7 +13,6 @@ import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.BasicExchange
-import ru.exrates.entities.exchanges.secondary.InfoFieldsObject
 import ru.exrates.func.RestCore
 import ru.exrates.utils.ClientCodes
 import java.math.BigDecimal

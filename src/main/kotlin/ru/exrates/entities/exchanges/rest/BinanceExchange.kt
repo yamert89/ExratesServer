@@ -1,24 +1,14 @@
 package ru.exrates.entities.exchanges.rest
 
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import org.springframework.beans.factory.getBean
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
 import org.springframework.http.HttpStatus
-import org.springframework.web.reactive.function.client.ClientResponse
-import reactor.core.publisher.Mono
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
-import ru.exrates.entities.exchanges.secondary.InfoFieldsObject
 import ru.exrates.entities.exchanges.secondary.Limit
-import ru.exrates.func.RestCore
 import ru.exrates.utils.ClientCodes
-import java.math.BigDecimal
-import java.math.MathContext
 import java.time.Duration
-import javax.annotation.PostConstruct
 import javax.persistence.DiscriminatorValue
 import javax.persistence.Entity
 
@@ -30,7 +20,6 @@ class BinanceExchange(): RestExchange() {
     *       Initialization
     * ******************************************************************************************************************
     * */
-
 
     override fun extractInfo() {
         val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONObject::class)

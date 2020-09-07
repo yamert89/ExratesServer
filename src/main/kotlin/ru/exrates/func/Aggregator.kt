@@ -1,5 +1,6 @@
 package ru.exrates.func
 
+/*import ru.exrates.entities.exchanges.ExmoExchange*/
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -11,13 +12,13 @@ import org.springframework.context.support.GenericApplicationContext
 import org.springframework.stereotype.Component
 import ru.exrates.configs.Properties
 import ru.exrates.entities.CurrencyPair
-import ru.exrates.entities.exchanges.*
+import ru.exrates.entities.exchanges.BasicExchange
+import ru.exrates.entities.exchanges.ExchangeDTO
 import ru.exrates.entities.exchanges.rest.BinanceExchange
 import ru.exrates.entities.exchanges.rest.CoinBaseExchange
 import ru.exrates.entities.exchanges.rest.P2pb2bExchange
 import ru.exrates.entities.exchanges.rest.RestExchange
 import ru.exrates.entities.exchanges.secondary.ExchangeNamesObject
-/*import ru.exrates.entities.exchanges.ExmoExchange*/
 import ru.exrates.repos.ExchangeService
 import ru.exrates.utils.ClientCodes
 import ru.exrates.utils.CursPeriod

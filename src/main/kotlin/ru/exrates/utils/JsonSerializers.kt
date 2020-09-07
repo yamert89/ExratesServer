@@ -6,8 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializerProvider
 import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.BasicExchange
-import java.io.StringWriter
-import java.lang.IllegalArgumentException
 
 class TimePeriodSerializer(private val mapper: ObjectMapper = ObjectMapper()): JsonSerializer<TimePeriod>() {
     override fun serialize(value: TimePeriod?, gen: JsonGenerator?, serializers: SerializerProvider?) {
