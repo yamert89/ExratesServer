@@ -132,6 +132,7 @@ class CoinBaseExchange: RestExchange() {
         val uri = "$URL_ENDPOINT${URL_CURRENT_AVG_PRICE.replace(pathId, pair.symbol)}?level=1"
         val entity = restCore.blockingStringRequest(uri, JSONObject::class, generateHeaders(uri))
         if (stateChecker.checkEmptyJson(entity.second, exId) || entity.operateError(pair)) return
+        logger.debug("current price entity: $entity")
         val bidPrice = entity.second.getJSONArray("bids").getJSONArray(0)[0].toString().toDouble()
         val asksPrice = entity.second.getJSONArray("asks").getJSONArray(0)[0].toString().toDouble()
         pair.price = (bidPrice + asksPrice) / 2
