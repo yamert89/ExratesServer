@@ -46,7 +46,7 @@ class HuobiExchange: RestExchange() {
         super.currentPrice(pair, period)
         val uri = "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?symbol=${pair.symbol}&type=step0&depth=5"
         val entity = restCore.blockingStringRequest(uri, JSONObject::class)
-        if (stateChecker.checkEmptyJson(entity.second, exId) || entity.operateError(pair)) return
+        if (failHandle(entity, pair)) return
         val tick = entity.second.getJSONObject("tick")
         val bids = tick.getJSONArray("bids")
         val asks = tick.getJSONArray("asks")
@@ -59,6 +59,20 @@ class HuobiExchange: RestExchange() {
             askPrice += asks.getJSONArray(i).getDouble(0)
         }
         pair.price = (bPrice / bids.length() + askPrice / asks.length()) / 2
+    }
+
+    override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int) {
+        super.priceHistory(pair, interval, limit)
+        val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?symbol=${pair.symbol}&period=$interval&size=$limit"
+        val entity = restCore.blockingStringRequest(uri, JSONObject::class)
+        if (failHandle(entity, pair)) return
+        pair.priceHistory.clear()
+        val array = entity.second.getJSONArray("data")
+        for (i in 0 until array.length()){
+            val ob = array.getJSONObject(i)
+            pair.priceHistory.add(((ob.getDouble("low") + ob.getDouble("high")) / 2))
+        }
+        logger.trace("price history updated on ${pair.symbol} pair $name exch")
     }
 
 
