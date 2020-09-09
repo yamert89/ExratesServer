@@ -105,7 +105,7 @@ class CoinBaseExchange: RestExchange() {
         logger.debug("update current price for $period ${pair.symbol}")
         val uri = "$URL_ENDPOINT${URL_CURRENT_AVG_PRICE.replace(pathId, pair.symbol)}?level=1"
         val entity = restCore.blockingStringRequest(uri, JSONObject::class, generateHeaders(uri))
-        if (stateChecker.checkEmptyJson(entity.second, exId) || entity.operateError(pair)) return
+        if (failHandle(entity, pair)) return
         logger.debug("current price entity: $entity")
         val bidPrice = entity.second.getJSONArray("bids").getJSONArray(0)[0].toString().toDouble()
         val asksPrice = entity.second.getJSONArray("asks").getJSONArray(0)[0].toString().toDouble()
@@ -121,7 +121,7 @@ class CoinBaseExchange: RestExchange() {
         val uri = "$URL_ENDPOINT${URL_PRICE_CHANGE.replace(pathId, pair.symbol)}?start=$start&end=$end&granularity=${per.seconds}"
         try{
             val array = restCore.blockingStringRequest(uri, JSONArray::class, generateHeaders(uri))
-            if (stateChecker.checkEmptyJson(array.second, exId) || array.operateError(pair)) return
+            if (failHandle(array, pair)) return
             pair.priceHistory.clear()
             for (i in 0 until array.second.length()){ //fixme data is incomplete
                 val arr = array.second.getJSONArray(i)
@@ -142,7 +142,7 @@ class CoinBaseExchange: RestExchange() {
         val uri = "$URL_ENDPOINT${URL_PRICE_CHANGE.replace(pathId, pair.symbol)}?start=$start&end=$end&granularity=${period.period.seconds}"
         val array = restCore.blockingStringRequest(uri, JSONArray::class, generateHeaders(uri))
         logger.trace("Response of $uri \n$array")
-        if (stateChecker.checkEmptyJson(array.second, exId) || array.operateError(pair)) return
+        if (failHandle(array, pair)) return
         val arr = array.second.getJSONArray(0)
         val oldVal = (arr.getDouble(1) + arr.getDouble(2)) / 2
         writePriceChange(pair, period, oldVal)

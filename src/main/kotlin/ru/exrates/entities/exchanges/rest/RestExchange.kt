@@ -199,6 +199,9 @@ abstract class RestExchange : BasicExchange(){
 
     protected fun <T: Any> Pair<HttpStatus, T>.hasErrors() = getError() != ClientCodes.SUCCESS
 
+    protected fun <T: Any> failHandle(jsonEntity: Pair<HttpStatus, T>, pair: CurrencyPair): Boolean
+            = stateChecker.checkEmptyJson(jsonEntity.second, exId) || jsonEntity.operateError(pair)
+
     override fun toString(): String {
         return "${this::class.simpleName} exId = $exId pairs: ${pairs.joinToString{it.symbol}}\n"
     }
