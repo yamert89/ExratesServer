@@ -63,7 +63,14 @@ class HuobiExchange: RestExchange() {
 
 
     override fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod) {
-
+        val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?symbol=${pair.symbol}&period=${period.name}&size=1"
+        val entity = restCore.blockingStringRequest(uri, JSONObject::class)
+        logger.trace("Response of $uri \n$entity")
+        if (stateChecker.checkEmptyJson(entity.second, exId) || entity.operateError(pair)) return
+        val data = entity.second.getJSONArray("data").getJSONObject(0)
+        //{"id":1598803200,"open":11615.88,"close":11740.01,"low":11570.34,"high":11776.53,"amount":35795.05511616849,"vol":4.1770683711697394E8,"count":370484}
+        val oldVal = (data.getDouble("low") + data.getDouble("high")) / 2
+        writePriceChange(pair, period, oldVal)
     }
 
     override fun <T : Any> Pair<HttpStatus, T>.getError(): Int {
