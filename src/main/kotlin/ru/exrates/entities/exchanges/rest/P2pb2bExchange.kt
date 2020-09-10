@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.secondary.ExRJsonObject
+import ru.exrates.entities.exchanges.secondary.RestCurPriceObject
 import ru.exrates.utils.ClientCodes
 import java.time.Duration
 import javax.persistence.DiscriminatorValue
@@ -64,17 +65,16 @@ class P2pb2bExchange: RestExchange() {
     * ******************************************************************************************************************
     * */
 
-    override fun currentPrice(pair: CurrencyPair, period: TimePeriod) {
-        super.currentPrice(pair, period)
-        val uri = "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?market=${pair.symbol}"
-        val entity = restCore.blockingStringRequest(uri, ExRJsonObject::class)
-        if (failHandle(entity, pair)) return
-        val result = entity.second.getJSONObject("result")
+
+    override fun CurrencyPair.currentPriceExt() = RestCurPriceObject(
+        "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?market=${symbol}",
+        ExRJsonObject::class
+    ){jsonUnit ->
+        val ob = jsonUnit as ExRJsonObject
+        val result = ob.getJSONObject("result")
         val bid = result.getDouble("bid")
         val ask = result.getDouble("ask")
-        pair.price = (ask + bid) / 2
-        logger.trace("Price updated on ${pair.symbol} pair | = ${pair.price} ex = $name")
-
+        (ask + bid) / 2
     }
 
     override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int) {

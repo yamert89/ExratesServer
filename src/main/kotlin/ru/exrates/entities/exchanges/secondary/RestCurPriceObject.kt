@@ -1,4 +1,11 @@
 package ru.exrates.entities.exchanges.secondary
 
-class RestCurPriceObject(val uri: String, val jsonType: Any, val price: Double) {
+import kotlin.reflect.KClass
+
+class RestCurPriceObject(
+    val uri: String,
+    val jsonType: KClass<out JsonUnit>,
+    private val func: (JsonUnit) -> Double){
+
+    fun price(jsonUnit: JsonUnit): Double = func(jsonUnit)
 }

@@ -12,6 +12,7 @@ import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.secondary.ExRJsonArray
 import ru.exrates.entities.exchanges.secondary.ExRJsonObject
 import ru.exrates.entities.exchanges.secondary.Limit
+import ru.exrates.entities.exchanges.secondary.RestCurPriceObject
 import ru.exrates.utils.ClientCodes
 import java.time.Duration
 import java.time.Instant
@@ -95,23 +96,22 @@ class CoinBaseExchange: RestExchange() {
 
     }
 
-    override fun limitsFill(entity: JSONObject) {
+    override fun limitsFill(entity: ExRJsonObject) {
         super.limitsFill(entity)
         limits.add(
             Limit("SECOND", LimitType.REQUEST, Duration.ofSeconds(1), 1)
         )
     }
 
-    override fun currentPrice(pair: CurrencyPair, period: TimePeriod) {
-        super.currentPrice(pair, period)
-        logger.debug("update current price for $period ${pair.symbol}")
-        val uri = "$URL_ENDPOINT${URL_CURRENT_AVG_PRICE.replace(pathId, pair.symbol)}?level=1"
-        val entity = restCore.blockingStringRequest(uri, ExRJsonObject::class, generateHeaders(uri))
-        if (failHandle(entity, pair)) return
-        logger.debug("current price entity: $entity")
-        val bidPrice = entity.second.getJSONArray("bids").getJSONArray(0)[0].toString().toDouble()
-        val asksPrice = entity.second.getJSONArray("asks").getJSONArray(0)[0].toString().toDouble()
-        pair.price = (bidPrice + asksPrice) / 2
+
+    override fun CurrencyPair.currentPriceExt() = RestCurPriceObject(
+        "$URL_ENDPOINT${URL_CURRENT_AVG_PRICE.replace(pathId, symbol)}?level=1",
+        ExRJsonObject::class
+    ){jsonUnit ->
+        val ob = jsonUnit as ExRJsonObject
+        val bidPrice = jsonUnit.getJSONArray("bids").getJSONArray(0)[0].toString().toDouble()
+        val asksPrice =jsonUnit.getJSONArray("asks").getJSONArray(0)[0].toString().toDouble()
+        (bidPrice + asksPrice) / 2
     }
 
     override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int) {

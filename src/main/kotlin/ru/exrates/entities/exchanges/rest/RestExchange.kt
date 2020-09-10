@@ -15,6 +15,8 @@ import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.BasicExchange
 import ru.exrates.entities.exchanges.secondary.ExRJsonArray
 import ru.exrates.entities.exchanges.secondary.ExRJsonObject
+import ru.exrates.entities.exchanges.secondary.JsonUnit
+import ru.exrates.entities.exchanges.secondary.RestCurPriceObject
 import ru.exrates.func.RestCore
 import ru.exrates.utils.ClientCodes
 import java.math.BigDecimal
@@ -93,7 +95,7 @@ abstract class RestExchange : BasicExchange(){
 
     abstract fun initVars()
 
-    protected fun limitsFill(entity: JSONObject){}
+    protected fun limitsFill(entity: ExRJsonObject){}
 
     abstract fun extractInfo()
 
@@ -131,10 +133,19 @@ abstract class RestExchange : BasicExchange(){
             logger.trace("current price $pair.symbol req skipped")
             return
         }
-
+        val ob = pair.currentPriceExt()
+        val entity = restCore.blockingStringRequest(ob.uri, ob.jsonType)
+        if (failHandle(entity, pair)) return
+        pair.price = ob.price(entity.second)
+        logger.trace("Price updated on ${pair.symbol} pair $name exch| = ${pair.price}")
     }
 
-    abstract fun <T: Any> CurrencyPair.currentPriceExt()
+    /**
+     * @return RestCurPriceObject which contains
+     * - uri
+     * - type of json
+     * - function with get value logic*/
+    abstract fun CurrencyPair.currentPriceExt(): RestCurPriceObject
 
     override fun priceChange(pair: CurrencyPair, interval: TimePeriod){
         if(!pair.updateTimes.priceChangeTimeElapsed(interval)) {

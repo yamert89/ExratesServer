@@ -4,9 +4,7 @@ import org.springframework.http.HttpStatus
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
-import ru.exrates.entities.exchanges.secondary.ExRJsonArray
-import ru.exrates.entities.exchanges.secondary.ExRJsonObject
-import ru.exrates.entities.exchanges.secondary.Limit
+import ru.exrates.entities.exchanges.secondary.*
 import ru.exrates.utils.ClientCodes
 import java.time.Duration
 import javax.persistence.DiscriminatorValue
@@ -88,15 +86,11 @@ class BinanceExchange(): RestExchange() {
     * ******************************************************************************************************************
     * */
 
-    override fun currentPrice(pair: CurrencyPair, period: TimePeriod) {
-        super.currentPrice(pair, period)
-        val uri = "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?symbol=${pair.symbol}"
-        val entity = restCore.blockingStringRequest(uri, ExRJsonObject::class)
-        if (failHandle(entity, pair)) return
-        val price = entity.second.getString("price").toDouble()
-        pair.price = price
-        logger.trace("Price updated on ${pair.symbol} pair $name exch| = $price")
-    }
+
+    override fun CurrencyPair.currentPriceExt() = RestCurPriceObject(
+        "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?symbol=${symbol}",
+        ExRJsonObject::class
+    ) { jsonUnit ->  (jsonUnit as ExRJsonObject).getString("price").toDouble()}
 
     override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int){
         super.priceHistory(pair, interval, limit)
