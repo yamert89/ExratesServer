@@ -1,11 +1,11 @@
 package ru.exrates.entities.exchanges.rest
 
-import org.springframework.boot.configurationprocessor.json.JSONArray
-import org.springframework.boot.configurationprocessor.json.JSONObject
 import org.springframework.http.HttpStatus
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
+import ru.exrates.entities.exchanges.secondary.ExRJsonArray
+import ru.exrates.entities.exchanges.secondary.ExRJsonObject
 import ru.exrates.entities.exchanges.secondary.Limit
 import ru.exrates.utils.ClientCodes
 import java.time.Duration
@@ -22,7 +22,7 @@ class BinanceExchange(): RestExchange() {
     * */
 
     override fun extractInfo() {
-        val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONObject::class)
+        val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, ExRJsonObject::class)
         if (entity.hasErrors()) throw IllegalStateException("Failed info initialization")
         limitsFill(entity.second)
         pairsFill(entity.second.getJSONArray("symbols"), "baseAsset", "quoteAsset", "symbol")
@@ -62,7 +62,7 @@ class BinanceExchange(): RestExchange() {
 
     }
 
-    override fun limitsFill(entity: JSONObject) {
+    override fun limitsFill(entity: ExRJsonObject) {
         super.limitsFill(entity)
         val array = entity.getJSONArray("rateLimits")
         limits.add(
@@ -91,7 +91,7 @@ class BinanceExchange(): RestExchange() {
     override fun currentPrice(pair: CurrencyPair, period: TimePeriod) {
         super.currentPrice(pair, period)
         val uri = "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?symbol=${pair.symbol}"
-        val entity = restCore.blockingStringRequest(uri, JSONObject::class)
+        val entity = restCore.blockingStringRequest(uri, ExRJsonObject::class)
         if (failHandle(entity, pair)) return
         val price = entity.second.getString("price").toDouble()
         pair.price = price
@@ -103,7 +103,7 @@ class BinanceExchange(): RestExchange() {
         val symbol = "?symbol=" + pair.symbol
         val period = "&interval=$interval"
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE$symbol$period&limit=$limit"
-        val entity = restCore.blockingStringRequest(uri, JSONArray::class)
+        val entity = restCore.blockingStringRequest(uri, ExRJsonArray::class)
         if (failHandle(entity, pair)) return
         pair.priceHistory.clear()
         for (i in 0 until entity.second.length()){
@@ -122,7 +122,7 @@ class BinanceExchange(): RestExchange() {
 
     override fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod){
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?symbol=${pair.symbol}&interval=${period.name}&limit=1"
-        val entity = restCore.blockingStringRequest(uri, JSONArray::class)
+        val entity = restCore.blockingStringRequest(uri, ExRJsonArray::class)
         logger.trace("Response of $uri \n$entity")
         if (failHandle(entity, pair)) return
         val array = entity.second.getJSONArray(0)
@@ -137,7 +137,7 @@ class BinanceExchange(): RestExchange() {
             HttpStatus.TOO_MANY_REQUESTS -> ClientCodes.EXCHANGE_NOT_ACCESSIBLE
             HttpStatus.I_AM_A_TEAPOT -> ClientCodes.EXCHANGE_NOT_ACCESSIBLE
             else -> {
-                val status = (second as JSONObject).getInt("code")
+                val status = (second as ExRJsonObject).getInt("code")
                 when(status){
                     -1000 -> ClientCodes.TEMPORARY_UNAVAILABLE
                     -1007 -> ClientCodes.EXCHANGE_NOT_ACCESSIBLE

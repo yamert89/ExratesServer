@@ -13,6 +13,8 @@ import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.BasicExchange
+import ru.exrates.entities.exchanges.secondary.ExRJsonArray
+import ru.exrates.entities.exchanges.secondary.ExRJsonObject
 import ru.exrates.func.RestCore
 import ru.exrates.utils.ClientCodes
 import java.math.BigDecimal
@@ -72,7 +74,7 @@ abstract class RestExchange : BasicExchange(){
 
     override fun fillTop() {
         if (props.skipTop()) return
-        val pairs = restCore.blockingStringRequest(URL_ENDPOINT + URL_TOP_STATISTIC, JSONArray::class)
+        val pairs = restCore.blockingStringRequest(URL_ENDPOINT + URL_TOP_STATISTIC, ExRJsonArray::class)
         if (pairs.hasErrors()) throw IllegalStateException("Failed fill top (base in rest) from $URL_ENDPOINT")
         if (pairs.second.length() == 0) return
         val all = HashMap<String, Int>()
@@ -113,7 +115,7 @@ abstract class RestExchange : BasicExchange(){
             return
         }
         logger.debug("task ping try...$URL_PING")
-        val resp = restCore.blockingStringRequest(URL_PING, JSONObject::class)
+        val resp = restCore.blockingStringRequest(URL_PING, ExRJsonObject::class)
         if (resp.hasErrors()) throw IllegalStateException("Failed ping $URL_ENDPOINT, resp: ${resp.second}")
         super.task()
     }

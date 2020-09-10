@@ -22,7 +22,7 @@ class WS{
     @Autowired
     lateinit var context: ApplicationContext
 
-    val writer = BufferedWriter(FileWriter(File("J:/2.txt")))
+    val writer = BufferedWriter(FileWriter(File("JsonUnit:/2.txt")))
 
 
 

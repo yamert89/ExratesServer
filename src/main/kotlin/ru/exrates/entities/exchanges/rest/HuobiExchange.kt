@@ -4,6 +4,7 @@ import org.springframework.boot.configurationprocessor.json.JSONObject
 import org.springframework.http.HttpStatus
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.TimePeriod
+import ru.exrates.entities.exchanges.secondary.ExRJsonObject
 import java.time.Duration
 import kotlin.IllegalStateException
 
@@ -11,7 +12,7 @@ class HuobiExchange: RestExchange() {
 
 
     override fun extractInfo() {
-        val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONObject::class)
+        val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, ExRJsonObject::class)
         if (entity.hasErrors()) throw IllegalStateException("Failed info initialization")
         pairsFill(entity.second.getJSONArray("data"), "base-currency", "quote-currency", "symbol")
     }
@@ -45,7 +46,7 @@ class HuobiExchange: RestExchange() {
     override fun currentPrice(pair: CurrencyPair, period: TimePeriod) {
         super.currentPrice(pair, period)
         val uri = "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?symbol=${pair.symbol}&type=step0&depth=5"
-        val entity = restCore.blockingStringRequest(uri, JSONObject::class)
+        val entity = restCore.blockingStringRequest(uri, ExRJsonObject::class)
         if (failHandle(entity, pair)) return
         val tick = entity.second.getJSONObject("tick")
         val bids = tick.getJSONArray("bids")
@@ -64,7 +65,7 @@ class HuobiExchange: RestExchange() {
     override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int) {
         super.priceHistory(pair, interval, limit)
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?symbol=${pair.symbol}&period=$interval&size=$limit"
-        val entity = restCore.blockingStringRequest(uri, JSONObject::class)
+        val entity = restCore.blockingStringRequest(uri, ExRJsonObject::class)
         if (failHandle(entity, pair)) return
         pair.priceHistory.clear()
         val array = entity.second.getJSONArray("data")
@@ -78,7 +79,7 @@ class HuobiExchange: RestExchange() {
 
     override fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod) {
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?symbol=${pair.symbol}&period=${period.name}&size=1"
-        val entity = restCore.blockingStringRequest(uri, JSONObject::class)
+        val entity = restCore.blockingStringRequest(uri, ExRJsonObject::class)
         logger.trace("Response of $uri \n$entity")
         if (failHandle(entity, pair)) return
         val data = entity.second.getJSONArray("data").getJSONObject(0)

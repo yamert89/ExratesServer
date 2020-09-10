@@ -14,6 +14,9 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.publisher.toFlux
 import reactor.core.scheduler.Schedulers
+import ru.exrates.entities.exchanges.secondary.ExRJsonArray
+import ru.exrates.entities.exchanges.secondary.ExRJsonObject
+import ru.exrates.entities.exchanges.secondary.JsonUnit
 import java.time.Duration
 import kotlin.reflect.KClass
 
@@ -59,21 +62,21 @@ class RestCore() {
 
 
     @Suppress("UNCHECKED_CAST")
-    fun <T : Any> blockingStringRequest(uri: String, jsonType: KClass<T>, headers: HttpHeaders = HttpHeaders.EMPTY): Pair<HttpStatus, T> {
+    fun <T : JsonUnit> blockingStringRequest(uri: String, jsonType: KClass<T>, headers: HttpHeaders = HttpHeaders.EMPTY): Pair<HttpStatus, T> {
         val req = stringRequest(uri, headers)
-        val resp = req.second.block()
+        val resp = req.second.block()!!
         logger.trace("Response of $uri\n$resp")
         val status = req.first.block()!!.statusCode()
         logger.trace("Response status of $uri : ${status}")
         try {
-            return if (status != HttpStatus.OK || jsonType == JSONObject::class) status to JSONObject(resp) as T
-            else  status to JSONArray(resp) as T
+            return if (status != HttpStatus.OK || jsonType == ExRJsonObject::class) status to ExRJsonObject(resp) as T
+            else  status to ExRJsonArray(resp) as T
         }catch (e: JSONException){
             logger.error("json create exception with body: $resp")
         }
         return when(jsonType){
-            JSONObject::class -> status to JSONObject() as T
-            else -> status to JSONArray() as T
+            ExRJsonObject::class -> status to ExRJsonObject() as T
+            else -> status to ExRJsonArray() as T
         }
     }
 

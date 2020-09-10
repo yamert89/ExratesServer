@@ -9,6 +9,8 @@ import org.springframework.util.LinkedMultiValueMap
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
+import ru.exrates.entities.exchanges.secondary.ExRJsonArray
+import ru.exrates.entities.exchanges.secondary.ExRJsonObject
 import ru.exrates.entities.exchanges.secondary.Limit
 import ru.exrates.utils.ClientCodes
 import java.time.Duration
@@ -41,10 +43,10 @@ class CoinBaseExchange: RestExchange() {
 
 
     override fun extractInfo() {
-        val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONArray::class, generateHeaders(URL_ENDPOINT + URL_INFO))
+        val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, ExRJsonArray::class, generateHeaders(URL_ENDPOINT + URL_INFO))
         if (entity.hasErrors()) throw IllegalStateException("Failed info initialization")
         pairsFill(entity.second, "base_currency", "quote_currency", "id")
-        limitsFill(JSONObject())
+        limitsFill(ExRJsonObject())
     }
 
     override fun initVars() {
@@ -77,14 +79,14 @@ class CoinBaseExchange: RestExchange() {
             reqs[it.symbol] = restCore.stringRequest("$URL_ENDPOINT${URL_TOP_STATISTIC.replace(pathId, it.symbol)}")
         }
         val topSize = if(props.maxSize() < pairs.size) props.maxSize() else pairs.size
-        topPairs.addAll(reqs.mapValues { JSONObject(it.value.block()).getDouble(TOP_COUNT_FIELD) }
+        topPairs.addAll(reqs.mapValues { ExRJsonObject(it.value.block()).getDouble(TOP_COUNT_FIELD) }
             .entries.sortedByDescending { it.value }.map { it.key }.subList(0, topSize))*/
         val topSize = if(props.maxSize() < pairs.size) props.maxSize() else pairs.size
         val urls = pairs.map { "$URL_ENDPOINT${URL_TOP_STATISTIC.replace(pathId, it.symbol)}" }
 
         val flux = restCore.patchStringRequests(urls, Duration.ofMillis(requestDelay()))
         flux.subscribe()
-        val vList = flux.collectList().block().map {JSONObject(it).getDouble(TOP_COUNT_FIELD)  }
+        val vList = flux.collectList().block().map { ExRJsonObject(it).getDouble(TOP_COUNT_FIELD)  }
         val map = mutableMapOf<String, Double>()
         for(i in list.indices){
             map[list[i]] = vList[i]
@@ -104,7 +106,7 @@ class CoinBaseExchange: RestExchange() {
         super.currentPrice(pair, period)
         logger.debug("update current price for $period ${pair.symbol}")
         val uri = "$URL_ENDPOINT${URL_CURRENT_AVG_PRICE.replace(pathId, pair.symbol)}?level=1"
-        val entity = restCore.blockingStringRequest(uri, JSONObject::class, generateHeaders(uri))
+        val entity = restCore.blockingStringRequest(uri, ExRJsonObject::class, generateHeaders(uri))
         if (failHandle(entity, pair)) return
         logger.debug("current price entity: $entity")
         val bidPrice = entity.second.getJSONArray("bids").getJSONArray(0)[0].toString().toDouble()
@@ -120,7 +122,7 @@ class CoinBaseExchange: RestExchange() {
         val start = Instant.now().minus(per.multipliedBy(limit.toLong()))
         val uri = "$URL_ENDPOINT${URL_PRICE_CHANGE.replace(pathId, pair.symbol)}?start=$start&end=$end&granularity=${per.seconds}"
         try{
-            val array = restCore.blockingStringRequest(uri, JSONArray::class, generateHeaders(uri))
+            val array = restCore.blockingStringRequest(uri, ExRJsonArray::class, generateHeaders(uri))
             if (failHandle(array, pair)) return
             pair.priceHistory.clear()
             for (i in 0 until array.second.length()){ //fixme data is incomplete
@@ -140,7 +142,7 @@ class CoinBaseExchange: RestExchange() {
         val end = Instant.now().toString()
         val start = Instant.now().minus(period.period)
         val uri = "$URL_ENDPOINT${URL_PRICE_CHANGE.replace(pathId, pair.symbol)}?start=$start&end=$end&granularity=${period.period.seconds}"
-        val array = restCore.blockingStringRequest(uri, JSONArray::class, generateHeaders(uri))
+        val array = restCore.blockingStringRequest(uri, ExRJsonArray::class, generateHeaders(uri))
         logger.trace("Response of $uri \n$array")
         if (failHandle(array, pair)) return
         val arr = array.second.getJSONArray(0)

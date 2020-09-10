@@ -5,6 +5,7 @@ import org.springframework.boot.configurationprocessor.json.JSONObject
 import org.springframework.http.HttpStatus
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.TimePeriod
+import ru.exrates.entities.exchanges.secondary.ExRJsonObject
 import ru.exrates.utils.ClientCodes
 import java.time.Duration
 import javax.persistence.DiscriminatorValue
@@ -22,7 +23,7 @@ class P2pb2bExchange: RestExchange() {
 
 
     override fun extractInfo() {
-        val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONObject::class)
+        val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, ExRJsonObject::class)
         if (entity.hasErrors()) throw IllegalStateException("Failed info initialization")
         pairsFill(entity.second.getJSONArray("result"), "stock", "money", "name")
     }
@@ -66,7 +67,7 @@ class P2pb2bExchange: RestExchange() {
     override fun currentPrice(pair: CurrencyPair, period: TimePeriod) {
         super.currentPrice(pair, period)
         val uri = "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?market=${pair.symbol}"
-        val entity = restCore.blockingStringRequest(uri, JSONObject::class)
+        val entity = restCore.blockingStringRequest(uri, ExRJsonObject::class)
         if (failHandle(entity, pair)) return
         val result = entity.second.getJSONObject("result")
         val bid = result.getDouble("bid")
@@ -83,7 +84,7 @@ class P2pb2bExchange: RestExchange() {
         var entity :Pair<HttpStatus, JSONObject>? = null
 
         try{
-            entity = restCore.blockingStringRequest(uri, JSONObject::class)
+            entity = restCore.blockingStringRequest(uri, ExRJsonObject::class)
             if (failHandle(entity, pair)) return
             val array = entity.second.getJSONArray("result")
             if (array.length() == 0) {
@@ -111,7 +112,7 @@ class P2pb2bExchange: RestExchange() {
 
     override fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod){
         val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=${period.name}&limit=50"
-        val entity = restCore.blockingStringRequest(uri, JSONObject::class)
+        val entity = restCore.blockingStringRequest(uri, ExRJsonObject::class)
         if (failHandle(entity, pair)) return
         val array = entity.second.getJSONArray("result")
         if(array.length() == 0){
