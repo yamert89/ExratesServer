@@ -129,7 +129,10 @@ abstract class RestExchange : BasicExchange(){
             logger.trace("current price $pair.symbol req skipped")
             return
         }
+
     }
+
+    abstract fun <T: Any> CurrencyPair.currentPriceExt()
 
     override fun priceChange(pair: CurrencyPair, interval: TimePeriod){
         if(!pair.updateTimes.priceChangeTimeElapsed(interval)) {
