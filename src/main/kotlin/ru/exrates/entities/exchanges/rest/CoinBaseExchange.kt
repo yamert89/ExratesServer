@@ -136,18 +136,16 @@ class CoinBaseExchange: RestExchange() {
         } //todo wrong operate
     }
 
-
-    override fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod) {
-        logger.debug("update price change ${period.name} for ${pair.symbol}")
-        val end = Instant.now().toString()
-        val start = Instant.now().minus(period.period)
-        val uri = "$URL_ENDPOINT${URL_PRICE_CHANGE.replace(pathId, pair.symbol)}?start=$start&end=$end&granularity=${period.period.seconds}"
-        val array = restCore.blockingStringRequest(uri, ExRJsonArray::class, generateHeaders(uri))
-        logger.trace("Response of $uri \n$array")
-        if (failHandle(array, pair)) return
-        val arr = array.second.getJSONArray(0)
-        val oldVal = (arr.getDouble(1) + arr.getDouble(2)) / 2
-        writePriceChange(pair, period, oldVal)
+    override fun CurrencyPair.singlePriceChangeExt(period: TimePeriod) = RestCurPriceObject(
+        {
+            val end = Instant.now().toString()
+            val start = Instant.now().minus(period.period)
+            "$URL_ENDPOINT${URL_PRICE_CHANGE.replace(pathId, symbol)}?start=$start&end=$end&granularity=${period.period.seconds}"
+        }(),
+        ExRJsonArray::class
+    ){jsonUnit ->
+        val arr = (jsonUnit as ExRJsonArray).getJSONArray(0)
+        (arr.getDouble(1) + arr.getDouble(2)) / 2
     }
 
     override fun <T: Any> Pair<HttpStatus, T>.getError(): Int {

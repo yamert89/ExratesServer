@@ -114,14 +114,12 @@ class BinanceExchange(): RestExchange() {
     * ******************************************************************************************************************
     * */
 
-    override fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod){
-        val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?symbol=${pair.symbol}&interval=${period.name}&limit=1"
-        val entity = restCore.blockingStringRequest(uri, ExRJsonArray::class)
-        logger.trace("Response of $uri \n$entity")
-        if (failHandle(entity, pair)) return
-        val array = entity.second.getJSONArray(0)
-        val oldVal = (array.getDouble(2) + array.getDouble(3)) / 2
-        writePriceChange(pair, period, oldVal)
+    override fun CurrencyPair.singlePriceChangeExt(period: TimePeriod) = RestCurPriceObject(
+        "$URL_ENDPOINT$URL_PRICE_CHANGE?symbol=${symbol}&interval=${period.name}&limit=1",
+        ExRJsonArray::class
+    ){jsonUnit ->
+        val array = (jsonUnit as ExRJsonArray).getJSONArray(0)
+        (array.getDouble(2) + array.getDouble(3)) / 2
     }
 
     override fun <T : Any> Pair<HttpStatus, T>.getError(): Int {

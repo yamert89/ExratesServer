@@ -179,14 +179,19 @@ abstract class RestExchange : BasicExchange(){
     * */
 
 
-    abstract fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod)
-
-    protected fun writePriceChange(pair: CurrencyPair, period: TimePeriod, oldVal: Double){
+    final fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod){
+        val ob = pair.singlePriceChangeExt(period)
+        val entity = restCore.blockingStringRequest(ob.uri, ob.jsonType)
+        if (failHandle(entity, pair)) return
+        val oldVal = ob.price(entity.second)
+        if (oldVal == Double.MAX_VALUE) return
         val changeVol = if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1 //fixme full logging
         logger.trace("single price change calculating: price: ${pair.price}, period: ${period.name}, oldVal: $oldVal, changeVol: $changeVol")
         pair.putInPriceChange(period, BigDecimal(changeVol, MathContext(2)).toDouble())
         logger.trace("Change period updated on ${pair.symbol} pair $name exch, interval = ${period.name} | change = $changeVol")
     }
+
+    abstract fun CurrencyPair.singlePriceChangeExt(period: TimePeriod): RestCurPriceObject
 
     fun limited() = limits.any { it.type == LimitType.REQUEST }
 

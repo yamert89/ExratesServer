@@ -110,22 +110,18 @@ class P2pb2bExchange: RestExchange() {
     * ******************************************************************************************************************
     * */
 
-    override fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod){
-        val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=${period.name}&limit=50"
-        val entity = restCore.blockingStringRequest(uri, ExRJsonObject::class)
-        if (failHandle(entity, pair)) return
-        val array = entity.second.getJSONArray("result")
+    override fun CurrencyPair.singlePriceChangeExt(period: TimePeriod) = RestCurPriceObject(
+        "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${symbol}&interval=${period.name}&limit=50",
+        ExRJsonObject::class
+    ){jsonUnit ->
+        val ob = jsonUnit as ExRJsonObject
+        val array = jsonUnit.getJSONArray("result")
         if(array.length() == 0){
-            pair.putInPriceChange(period, Double.MAX_VALUE)
-            return
-        }
-        try {
+            this.putInPriceChange(period, Double.MAX_VALUE)
+            Double.MAX_VALUE
+        } else{
             val array2 = array.getJSONArray(0)
-            val oldVal = (array2.getDouble(1) + array2.getDouble(2)) / 2
-            writePriceChange(pair, period, oldVal)
-        }catch (e: Exception){
-            logger.error(e)
-            logger.error("Response: ${entity.second}")
+            (array2.getDouble(1) + array2.getDouble(2)) / 2
         }
     }
 
