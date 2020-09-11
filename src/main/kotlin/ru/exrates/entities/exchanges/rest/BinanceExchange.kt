@@ -87,10 +87,9 @@ class BinanceExchange(): RestExchange() {
     * */
 
 
-    override fun CurrencyPair.currentPriceExt() = RestCurPriceObject(
-        "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?symbol=${symbol}",
-        ExRJsonObject::class
-    ) { jsonUnit ->  (jsonUnit as ExRJsonObject).getString("price").toDouble()}
+    override fun CurrencyPair.currentPriceExt() = RestCurPriceObject<ExRJsonObject>(
+        "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?symbol=${symbol}"
+    ) { jsonUnit ->  jsonUnit.getString("price").toDouble()}
 
     override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int){
         super.priceHistory(pair, interval, limit)
@@ -114,9 +113,8 @@ class BinanceExchange(): RestExchange() {
     * ******************************************************************************************************************
     * */
 
-    override fun CurrencyPair.singlePriceChangeExt(period: TimePeriod) = RestCurPriceObject(
-        "$URL_ENDPOINT$URL_PRICE_CHANGE?symbol=${symbol}&interval=${period.name}&limit=1",
-        ExRJsonArray::class
+    override fun CurrencyPair.singlePriceChangeExt(period: TimePeriod) = RestCurPriceObject<ExRJsonArray>(
+        "$URL_ENDPOINT$URL_PRICE_CHANGE?symbol=${symbol}&interval=${period.name}&limit=1"
     ){jsonUnit ->
         val array = (jsonUnit as ExRJsonArray).getJSONArray(0)
         (array.getDouble(2) + array.getDouble(3)) / 2

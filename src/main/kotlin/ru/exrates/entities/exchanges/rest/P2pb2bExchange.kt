@@ -7,6 +7,7 @@ import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.secondary.ExRJsonObject
 import ru.exrates.entities.exchanges.secondary.RestCurPriceObject
+import ru.exrates.entities.exchanges.secondary.RestHistoryObject
 import ru.exrates.utils.ClientCodes
 import java.time.Duration
 import javax.persistence.DiscriminatorValue
@@ -66,12 +67,10 @@ class P2pb2bExchange: RestExchange() {
     * */
 
 
-    override fun CurrencyPair.currentPriceExt() = RestCurPriceObject(
-        "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?market=${symbol}",
-        ExRJsonObject::class
+    override fun CurrencyPair.currentPriceExt() = RestCurPriceObject<ExRJsonObject>(
+        "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?market=${symbol}"
     ){jsonUnit ->
-        val ob = jsonUnit as ExRJsonObject
-        val result = ob.getJSONObject("result")
+        val result = jsonUnit.getJSONObject("result")
         val bid = result.getDouble("bid")
         val ask = result.getDouble("ask")
         (ask + bid) / 2
@@ -103,6 +102,22 @@ class P2pb2bExchange: RestExchange() {
         } //todo wrong operate
 
     }
+
+    override fun CurrencyPair.historyExt(interval: String, limit: Int) = RestHistoryObject(
+        {
+            val lim = if (limit < 50) 50 else limit
+            "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${symbol}&interval=$interval&limit=$lim"
+        }(),
+        ExRJsonObject::class
+    ){jsonUnit -> mutableListOf<Double>().apply{
+        val array = (jsonUnit as ExRJsonObject).getJSONArray("result")
+        if (array.length() == 0) {
+            logger.warn("Price history result array is empty")
+            return
+        }
+        //todo
+
+    } }
 
     /*
     * ******************************************************************************************************************

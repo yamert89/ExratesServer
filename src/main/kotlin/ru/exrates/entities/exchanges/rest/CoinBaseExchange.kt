@@ -104,11 +104,9 @@ class CoinBaseExchange: RestExchange() {
     }
 
 
-    override fun CurrencyPair.currentPriceExt() = RestCurPriceObject(
-        "$URL_ENDPOINT${URL_CURRENT_AVG_PRICE.replace(pathId, symbol)}?level=1",
-        ExRJsonObject::class
+    override fun CurrencyPair.currentPriceExt() = RestCurPriceObject<ExRJsonObject>(
+        "$URL_ENDPOINT${URL_CURRENT_AVG_PRICE.replace(pathId, symbol)}?level=1"
     ){jsonUnit ->
-        val ob = jsonUnit as ExRJsonObject
         val bidPrice = jsonUnit.getJSONArray("bids").getJSONArray(0)[0].toString().toDouble()
         val asksPrice =jsonUnit.getJSONArray("asks").getJSONArray(0)[0].toString().toDouble()
         (bidPrice + asksPrice) / 2
@@ -136,15 +134,14 @@ class CoinBaseExchange: RestExchange() {
         } //todo wrong operate
     }
 
-    override fun CurrencyPair.singlePriceChangeExt(period: TimePeriod) = RestCurPriceObject(
+    override fun CurrencyPair.singlePriceChangeExt(period: TimePeriod) = RestCurPriceObject<ExRJsonArray>(
         {
             val end = Instant.now().toString()
             val start = Instant.now().minus(period.period)
             "$URL_ENDPOINT${URL_PRICE_CHANGE.replace(pathId, symbol)}?start=$start&end=$end&granularity=${period.period.seconds}"
-        }(),
-        ExRJsonArray::class
+        }()
     ){jsonUnit ->
-        val arr = (jsonUnit as ExRJsonArray).getJSONArray(0)
+        val arr = jsonUnit.getJSONArray(0)
         (arr.getDouble(1) + arr.getDouble(2)) / 2
     }
 

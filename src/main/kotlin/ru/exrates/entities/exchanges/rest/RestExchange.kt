@@ -13,10 +13,7 @@ import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.BasicExchange
-import ru.exrates.entities.exchanges.secondary.ExRJsonArray
-import ru.exrates.entities.exchanges.secondary.ExRJsonObject
-import ru.exrates.entities.exchanges.secondary.JsonUnit
-import ru.exrates.entities.exchanges.secondary.RestCurPriceObject
+import ru.exrates.entities.exchanges.secondary.*
 import ru.exrates.func.RestCore
 import ru.exrates.utils.ClientCodes
 import java.math.BigDecimal
@@ -180,7 +177,7 @@ abstract class RestExchange : BasicExchange(){
 
 
     final fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod){
-        val ob = pair.singlePriceChangeExt(period)
+        val ob: RestCurPriceObject<ExRJsonObject> = pair.singlePriceChangeExt(period)
         val entity = restCore.blockingStringRequest(ob.uri, ob.jsonType)
         if (failHandle(entity, pair)) return
         val oldVal = ob.price(entity.second)
@@ -191,7 +188,19 @@ abstract class RestExchange : BasicExchange(){
         logger.trace("Change period updated on ${pair.symbol} pair $name exch, interval = ${period.name} | change = $changeVol")
     }
 
-    abstract fun CurrencyPair.singlePriceChangeExt(period: TimePeriod): RestCurPriceObject
+    abstract fun <T: JsonUnit> CurrencyPair.singlePriceChangeExt(period: TimePeriod): RestCurPriceObject<T>
+
+    final override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int) {
+        super.priceHistory(pair, interval, limit)
+        val ob = pair.historyExt()
+        val entity = restCore.blockingStringRequest(ob.uri, ob.jsonType)
+        if (failHandle(entity, pair)) return
+        pair.priceHistory.clear()
+        ob.history(entity.second).forEach { pair.priceHistory.add(it) }
+        logger.trace("price history updated on ${pair.symbol} pair $name exch")
+    }
+
+    abstract fun <T : JsonUnit> CurrencyPair.historyExt(interval: String, limit: Int): RestHistoryObject<T>
 
     fun limited() = limits.any { it.type == LimitType.REQUEST }
 

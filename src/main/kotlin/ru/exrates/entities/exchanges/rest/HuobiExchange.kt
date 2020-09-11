@@ -6,6 +6,7 @@ import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.secondary.ExRJsonObject
 import ru.exrates.entities.exchanges.secondary.RestCurPriceObject
+import ru.exrates.entities.exchanges.secondary.RestHistoryObject
 import java.time.Duration
 import kotlin.IllegalStateException
 
@@ -44,9 +45,8 @@ class HuobiExchange: RestExchange() {
         historyPeriods = changePeriods.map { it.name }
     }
 
-    override fun CurrencyPair.currentPriceExt() = RestCurPriceObject(
-        "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?symbol=${symbol}&type=step0&depth=5",
-        ExRJsonObject::class
+    override fun CurrencyPair.currentPriceExt() = RestCurPriceObject<ExRJsonObject>(
+        "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?symbol=${symbol}&type=step0&depth=5"
     ){jsonUnit ->
         val ob = jsonUnit as ExRJsonObject
         val tick = jsonUnit.getJSONObject("tick")
@@ -63,25 +63,21 @@ class HuobiExchange: RestExchange() {
         (bPrice / bids.length() + askPrice / asks.length()) / 2
     }
 
-    override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int) {
-        super.priceHistory(pair, interval, limit)
-        val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?symbol=${pair.symbol}&period=$interval&size=$limit"
-        val entity = restCore.blockingStringRequest(uri, ExRJsonObject::class)
-        if (failHandle(entity, pair)) return
-        pair.priceHistory.clear()
-        val array = entity.second.getJSONArray("data")
-        for (i in 0 until array.length()){
-            val ob = array.getJSONObject(i)
-            pair.priceHistory.add(((ob.getDouble("low") + ob.getDouble("high")) / 2))
+    override fun CurrencyPair.historyExt(interval: String, limit: Int) = RestHistoryObject<ExRJsonObject>(
+        "$URL_ENDPOINT$URL_PRICE_CHANGE?symbol=${symbol}&period=$interval&size=$limit"
+    ){jsonUnit -> mutableListOf<Double>().apply {
+        val jsArray = jsonUnit.getJSONArray("data")
+        for (i in 0 until jsArray.length()) {
+            val ob = jsArray.getJSONObject(i)
+            add(((ob.getDouble("low") + ob.getDouble("high")) / 2))
         }
-        logger.trace("price history updated on ${pair.symbol} pair $name exch")
+    }
     }
 
-    override fun CurrencyPair.singlePriceChangeExt(period: TimePeriod) = RestCurPriceObject(
-        "$URL_ENDPOINT$URL_PRICE_CHANGE?symbol=${symbol}&period=${period.name}&size=1",
-        ExRJsonObject::class
+    override fun CurrencyPair.singlePriceChangeExt(period: TimePeriod) = RestCurPriceObject<ExRJsonObject>(
+        "$URL_ENDPOINT$URL_PRICE_CHANGE?symbol=${symbol}&period=${period.name}&size=1"
     ){jsonUnit ->
-        val data = (jsonUnit as ExRJsonObject).getJSONArray("data").getJSONObject(0)
+        val data = jsonUnit.getJSONArray("data").getJSONObject(0)
         //{"id":1598803200,"open":11615.88,"close":11740.01,"low":11570.34,"high":11776.53,"amount":35795.05511616849,"vol":4.1770683711697394E8,"count":370484}
         (data.getDouble("low") + data.getDouble("high")) / 2
     }
