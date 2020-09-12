@@ -69,7 +69,7 @@ class CoinBaseExchange: RestExchange() {
 
     }
 
-    override fun fillTop() {
+    override fun fillTop(getArrayFunc: () -> Pair<HttpStatus, JSONArray>) {
         if (props.skipTop()) return
         val list = pairs.map { it.symbol }
         /*val reqs = mutableMapOf<String, Mono<String>>()

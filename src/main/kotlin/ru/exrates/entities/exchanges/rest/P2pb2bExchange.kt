@@ -53,7 +53,7 @@ class P2pb2bExchange: RestExchange() {
         historyPeriods = changePeriods.map { it.name }
     }
 
-    override fun fillTop() {
+    override fun fillTop(getArrayFunc: () -> Pair<HttpStatus, JSONArray>) {
         topPairs.addAll(listOf("ETH_BTC", "BNB_BTC", "DASH_BTC", "NEO_BTC", "BCH_BTC", "ETC_BTC", "BTG_BTC",
             "LTC_BTC", "XLM_BTC", "WAVES_BTC", "WTC_BTC", "GAS_BTC", "YAP_BTC", "DOGE_BTC", "ENJ_BTC", "HNC_BTC"))
     }

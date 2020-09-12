@@ -1,16 +1,16 @@
 package ru.exrates.entities.exchanges.rest
 
+import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
 import org.springframework.http.HttpStatus
 import ru.exrates.entities.CurrencyPair
+import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
-import ru.exrates.entities.exchanges.secondary.ExRJsonArray
-import ru.exrates.entities.exchanges.secondary.ExRJsonObject
-import ru.exrates.entities.exchanges.secondary.RestCurPriceObject
-import ru.exrates.entities.exchanges.secondary.RestHistoryObject
+import ru.exrates.entities.exchanges.secondary.*
 import ru.exrates.utils.ClientCodes
 import java.time.Duration
 import kotlin.IllegalStateException
+
 
 class HuobiExchange: RestExchange() {
 
@@ -29,6 +29,10 @@ class HuobiExchange: RestExchange() {
         URL_INFO = "/v1/common/symbols"
         URL_PRICE_CHANGE = "/market/history/kline"
         URL_CURRENT_AVG_PRICE = "/market/depth"
+        URL_TOP_STATISTIC = "/market/tickers"
+        TOP_SYMBOL_FIELD = "symbol"
+        TOP_COUNT_FIELD = "count"
+
         /*
         * 1min, 5min, 15min, 30min, 60min, 4hour, 1day, 1mon, 1week, 1year*/
         changePeriods.addAll(listOf(
@@ -45,6 +49,21 @@ class HuobiExchange: RestExchange() {
         ))
 
         historyPeriods = changePeriods.map { it.name }
+    }
+
+    override fun fillTop(getArrayFunc: () -> Pair<HttpStatus, JSONArray>) {
+       super.fillTop{
+          val resp = restCore.blockingStringRequest(URL_ENDPOINT + URL_TOP_STATISTIC, ExRJsonObject::class)
+          resp.first to resp.second.getJSONArray("data")
+       }
+
+    }
+
+    override fun limitsFill(entity: ExRJsonObject) {
+        super.limitsFill(entity)
+        limits.add(
+            Limit("SECOND", LimitType.REQUEST, Duration.ofSeconds(1), 9)
+        )
     }
 
     override fun CurrencyPair.currentPriceExt() = RestCurPriceObject(

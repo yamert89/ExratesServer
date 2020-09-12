@@ -1,5 +1,7 @@
 package ru.exrates.entities.exchanges.rest
 
+import org.springframework.boot.configurationprocessor.json.JSONArray
+import org.springframework.boot.configurationprocessor.json.JSONObject
 import org.springframework.http.HttpStatus
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.LimitType
@@ -58,6 +60,12 @@ class BinanceExchange(): RestExchange() {
         )
         historyPeriods = changePeriods.map { it.name }
 
+    }
+
+    override fun fillTop(getArrayFunc: () -> Pair<HttpStatus, JSONArray>) {
+        super.fillTop{
+            restCore.blockingStringRequest(URL_ENDPOINT + URL_TOP_STATISTIC, ExRJsonArray::class)
+        }
     }
 
     override fun limitsFill(entity: ExRJsonObject) {

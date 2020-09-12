@@ -71,9 +71,9 @@ abstract class RestExchange : BasicExchange(){
     }
 
 
-    override fun fillTop() {
+    fun fillTop(getArrayFunc: () -> Pair<HttpStatus, JSONArray> = {HttpStatus.I_AM_A_TEAPOT to  ExRJsonArray()}) {
         if (props.skipTop()) return
-        val pairs = restCore.blockingStringRequest(URL_ENDPOINT + URL_TOP_STATISTIC, ExRJsonArray::class)
+        val pairs = getArrayFunc()//restCore.blockingStringRequest(URL_ENDPOINT + URL_TOP_STATISTIC, ExRJsonArray::class)
         if (pairs.hasErrors()) throw IllegalStateException("Failed fill top (base in rest) from $URL_ENDPOINT")
         if (pairs.second.length() == 0) return
         val all = HashMap<String, Int>()

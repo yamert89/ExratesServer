@@ -142,7 +142,7 @@ abstract class BasicExchange() : Exchange, Cloneable{
             }
     }
 
-    abstract override fun fillTop()
+
 
     /*
     * ******************************************************************************************************************

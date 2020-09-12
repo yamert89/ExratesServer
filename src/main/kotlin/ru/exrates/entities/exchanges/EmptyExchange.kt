@@ -1,5 +1,7 @@
 package ru.exrates.entities.exchanges
 
+import org.springframework.boot.configurationprocessor.json.JSONArray
+import org.springframework.http.HttpStatus
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.TimePeriod
 
@@ -15,7 +17,7 @@ class EmptyExchange(): BasicExchange() {
     override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int) {
     }
 
-    override fun fillTop() {
+    fun fillTop(getArrayFunc: () -> Pair<HttpStatus, JSONArray>) {
 
     }
 }
