@@ -8,6 +8,7 @@ import ru.exrates.entities.exchanges.secondary.ExRJsonArray
 import ru.exrates.entities.exchanges.secondary.ExRJsonObject
 import ru.exrates.entities.exchanges.secondary.RestCurPriceObject
 import ru.exrates.entities.exchanges.secondary.RestHistoryObject
+import ru.exrates.utils.ClientCodes
 import java.time.Duration
 import kotlin.IllegalStateException
 
@@ -89,6 +90,26 @@ class HuobiExchange: RestExchange() {
     }
 
     override fun <T : Any> Pair<HttpStatus, T>.getError(): Int {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val resp = second as JSONObject
+        if (resp.getString("status") == "ok") return ClientCodes.SUCCESS
+        val errorCode = resp.getString("err-code")
+        val errorMessage = resp.getString("err-msg")
+        val invalidParameter = "invalid-parameter"
+
+        return when{
+            errorCode == invalidParameter ->
+                when(errorMessage){
+                    "invalid symbol" -> ClientCodes.CURRENCY_NOT_FOUND
+                    else -> {
+                        logger.error("Invalid huobi parameter: $errorMessage")
+                        ClientCodes.TEMPORARY_UNAVAILABLE
+                    }
+                }
+            else ->{
+                logger.error("Huobi error: err-code: $errorCode, err-msg: $errorMessage")
+                ClientCodes.TEMPORARY_UNAVAILABLE
+            }
+        }
+
     }
 }
