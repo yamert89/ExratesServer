@@ -67,40 +67,14 @@ class P2pb2bExchange: RestExchange() {
     * */
 
 
-    override fun CurrencyPair.currentPriceExt() = RestCurPriceObject<ExRJsonObject>(
-        "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?market=${symbol}"
+    override fun CurrencyPair.currentPriceExt() = RestCurPriceObject(
+        "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?market=${symbol}",
+        ExRJsonObject::class
     ){jsonUnit ->
-        val result = jsonUnit.getJSONObject("result")
+        val result = (jsonUnit as ExRJsonObject).getJSONObject("result")
         val bid = result.getDouble("bid")
         val ask = result.getDouble("ask")
         (ask + bid) / 2
-    }
-
-    override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int) {
-        super.priceHistory(pair, interval, limit)
-        val lim = if (limit < 50) 50 else limit
-        val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=$interval&limit=$lim"
-        var entity :Pair<HttpStatus, JSONObject>? = null
-
-        try{
-            entity = restCore.blockingStringRequest(uri, ExRJsonObject::class)
-            if (failHandle(entity, pair)) return
-            val array = entity.second.getJSONArray("result")
-            if (array.length() == 0) {
-                logger.warn("Price history result array is empty")
-                return
-            }
-            pair.priceHistory.clear()
-            for (i in 0 until limit){
-                val arr = array.getJSONArray(i)
-                pair.priceHistory.add((arr.getDouble(1) + arr.getDouble(2)) / 2)
-            }
-            logger.trace("price history updated on ${pair.symbol} pair $name exch")
-        }catch (e: Exception){
-            logger.error("Exception in priceHistory. entity = $entity")
-            logger.error(e)
-        } //todo wrong operate
-
     }
 
     override fun CurrencyPair.historyExt(interval: String, limit: Int) = RestHistoryObject(
@@ -113,10 +87,11 @@ class P2pb2bExchange: RestExchange() {
         val array = (jsonUnit as ExRJsonObject).getJSONArray("result")
         if (array.length() == 0) {
             logger.warn("Price history result array is empty")
-            return
+        } else {
+            for (i in 0 until array.length()) {
+                add((array.getDouble(1) + array.getDouble(2)) / 2)
+            }
         }
-        //todo
-
     } }
 
     /*

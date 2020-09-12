@@ -87,25 +87,11 @@ class BinanceExchange(): RestExchange() {
     * */
 
 
-    override fun CurrencyPair.currentPriceExt() = RestCurPriceObject<ExRJsonObject>(
-        "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?symbol=${symbol}"
-    ) { jsonUnit ->  jsonUnit.getString("price").toDouble()}
+    override fun CurrencyPair.currentPriceExt() = RestCurPriceObject(
+        "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?symbol=${symbol}",
+        ExRJsonObject::class
+    ) { jsonUnit ->  (jsonUnit as ExRJsonObject).getString("price").toDouble()}
 
-    override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int){
-        super.priceHistory(pair, interval, limit)
-        val symbol = "?symbol=" + pair.symbol
-        val period = "&interval=$interval"
-        val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE$symbol$period&limit=$limit"
-        val entity = restCore.blockingStringRequest(uri, ExRJsonArray::class)
-        if (failHandle(entity, pair)) return
-        pair.priceHistory.clear()
-        for (i in 0 until entity.second.length()){
-            val array = entity.second.getJSONArray(i)
-            pair.priceHistory.add((array.getDouble(2) + array.getDouble(3)) / 2)
-        }
-        logger.trace("price history updated on ${pair.symbol} pair $name exch")
-
-    }
 
     /*
     * ******************************************************************************************************************
@@ -113,11 +99,27 @@ class BinanceExchange(): RestExchange() {
     * ******************************************************************************************************************
     * */
 
-    override fun CurrencyPair.singlePriceChangeExt(period: TimePeriod) = RestCurPriceObject<ExRJsonArray>(
-        "$URL_ENDPOINT$URL_PRICE_CHANGE?symbol=${symbol}&interval=${period.name}&limit=1"
+    override fun CurrencyPair.singlePriceChangeExt(period: TimePeriod) = RestCurPriceObject(
+        "$URL_ENDPOINT$URL_PRICE_CHANGE?symbol=${symbol}&interval=${period.name}&limit=1",
+        ExRJsonArray::class
     ){jsonUnit ->
         val array = (jsonUnit as ExRJsonArray).getJSONArray(0)
         (array.getDouble(2) + array.getDouble(3)) / 2
+    }
+
+    override fun CurrencyPair.historyExt(interval: String, limit: Int) = RestHistoryObject(
+        "$URL_ENDPOINT$URL_PRICE_CHANGE?symbol=$symbol&interval=$interval&limit=$limit",
+        ExRJsonArray::class
+
+    ){jsonUnit -> mutableListOf<Double>().apply {
+        jsonUnit as ExRJsonArray
+        for (i in 0 until jsonUnit.length()){
+            val array = jsonUnit.getJSONArray(i)
+            add((array.getDouble(2) + array.getDouble(3)) / 2)
+        }
+    }
+
+
     }
 
     override fun <T : Any> Pair<HttpStatus, T>.getError(): Int {

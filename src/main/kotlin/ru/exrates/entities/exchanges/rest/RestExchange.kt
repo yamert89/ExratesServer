@@ -177,7 +177,7 @@ abstract class RestExchange : BasicExchange(){
 
 
     final fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod){
-        val ob: RestCurPriceObject<ExRJsonObject> = pair.singlePriceChangeExt(period)
+        val ob = pair.singlePriceChangeExt(period)
         val entity = restCore.blockingStringRequest(ob.uri, ob.jsonType)
         if (failHandle(entity, pair)) return
         val oldVal = ob.price(entity.second)
@@ -188,11 +188,11 @@ abstract class RestExchange : BasicExchange(){
         logger.trace("Change period updated on ${pair.symbol} pair $name exch, interval = ${period.name} | change = $changeVol")
     }
 
-    abstract fun <T: JsonUnit> CurrencyPair.singlePriceChangeExt(period: TimePeriod): RestCurPriceObject<T>
+    abstract fun CurrencyPair.singlePriceChangeExt(period: TimePeriod): RestCurPriceObject
 
     final override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int) {
         super.priceHistory(pair, interval, limit)
-        val ob = pair.historyExt()
+        val ob = pair.historyExt(interval, limit)
         val entity = restCore.blockingStringRequest(ob.uri, ob.jsonType)
         if (failHandle(entity, pair)) return
         pair.priceHistory.clear()
@@ -200,7 +200,7 @@ abstract class RestExchange : BasicExchange(){
         logger.trace("price history updated on ${pair.symbol} pair $name exch")
     }
 
-    abstract fun <T : JsonUnit> CurrencyPair.historyExt(interval: String, limit: Int): RestHistoryObject<T>
+    abstract fun CurrencyPair.historyExt(interval: String, limit: Int): RestHistoryObject
 
     fun limited() = limits.any { it.type == LimitType.REQUEST }
 

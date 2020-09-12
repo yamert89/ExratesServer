@@ -9,10 +9,7 @@ import org.springframework.util.LinkedMultiValueMap
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.LimitType
 import ru.exrates.entities.TimePeriod
-import ru.exrates.entities.exchanges.secondary.ExRJsonArray
-import ru.exrates.entities.exchanges.secondary.ExRJsonObject
-import ru.exrates.entities.exchanges.secondary.Limit
-import ru.exrates.entities.exchanges.secondary.RestCurPriceObject
+import ru.exrates.entities.exchanges.secondary.*
 import ru.exrates.utils.ClientCodes
 import java.time.Duration
 import java.time.Instant
@@ -104,43 +101,42 @@ class CoinBaseExchange: RestExchange() {
     }
 
 
-    override fun CurrencyPair.currentPriceExt() = RestCurPriceObject<ExRJsonObject>(
-        "$URL_ENDPOINT${URL_CURRENT_AVG_PRICE.replace(pathId, symbol)}?level=1"
+    override fun CurrencyPair.currentPriceExt() = RestCurPriceObject(
+        "$URL_ENDPOINT${URL_CURRENT_AVG_PRICE.replace(pathId, symbol)}?level=1",
+        ExRJsonObject::class
     ){jsonUnit ->
+        jsonUnit as ExRJsonObject
         val bidPrice = jsonUnit.getJSONArray("bids").getJSONArray(0)[0].toString().toDouble()
         val asksPrice =jsonUnit.getJSONArray("asks").getJSONArray(0)[0].toString().toDouble()
         (bidPrice + asksPrice) / 2
     }
 
-    override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int) {
-        super.priceHistory(pair, interval, limit)
-        logger.debug("update price history for $interval ${pair.symbol}")
-        val end = Instant.now().toString()
-        val per = changePeriods.find { it.name == interval }!!.period
-        val start = Instant.now().minus(per.multipliedBy(limit.toLong()))
-        val uri = "$URL_ENDPOINT${URL_PRICE_CHANGE.replace(pathId, pair.symbol)}?start=$start&end=$end&granularity=${per.seconds}"
-        try{
-            val array = restCore.blockingStringRequest(uri, ExRJsonArray::class, generateHeaders(uri))
-            if (failHandle(array, pair)) return
-            pair.priceHistory.clear()
-            for (i in 0 until array.second.length()){ //fixme data is incomplete
-                val arr = array.second.getJSONArray(i)
-                pair.priceHistory.add((arr.getDouble(1) + arr.getDouble(2)) / 2)
-            }
-            logger.trace("price history updated on ${pair.symbol} pair $name exch")
-        }catch (e: Exception){
-            logger.error("Connect exception")
-            logger.error(e)
-        } //todo wrong operate
+    override fun CurrencyPair.historyExt(interval: String, limit: Int) = RestHistoryObject(
+        {
+            val end = Instant.now().toString()
+            val per = changePeriods.find { it.name == interval }!!.period
+            val start = Instant.now().minus(per.multipliedBy(limit.toLong()))
+           "$URL_ENDPOINT${URL_PRICE_CHANGE.replace(pathId, symbol)}?start=$start&end=$end&granularity=${per.seconds}"
+        }(),
+        ExRJsonArray::class
+    ){jsonUnit -> mutableListOf<Double>().apply {
+        jsonUnit as ExRJsonArray
+        for (i in 0 until jsonUnit.length()) { //fixme data is incomplete
+            val arr = jsonUnit.getJSONArray(i)
+            add((arr.getDouble(1) + arr.getDouble(2)) / 2)
+        }
+    }
     }
 
-    override fun CurrencyPair.singlePriceChangeExt(period: TimePeriod) = RestCurPriceObject<ExRJsonArray>(
+    override fun CurrencyPair.singlePriceChangeExt(period: TimePeriod) = RestCurPriceObject(
         {
             val end = Instant.now().toString()
             val start = Instant.now().minus(period.period)
             "$URL_ENDPOINT${URL_PRICE_CHANGE.replace(pathId, symbol)}?start=$start&end=$end&granularity=${period.period.seconds}"
-        }()
+        }(),
+        ExRJsonArray::class
     ){jsonUnit ->
+        jsonUnit as ExRJsonArray
         val arr = jsonUnit.getJSONArray(0)
         (arr.getDouble(1) + arr.getDouble(2)) / 2
     }
