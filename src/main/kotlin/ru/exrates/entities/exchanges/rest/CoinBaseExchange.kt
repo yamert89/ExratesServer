@@ -57,6 +57,7 @@ class CoinBaseExchange: RestExchange() {
         URL_TOP_STATISTIC = "/products/<product-id>/stats"
         TOP_COUNT_FIELD = "volume"
         name = "coinbase"
+        taskTimeOut = TimePeriod(Duration.ofMinutes(2), "coinbaseTaskTimeout")
         changePeriods.addAll(listOf(
             TimePeriod(Duration.ofSeconds(60), "1m"),
             TimePeriod(Duration.ofSeconds(300), "5m"),

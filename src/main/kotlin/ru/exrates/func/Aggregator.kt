@@ -14,10 +14,7 @@ import ru.exrates.configs.Properties
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.exchanges.BasicExchange
 import ru.exrates.entities.exchanges.ExchangeDTO
-import ru.exrates.entities.exchanges.rest.BinanceExchange
-import ru.exrates.entities.exchanges.rest.CoinBaseExchange
-import ru.exrates.entities.exchanges.rest.P2pb2bExchange
-import ru.exrates.entities.exchanges.rest.RestExchange
+import ru.exrates.entities.exchanges.rest.*
 import ru.exrates.entities.exchanges.secondary.ExchangeNamesObject
 import ru.exrates.repos.ExchangeService
 import ru.exrates.utils.ClientCodes
@@ -51,6 +48,7 @@ class Aggregator(
         exchangeNames["binance"] = BinanceExchange::class
         exchangeNames["p2pb2b"] = P2pb2bExchange::class
         exchangeNames["coinbase"] = CoinBaseExchange::class
+        exchangeNames["huobi"] = HuobiExchange::class
         //exchangeNames["exmoExchange"] = ExmoExchange::class
     }
 

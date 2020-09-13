@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.transaction.annotation.EnableTransactionManagement
 import ru.exrates.entities.exchanges.rest.BinanceExchange
 import ru.exrates.entities.exchanges.rest.CoinBaseExchange
+import ru.exrates.entities.exchanges.rest.HuobiExchange
 import ru.exrates.entities.exchanges.rest.P2pb2bExchange
 
 /*import ru.exrates.entities.exchanges.ExmoExchange*/
@@ -32,6 +33,10 @@ class App {
     @Bean
     @Lazy
     fun coinbaseExchange() = CoinBaseExchange()
+
+    @Bean
+    @Lazy
+    fun huobiExchange() = HuobiExchange()
 
     /*@Bean
     //@Scope(value = "prototype")

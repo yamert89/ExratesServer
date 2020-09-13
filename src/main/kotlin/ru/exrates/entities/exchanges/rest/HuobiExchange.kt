@@ -9,9 +9,12 @@ import ru.exrates.entities.TimePeriod
 import ru.exrates.entities.exchanges.secondary.*
 import ru.exrates.utils.ClientCodes
 import java.time.Duration
+import javax.persistence.DiscriminatorValue
+import javax.persistence.Entity
 import kotlin.IllegalStateException
 
-
+@Entity
+@DiscriminatorValue("huobi")
 class HuobiExchange: RestExchange() {
 
 
@@ -32,6 +35,7 @@ class HuobiExchange: RestExchange() {
         URL_TOP_STATISTIC = "/market/tickers"
         TOP_SYMBOL_FIELD = "symbol"
         TOP_COUNT_FIELD = "count"
+        taskTimeOut = TimePeriod(Duration.ofMinutes(1), "huobitaskTimeout")
 
         /*
         * 1min, 5min, 15min, 30min, 60min, 4hour, 1day, 1mon, 1week, 1year*/
