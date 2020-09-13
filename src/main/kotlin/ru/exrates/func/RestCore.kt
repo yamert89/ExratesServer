@@ -73,11 +73,12 @@ class RestCore() {
             else  status to ExRJsonArray(resp) as T
         }catch (e: JSONException){
             logger.error("json create exception with body: $resp")
+            return status to ExRJsonArray("[$resp]") as T
         }
-        return when(jsonType){
+        /*return when(jsonType){
             ExRJsonObject::class -> status to ExRJsonObject() as T
             else -> status to ExRJsonArray() as T
-        }
+        }*/
     }
 
 }

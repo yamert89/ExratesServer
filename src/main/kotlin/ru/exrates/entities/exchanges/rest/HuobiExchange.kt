@@ -115,8 +115,8 @@ class HuobiExchange: RestExchange() {
     override fun <T : Any> Pair<HttpStatus, T>.getError(): Int {
         val resp = second as JSONObject
 
-        if (resp.has("status") && resp.getString("status") == "ok") return ClientCodes.SUCCESS //fixme no value for status
-        val errorCode = resp.getString("err-code")
+        if (!resp.has("status") || resp.getString("status") == "ok") return ClientCodes.SUCCESS
+        val errorCode = resp.getString("err-code") //fixme no value for err-code
         val errorMessage = resp.getString("err-msg")
         val invalidParameter = "invalid-parameter"
 

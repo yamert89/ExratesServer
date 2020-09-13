@@ -85,6 +85,7 @@ class P2pb2bExchange: RestExchange() {
         ExRJsonObject::class
     ){jsonUnit -> mutableListOf<Double>().apply{
         val array = (jsonUnit as ExRJsonObject).getJSONArray("result")
+        logger.debug("P2pArray: $array")
         if (array.length() == 0) {
             logger.warn("Price history result array is empty")
         } else {
