@@ -1,6 +1,5 @@
 package ru.exrates.func
 
-/*import ru.exrates.entities.exchanges.ExmoExchange*/
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -43,12 +42,19 @@ class Aggregator(
     lateinit var logger: Logger
     val exchanges: MutableMap<Int, BasicExchange> = HashMap()
     val exchangeNames: MutableMap<String, KClass<out BasicExchange>> = HashMap()
+    private val fullExchangeNames = mapOf<String, KClass<out BasicExchange>>(
+        "binance" to BinanceExchange::class,
+        "p2pb2b" to P2pb2bExchange::class,
+        "huobi" to HuobiExchange::class,
+        "coinbase" to CoinBaseExchange::class)
+
+
 
     init {
-        exchangeNames["binance"] = BinanceExchange::class
+        //exchangeNames["binance"] = BinanceExchange::class
         exchangeNames["p2pb2b"] = P2pb2bExchange::class
         //exchangeNames["coinbase"] = CoinBaseExchange::class
-        exchangeNames["huobi"] = HuobiExchange::class
+        //exchangeNames["huobi"] = HuobiExchange::class
         //exchangeNames["exmoExchange"] = ExmoExchange::class
     }
 
@@ -62,46 +68,9 @@ class Aggregator(
     @PostConstruct
     fun init(){
         logger.trace("\n\n\t\t\t\tSTARTING EXRATES VERSION ${props.appVersion()}\n\n")
-        var key = ""
 
             exchangeNames.entries.forEach {
-                try {
-                    var exchange: BasicExchange? = exchangeService.find(it.key)
-                    key = it.key
-                    var pairsSize = 0
-                    if(exchange == null){
-                        exchange = genericApplicationContext.getBean(it.value.java)
-                        exchange = exchangeService.persist(exchange)
-                        pairsSize = calculatePairsSize(exchange)
-                        val pairs = TreeSet(exchange.pairs)
-                        while(pairs.size > pairsSize) pairs.pollLast()
-                        exchange.pairs.clear()
-                        exchange.pairs.addAll(pairs)
-                    }else{
-                        pairsSize = calculatePairsSize(exchange)
-                        if (!props.skipTop()) {
-                            val pairs = exchangeService.fillPairs(pairsSize, exchange)
-                            exchange.pairs.clear()
-                            exchange.pairs.addAll(pairs)
-                        }else{
-                            while (exchange.pairs.size > pairsSize) exchange.pairs.remove(exchange.pairs.last())
-                        }
-                    }
-
-                    val finalExchange = exchange
-                    val clazz: KClass<BasicExchange> = it.value as KClass<BasicExchange>
-                    genericApplicationContext.registerBean(
-                        clazz.java, {finalExchange},
-                        arrayOf(BeanDefinitionCustomizer { def: BeanDefinition -> def.isPrimary = true }))
-
-                    exchange = genericApplicationContext.getBean(it.value.java)
-                    exchanges[exchange.exId] = exchange
-                    logger.trace("Initialization $key success with ${exchange.pairs.size} pairs")
-                }catch (e: Exception){
-                    logger.error(e)
-                    logger.error("Failed $key initialization")
-                }
-
+                loadExchange(it.key, it.value)
             }
             GlobalScope.launch {
                 launch(taskHandler.getExecutorContext()){
@@ -113,6 +82,46 @@ class Aggregator(
 
             }
 
+    }
+
+    private fun loadExchange(exName: String, claz: KClass<out BasicExchange>){
+        var key = ""
+        try {
+            var exchange: BasicExchange? = exchangeService.find(exName)
+           key = exName
+            var pairsSize = 0
+            if(exchange == null){
+                exchange = genericApplicationContext.getBean(claz.java)
+                exchange = exchangeService.persist(exchange)
+                pairsSize = calculatePairsSize(exchange)
+                val pairs = TreeSet(exchange.pairs)
+                while(pairs.size > pairsSize) pairs.pollLast()
+                exchange.pairs.clear()
+                exchange.pairs.addAll(pairs)
+            }else{
+                pairsSize = calculatePairsSize(exchange)
+                if (!props.skipTop()) {
+                    val pairs = exchangeService.fillPairs(pairsSize, exchange)
+                    exchange.pairs.clear()
+                    exchange.pairs.addAll(pairs)
+                }else{
+                    while (exchange.pairs.size > pairsSize) exchange.pairs.remove(exchange.pairs.last())
+                }
+            }
+
+            val finalExchange = exchange
+            val clazz: KClass<BasicExchange> = claz as KClass<BasicExchange>
+            genericApplicationContext.registerBean(
+                clazz.java, {finalExchange},
+                arrayOf(BeanDefinitionCustomizer { def: BeanDefinition -> def.isPrimary = true }))
+
+            exchange = genericApplicationContext.getBean(clazz.java)
+            exchanges[exchange.exId] = exchange
+            logger.trace("Initialization $key success with ${exchange.pairs.size} pairs")
+        }catch (e: Exception){
+            logger.error(e)
+            logger.error("Failed $key initialization")
+        }
     }
 
     /*
@@ -312,7 +321,22 @@ class Aggregator(
         return counter / tLimits.size
     }
 
+    fun disableExchange(exName: String) {
+        if (!exchangeNames.containsKey(exName)) {logger.error("exchange $exName not found in context");  return}
+        genericApplicationContext.removeBeanDefinition("${exName}Exchange")
+        genericApplicationContext.beanDefinitionNames.joinToString("\n")
+        exchangeNames.remove(exName)
+        exchanges.remove(exchanges.values.find { it.name == exName }!!.exId)
+        logger.trace("Exchange $exName disabled")
+    }
 
+    fun enableExchange(ex: String) { //fixme reenabling
+        if (exchangeNames.contains(ex)) logger.error("Exchange $ex already enabled")
+        fullExchangeNames[ex]?.let {
+            loadExchange(ex, it)
+            exchangeNames[ex] = fullExchangeNames[ex]!!
+        } ?: logger.error("Exchange $ex not found")
+    }
 
 
 }

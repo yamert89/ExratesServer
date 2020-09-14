@@ -102,9 +102,4 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
         return res
     }
 
-    @GetMapping("/service/save")
-    fun save() = aggregator.save()
-
-    @GetMapping("/close")
-    fun close() = context.close()
 }
