@@ -1,7 +1,6 @@
 package ru.exrates.controllers
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ConfigurableApplicationContext
@@ -18,7 +17,6 @@ import java.net.ConnectException
 import java.security.Principal
 import javax.servlet.http.HttpServletResponse
 import javax.servlet.http.HttpSession
-import kotlin.Exception
 
 
 @RestController

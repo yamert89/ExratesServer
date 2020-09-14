@@ -11,7 +11,7 @@ import javax.persistence.*
 @Table(name = "change_periods")
 @JsonSerialize(using = TimePeriodSerializer::class)
 class TimePeriod(){
-    @JsonIgnore @Convert(converter = DurationConverter::class) @Column(nullable = false, unique = true)
+    @JsonIgnore @Convert(converter = DurationConverter::class) @Column(nullable = false)
     lateinit var period: Duration
 
     @Column(nullable = false)

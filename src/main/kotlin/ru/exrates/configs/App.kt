@@ -8,12 +8,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.*
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.transaction.annotation.EnableTransactionManagement
-import org.springframework.web.reactive.function.client.ClientResponse
-import reactor.core.publisher.Mono
 import ru.exrates.entities.exchanges.rest.BinanceExchange
 import ru.exrates.entities.exchanges.rest.CoinBaseExchange
+import ru.exrates.entities.exchanges.rest.HuobiExchange
 import ru.exrates.entities.exchanges.rest.P2pb2bExchange
-import ru.exrates.func.RestCore
 
 /*import ru.exrates.entities.exchanges.ExmoExchange*/
 
@@ -35,6 +33,10 @@ class App {
     @Bean
     @Lazy
     fun coinbaseExchange() = CoinBaseExchange()
+
+    @Bean
+    @Lazy
+    fun huobiExchange() = HuobiExchange()
 
     /*@Bean
     //@Scope(value = "prototype")

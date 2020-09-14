@@ -1,27 +1,17 @@
 package ru.exrates.entities.exchanges.rest
 
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import org.springframework.beans.factory.getBean
 import org.springframework.boot.configurationprocessor.json.JSONArray
 import org.springframework.boot.configurationprocessor.json.JSONObject
 import org.springframework.http.HttpStatus
-import org.springframework.http.ReactiveHttpInputMessage
-import org.springframework.web.reactive.function.BodyExtractor
-import org.springframework.web.reactive.function.client.ClientResponse
-import org.springframework.web.reactive.function.client.bodyToMono
-import reactor.core.publisher.Mono
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.TimePeriod
-import ru.exrates.func.RestCore
+import ru.exrates.entities.exchanges.secondary.ExRJsonObject
+import ru.exrates.entities.exchanges.secondary.RestCurPriceObject
+import ru.exrates.entities.exchanges.secondary.RestHistoryObject
 import ru.exrates.utils.ClientCodes
-import java.math.BigDecimal
-import java.math.MathContext
 import java.time.Duration
-import javax.annotation.PostConstruct
 import javax.persistence.DiscriminatorValue
 import javax.persistence.Entity
-import kotlin.Exception
 
 @Entity
 @DiscriminatorValue("p2pb2b")
@@ -33,21 +23,11 @@ class P2pb2bExchange: RestExchange() {
     * ******************************************************************************************************************
     * */
 
-    @PostConstruct
-    override fun init() {
-        super.init()
-        if (!temporary){
-            fillTop()
-            return
-        }
-        initVars()
-        val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, JSONObject::class)
+
+    override fun extractInfo() {
+        val entity = restCore.blockingStringRequest(URL_ENDPOINT + URL_INFO, ExRJsonObject::class)
         if (entity.hasErrors()) throw IllegalStateException("Failed info initialization")
         pairsFill(entity.second.getJSONArray("result"), "stock", "money", "name")
-        temporary = false
-        fillTop()
-        logger.debug("exchange " + name + " initialized with " + pairs.size + " pairs")
-
     }
 
     override fun initVars() {
@@ -73,7 +53,7 @@ class P2pb2bExchange: RestExchange() {
         historyPeriods = changePeriods.map { it.name }
     }
 
-    override fun fillTop() {
+    override fun fillTop(getArrayFunc: () -> Pair<HttpStatus, JSONArray>) {
         topPairs.addAll(listOf("ETH_BTC", "BNB_BTC", "DASH_BTC", "NEO_BTC", "BCH_BTC", "ETC_BTC", "BTG_BTC",
             "LTC_BTC", "XLM_BTC", "WAVES_BTC", "WTC_BTC", "GAS_BTC", "YAP_BTC", "DOGE_BTC", "ENJ_BTC", "HNC_BTC"))
     }
@@ -86,45 +66,34 @@ class P2pb2bExchange: RestExchange() {
     * ******************************************************************************************************************
     * */
 
-    override fun currentPrice(pair: CurrencyPair, period: TimePeriod) {
-        super.currentPrice(pair, period)
-        val uri = "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?market=${pair.symbol}"
-        val entity = restCore.blockingStringRequest(uri, JSONObject::class)
-        if (stateChecker.checkEmptyJson(entity.second, exId) || entity.operateError(pair)) return
-        val result = entity.second.getJSONObject("result")
+
+    override fun CurrencyPair.currentPriceExt() = RestCurPriceObject(
+        "$URL_ENDPOINT$URL_CURRENT_AVG_PRICE?market=${symbol}",
+        ExRJsonObject::class
+    ){jsonUnit ->
+        val result = (jsonUnit as ExRJsonObject).getJSONObject("result")
         val bid = result.getDouble("bid")
         val ask = result.getDouble("ask")
-        pair.price = (ask + bid) / 2
-        logger.trace("Price updated on ${pair.symbol} pair | = ${pair.price} ex = $name")
-
+        (ask + bid) / 2
     }
 
-    override fun priceHistory(pair: CurrencyPair, interval: String, limit: Int) {
-        super.priceHistory(pair, interval, limit)
-        val lim = if (limit < 50) 50 else limit
-        val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=$interval&limit=$lim"
-        var entity :Pair<HttpStatus, JSONObject>? = null
-
-        try{
-            entity = restCore.blockingStringRequest(uri, JSONObject::class)
-            if (stateChecker.checkEmptyJson(entity.second, exId) || entity.operateError(pair)) return
-            val array = entity.second.getJSONArray("result")
-            if (array.length() == 0) {
-                logger.warn("Price history result array is empty")
-                return
+    override fun CurrencyPair.historyExt(interval: String, limit: Int) = RestHistoryObject(
+        {
+            val lim = if (limit < 50) 50 else limit
+            "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${symbol}&interval=$interval&limit=$lim"
+        }(),
+        ExRJsonObject::class
+    ){jsonUnit -> mutableListOf<Double>().apply{
+        val array = (jsonUnit as ExRJsonObject).getJSONArray("result")
+        logger.debug("P2pArray: $array")
+        if (array.length() == 0) {
+            logger.warn("Price history result array is empty")
+        } else {
+            for (i in 0 until array.length()) {
+                add((array.getDouble(1) + array.getDouble(2)) / 2)
             }
-            pair.priceHistory.clear()
-            for (i in 0 until limit){
-                val arr = array.getJSONArray(i)
-                pair.priceHistory.add((arr.getDouble(1) + arr.getDouble(2)) / 2)
-            }
-            logger.trace("price history updated on ${pair.symbol} pair $name exch")
-        }catch (e: Exception){
-            logger.error("Exception in priceHistory. entity = $entity")
-            logger.error(e)
-        } //todo wrong operate
-
-    }
+        }
+    } }
 
     /*
     * ******************************************************************************************************************
@@ -132,22 +101,18 @@ class P2pb2bExchange: RestExchange() {
     * ******************************************************************************************************************
     * */
 
-    override fun updateSinglePriceChange(pair: CurrencyPair, period: TimePeriod){
-        val uri = "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${pair.symbol}&interval=${period.name}&limit=50"
-        val entity = restCore.blockingStringRequest(uri, JSONObject::class)
-        if (stateChecker.checkEmptyJson(entity.second, exId) || entity.operateError(pair)) return
-        val array = entity.second.getJSONArray("result")
+    override fun CurrencyPair.singlePriceChangeExt(period: TimePeriod) = RestCurPriceObject(
+        "$URL_ENDPOINT$URL_PRICE_CHANGE?market=${symbol}&interval=${period.name}&limit=50",
+        ExRJsonObject::class
+    ){jsonUnit ->
+        val ob = jsonUnit as ExRJsonObject
+        val array = jsonUnit.getJSONArray("result")
         if(array.length() == 0){
-            pair.putInPriceChange(period, Double.MAX_VALUE)
-            return
-        }
-        try {
+            this.putInPriceChange(period, Double.MAX_VALUE)
+            Double.MAX_VALUE
+        } else{
             val array2 = array.getJSONArray(0)
-            val oldVal = (array2.getDouble(1) + array2.getDouble(2)) / 2
-            writePriceChange(pair, period, oldVal)
-        }catch (e: Exception){
-            logger.error(e)
-            logger.error("Response: ${entity.second}")
+            (array2.getDouble(1) + array2.getDouble(2)) / 2
         }
     }
 

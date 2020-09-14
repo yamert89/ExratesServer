@@ -1,6 +1,5 @@
 package ru.exrates.func
 
-import org.hibernate.collection.internal.PersistentSortedSet
 import ru.exrates.entities.CurrencyPair
 import java.util.*
 

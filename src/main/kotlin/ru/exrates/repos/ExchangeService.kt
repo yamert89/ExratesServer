@@ -57,6 +57,13 @@ class ExchangeService(@Autowired private val exchangeRepository: ExchangeReposit
             }
         }
 
+        try{
+            logger.debug("change periods for exchange: ${exchange.name} ${exchange.changePeriods.joinToString { it.name }}")
+            return exchangeRepository.save(exchange)
+        }catch (e: Exception){
+            print("fuck")
+        }
+
         return exchangeRepository.save(exchange)
     }
 

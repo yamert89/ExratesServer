@@ -17,7 +17,6 @@ import java.util.*
 import javax.persistence.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
-import kotlin.jvm.Transient
 
 @Entity
 @JsonIgnoreProperties("id", "lastUse", "updateTimes", "logger", "initialized")

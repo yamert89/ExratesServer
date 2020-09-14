@@ -3,11 +3,11 @@ package ru.exrates.func
 import kotlinx.coroutines.*
 import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.annotation.Bean
 import org.springframework.stereotype.Service
 import ru.exrates.configs.Properties
-import java.lang.Runnable
-import java.util.concurrent.*
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 import javax.annotation.PostConstruct
 
 @Service
