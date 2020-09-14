@@ -90,7 +90,8 @@ class P2pb2bExchange: RestExchange() {
             logger.warn("Price history result array is empty")
         } else {
             for (i in 0 until array.length()) {
-                add((array.getDouble(1) + array.getDouble(2)) / 2)
+                val arr = array.getJSONArray(i)
+                add((arr.getDouble(1) + arr.getDouble(2)) / 2)
             }
         }
     } }
