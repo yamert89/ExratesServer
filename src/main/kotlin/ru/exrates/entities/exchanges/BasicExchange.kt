@@ -81,7 +81,7 @@ abstract class BasicExchange() : Exchange, Cloneable{
     val limits: MutableSet<Limit> = HashSet()
 
     @Convert(converter = TimePeriodConverter::class)
-    lateinit var taskTimeOut: TimePeriod
+    var taskTimeOut: TimePeriod = TimePeriod(Duration.ofMillis(90000), "BaseTaskTimeOut")
 
     @ElementCollection(fetch = FetchType.EAGER)
     @Fetch(FetchMode.SELECT)
@@ -100,13 +100,13 @@ abstract class BasicExchange() : Exchange, Cloneable{
     @PostConstruct
     fun init(){
         logger.debug("Postconstruct super $name")
-        taskTimeOut = TimePeriod(Duration.ofMillis(props.timerPeriod()), "BaseTaskTimeOut")
         GlobalScope.launch {
-            launch(taskHandler.getExecutorContext()){
+            launch{
                 delay(10000)
                 repeat(Int.MAX_VALUE){
                     task()
-                    delay(props.timerPeriod())
+                    logger.debug("Task started with ${taskTimeOut.period.toMillis()} millis")
+                    delay(taskTimeOut.period.toMillis())
                 }
             }
         }
@@ -119,6 +119,7 @@ abstract class BasicExchange() : Exchange, Cloneable{
             for (p in pairs){
                 try {
                     with(taskHandler){
+                        logger.debug("Updating task data for $p in $name")
                         runTasks((this@BasicExchange as RestExchange).requestDelay(),
                             { currentPrice(p, taskTimeOut) },
                             { priceChange(p, taskTimeOut) },
@@ -140,6 +141,7 @@ abstract class BasicExchange() : Exchange, Cloneable{
                     logger.error(e)
                 }
             }
+
     }
 
 

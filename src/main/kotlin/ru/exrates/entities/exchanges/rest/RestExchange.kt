@@ -111,6 +111,7 @@ abstract class RestExchange : BasicExchange(){
 
     override fun task() {
         if(id == 0) {
+            logger.debug("id = 0, task aborted")
             return
         }
         logger.debug("task ping try...$URL_PING")
@@ -155,7 +156,7 @@ abstract class RestExchange : BasicExchange(){
         runBlocking {
             val job = launch{
                 changePeriods.forEach {
-                    logger.debug("CHANGE")
+                    //logger.debug("CHANGE")
                     delay(requestDelay())
                     launch(taskHandler.getExecutorContext()){
                         //val mono = singlePriceChangeRequest(pair, it)

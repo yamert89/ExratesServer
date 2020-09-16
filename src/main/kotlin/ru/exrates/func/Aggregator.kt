@@ -51,10 +51,10 @@ class Aggregator(
 
 
     init {
-        //exchangeNames["binance"] = BinanceExchange::class
+        exchangeNames["binance"] = BinanceExchange::class
         exchangeNames["p2pb2b"] = P2pb2bExchange::class
-        //exchangeNames["coinbase"] = CoinBaseExchange::class
-        //exchangeNames["huobi"] = HuobiExchange::class
+        exchangeNames["coinbase"] = CoinBaseExchange::class
+        exchangeNames["huobi"] = HuobiExchange::class
         //exchangeNames["exmoExchange"] = ExmoExchange::class
     }
 
