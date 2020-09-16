@@ -137,9 +137,14 @@ class CoinBaseExchange: RestExchange() {
         }(),
         ExRJsonArray::class
     ){jsonUnit ->
-        jsonUnit as ExRJsonArray
-        val arr = jsonUnit.getJSONArray(0)
-        (arr.getDouble(1) + arr.getDouble(2)) / 2
+        try{
+            jsonUnit as ExRJsonArray
+            val arr = jsonUnit.getJSONArray(0)
+            (arr.getDouble(1) + arr.getDouble(2)) / 2
+        }catch (e: Exception){
+            Double.MAX_VALUE
+        }
+
     }
 
     override fun <T: Any> Pair<HttpStatus, T>.getError(): Int {
