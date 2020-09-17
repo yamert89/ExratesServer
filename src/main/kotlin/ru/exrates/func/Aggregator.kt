@@ -309,7 +309,7 @@ class Aggregator(
         val mess = appInfo.message.first
         val link = appInfo.message.second
         return when{
-            versionToken != appInfo.currentClientToken -> ClientCodes.CLIENT_NEEDS_UPDATE to ""
+            versionToken != appInfo.currentClientToken -> ClientCodes.CLIENT_NEEDS_UPDATE to "https://yandex.ru" //todo link to app
             mess.isNotEmpty() && link.isNotEmpty() -> ClientCodes.CLIENT_SHOW_DIALOG_WITH_LINK to
                     "$mess|$link"
             mess.isNotEmpty() && link.isEmpty() -> ClientCodes.CLIENT_SHOW_DIALOG to mess

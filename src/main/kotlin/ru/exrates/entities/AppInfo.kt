@@ -4,7 +4,6 @@ import org.springframework.stereotype.Service
 import javax.persistence.ElementCollection
 import javax.persistence.Entity
 
-@Entity
 @Service
 class AppInfo {
 
