@@ -15,6 +15,7 @@ import ru.exrates.utils.CursPeriod
 import ru.exrates.utils.ExchangePayload
 import java.net.ConnectException
 import java.security.Principal
+import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import javax.servlet.http.HttpSession
 
@@ -101,5 +102,8 @@ class RestInfo(@Autowired val aggregator: Aggregator, @Autowired val objectMappe
         logger.debug("Lists response: ${objectMapper.writeValueAsString(res.values)}")
         return res
     }
+
+    @GetMapping("/rest/checkmessages")
+    fun checkMessages(@RequestParam versionToken: String, request: HttpServletRequest) = aggregator.checkMessages(versionToken, request.remoteAddr)
 
 }

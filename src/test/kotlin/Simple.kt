@@ -6,12 +6,15 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
 import java.math.BigDecimal
 import java.math.MathContext
+import java.util.*
+import kotlin.collections.ArrayList
 
 fun main(){
     //round()
     //val my = My()
     //println(ObjectMapper().writeValueAsString(my))
-    varargFun()
+    //varargFun()
+    clientToken()
 
 }
 fun round(){
@@ -31,6 +34,10 @@ fun varargFun(){
 }
 fun argFun(vararg args: String){
     println(args.joinToString())
+}
+
+fun clientToken(){
+    println(UUID.randomUUID())
 }
 
 class MySerializer: JsonSerializer<MutableList<Any>>(){

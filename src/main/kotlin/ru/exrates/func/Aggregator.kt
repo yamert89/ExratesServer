@@ -10,6 +10,7 @@ import org.springframework.beans.factory.config.BeanDefinitionCustomizer
 import org.springframework.context.support.GenericApplicationContext
 import org.springframework.stereotype.Component
 import ru.exrates.configs.Properties
+import ru.exrates.entities.AppInfo
 import ru.exrates.entities.CurrencyPair
 import ru.exrates.entities.exchanges.BasicExchange
 import ru.exrates.entities.exchanges.ExchangeDTO
@@ -36,7 +37,9 @@ class Aggregator(
     @Autowired
     val stateChecker: EndpointStateChecker,
     @Autowired
-    val taskHandler: TaskHandler
+    val taskHandler: TaskHandler,
+    @Autowired
+    val appInfo: AppInfo
 ) {
     @Autowired
     lateinit var logger: Logger
@@ -296,6 +299,49 @@ class Aggregator(
         return CursPeriod(cursPayload.interval, values)
     }
 
+    /**
+     * @return
+     * - code of result
+     * - message if exist
+     * */
+
+    fun checkMessages(versionToken: String, remoteAddr: String): Pair<Int, String>{
+        val mess = appInfo.message.first
+        val link = appInfo.message.second
+        return when{
+            versionToken != appInfo.currentClientToken -> ClientCodes.CLIENT_NEEDS_UPDATE to ""
+            mess.isNotEmpty() && link.isNotEmpty() -> ClientCodes.CLIENT_SHOW_DIALOG_WITH_LINK to
+                    "$mess|$link"
+            mess.isNotEmpty() && link.isEmpty() -> ClientCodes.CLIENT_SHOW_DIALOG to mess
+            else -> ClientCodes.CLIENT_NOTHING to ""
+        }
+
+    }
+
+    /*
+    * ******************************************************************************************************************
+    *       Service methods
+    * ******************************************************************************************************************
+    * */
+
+    fun disableExchange(exName: String) {
+        if (!exchangeNames.containsKey(exName)) {logger.error("exchange $exName not found in context");  return}
+        genericApplicationContext.removeBeanDefinition("${exName}Exchange")
+        genericApplicationContext.beanDefinitionNames.joinToString("\n")
+        exchangeNames.remove(exName)
+        exchanges.remove(exchanges.values.find { it.name == exName }!!.exId)
+        logger.trace("Exchange $exName disabled")
+    }
+
+    fun enableExchange(ex: String) { //fixme reenabling
+        if (exchangeNames.contains(ex)) logger.error("Exchange $ex already enabled")
+        fullExchangeNames[ex]?.let {
+            loadExchange(ex, it)
+            exchangeNames[ex] = fullExchangeNames[ex]!!
+        } ?: logger.error("Exchange $ex not found")
+    }
+
+
     /*
     * ******************************************************************************************************************
     *       Class methods
@@ -325,22 +371,6 @@ class Aggregator(
         return counter / tLimits.size
     }
 
-    fun disableExchange(exName: String) {
-        if (!exchangeNames.containsKey(exName)) {logger.error("exchange $exName not found in context");  return}
-        genericApplicationContext.removeBeanDefinition("${exName}Exchange")
-        genericApplicationContext.beanDefinitionNames.joinToString("\n")
-        exchangeNames.remove(exName)
-        exchanges.remove(exchanges.values.find { it.name == exName }!!.exId)
-        logger.trace("Exchange $exName disabled")
-    }
-
-    fun enableExchange(ex: String) { //fixme reenabling
-        if (exchangeNames.contains(ex)) logger.error("Exchange $ex already enabled")
-        fullExchangeNames[ex]?.let {
-            loadExchange(ex, it)
-            exchangeNames[ex] = fullExchangeNames[ex]!!
-        } ?: logger.error("Exchange $ex not found")
-    }
 
 
 }
