@@ -134,6 +134,7 @@ abstract class RestExchange : BasicExchange(){
         val ob = pair.currentPriceExt()
         val entity = restCore.blockingStringRequest(ob.uri, ob.jsonType)
         if (failHandle(entity, pair)) return
+        pair.status = ClientCodes.SUCCESS
         pair.price = ob.price(entity.second)
         logger.trace("Price updated on ${pair.symbol} pair $name exch| = ${pair.price}")
     }
@@ -218,7 +219,7 @@ abstract class RestExchange : BasicExchange(){
             logger.error("Response has error: $first $second")
             when(error){
                 ClientCodes.CURRENCY_NOT_FOUND -> {
-                    pair.unavailable = true
+                    pair.status = ClientCodes.CURRENCY_NOT_FOUND
                     return true
                 }
                 ClientCodes.EXCHANGE_NOT_ACCESSIBLE -> return true

@@ -219,8 +219,11 @@ class Aggregator(
                     )
                 }
 
-                p.historyPeriods = exchange.historyPeriods
-                curs.add(p)
+                if (p.status == ClientCodes.SUCCESS) {
+                    p.historyPeriods = exchange.historyPeriods
+                    curs += p
+                }
+
             }
         }
 
@@ -257,7 +260,7 @@ class Aggregator(
             exchange.insertPair(pair)
         }
         taskHandler.awaitTasks({ exchange.priceHistory(pair, historyInterval, limit) })
-        return pair.priceHistory
+        return if (pair.status == ClientCodes.CURRENCY_NOT_FOUND) listOf(ClientCodes.CURRENCY_NOT_FOUND.toDouble(), exId.toDouble()) else pair.priceHistory
     }
 
     fun getCursIntervalStatistic(cursPayload: ExchangePayload): CursPeriod{
@@ -286,7 +289,8 @@ class Aggregator(
 
 
         pairs.forEach {
-             values[it.symbol] = it.getPriceChangeValue(ex.getTimePeriod(cursPayload.interval)) ?: Double.MAX_VALUE
+             values[it.symbol] = if(it.status == ClientCodes.CURRENCY_NOT_FOUND) Double.MAX_VALUE else
+                 it.getPriceChangeValue(ex.getTimePeriod(cursPayload.interval)) ?: Double.MAX_VALUE
         }
 
         return CursPeriod(cursPayload.interval, values)

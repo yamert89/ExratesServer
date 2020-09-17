@@ -73,11 +73,6 @@ class CurrencyPair() : Comparable<CurrencyPair>{
     @javax.persistence.Transient
     var historyPeriods : List<String>? = null //todo delete
 
-    @javax.persistence.Transient
-    var unavailable: Boolean = false
-
-
-
     constructor(curBase: String, curQuote: String, symbol: String, exchange: BasicExchange): this() {
         baseCurrency = curBase
         quoteCurrency = curQuote
