@@ -211,7 +211,7 @@ class Aggregator(
                 p.exchange = exchange
                 // p = exchange.getPair(pair.symbol)!!
                 with(taskHandler){
-                    awaitTasks(exchange.castToRestExchange().requestDelay(),
+                    awaitTasks(exchange.castToRestExchange().requestDelay(), //todo replace tasks out loop, add second loop
                         { exchange.currentPrice(p, exchange.taskTimeOut) },
                         { exchange.priceChange(p, exchange.taskTimeOut) },
                         { exchange.priceHistory(p, historyInterval ?:

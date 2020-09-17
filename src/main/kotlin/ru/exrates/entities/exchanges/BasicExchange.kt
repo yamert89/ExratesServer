@@ -196,7 +196,7 @@ class ExchangeDTO(exchange: BasicExchange?, exName: String = "", stat: Int = Cli
     @JsonSerialize(using = TimePeriodListSerializer::class)
     val changePeriods = exchange?.changePeriods ?: listOf<TimePeriod>()
     val historyPeriods = exchange?.historyPeriods ?: emptyList()
-    var pairs: SortedSet<CurrencyPair> = TreeSet<CurrencyPair>(exchange?.pairs ?: TreeSet<CurrencyPair>())
+    var pairs: SortedSet<CurrencyPair> = TreeSet<CurrencyPair>(exchange?.pairs?.filter { !it.unavailable } ?: TreeSet<CurrencyPair>())
     var status: Int = stat
     init {
        if(exchange == null) this.status = ClientCodes.EXCHANGE_NOT_FOUND
