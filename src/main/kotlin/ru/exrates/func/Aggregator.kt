@@ -66,7 +66,7 @@ class Aggregator(
     *       Initialization
     * ******************************************************************************************************************
     * */
-    //TODO replace to other class
+
 
     @PostConstruct
     fun init(){
@@ -148,10 +148,11 @@ class Aggregator(
         return dto
     }
 
-    fun getExchange(exId: Int, pairsN: Array<String>, period: String): ExchangeDTO{
+    fun getExchange(exId: Int, pairsName: Array<String>, period: String): ExchangeDTO{
         logger.debug("exchanges: ${exchanges.values}")
         if (!stateChecker.accessible(exId)) return ExchangeDTO(null, exchanges[exId]!!.name, ClientCodes.EXCHANGE_NOT_ACCESSIBLE)
         var currentMills = System.currentTimeMillis()
+        val pairsN = if (pairsName.size > props.maxSize()) pairsName.copyOfRange(0, props.maxSize() - 1) else pairsName
         logger.debug("start ex")
         val exch = exchanges[exId]
         if(exch == null){
@@ -174,7 +175,6 @@ class Aggregator(
         val reqPairs = HashSet(pairs.filter { pairsN.contains(it.symbol) })
         currentMills = System.currentTimeMillis() - currentMills
         logger.debug("end reqPairs Filter: $currentMills")
-        //todo - limit request pairs
         val timePeriod = exch.getTimePeriod(period)
         val restExch = exch as RestExchange
         reqPairs.forEach {
