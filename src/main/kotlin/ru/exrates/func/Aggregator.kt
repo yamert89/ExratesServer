@@ -203,6 +203,7 @@ class Aggregator(
     fun getCurStat(c1: String, c2: String, historyInterval: String?, limit: Int): List<CurrencyPair> {
         logger.debug("exchanges: ${exchanges.values}")
         val curs = mutableListOf<CurrencyPair>()
+        val start = System.currentTimeMillis()
         exchanges.forEach {
             val exchange = it.value
             var p = exchange.getPair(c1, c2)
@@ -229,7 +230,7 @@ class Aggregator(
 
             }
         }
-
+        logger.debug("CurStatTime: ${System.currentTimeMillis() - start}")
         return curs
     }
 
