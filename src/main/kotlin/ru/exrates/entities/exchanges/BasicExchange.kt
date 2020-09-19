@@ -99,6 +99,8 @@ abstract class BasicExchange() : Exchange, Cloneable{
     @PostConstruct
     fun init(){
         logger.debug("Postconstruct super $name")
+        changePeriods.sortBy { it.period }
+        if (!props.taskIsEnabled()) return
         GlobalScope.launch {
             launch{
                 delay(10000)
@@ -109,7 +111,6 @@ abstract class BasicExchange() : Exchange, Cloneable{
                 }
             }
         }
-        changePeriods.sortBy { it.period }
     }
 
     fun task(){

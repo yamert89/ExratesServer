@@ -24,6 +24,9 @@ class Properties {
     private lateinit var appVersion: String
     @Value("\${app.exchanges.skipTop}")
     private lateinit var skipTop: String
+    @Value("\${app.exchanges.enableTask}")
+    private lateinit var enableTask: String
+
 
     fun timerPeriod() = timerPeriod.toLong()
     fun maxSize() = maxSize.toInt()
@@ -33,6 +36,7 @@ class Properties {
     fun maxPoolSize() = maxPoolSize.toInt()
     fun appVersion() = appVersion
     fun skipTop() = skipTop.toBoolean()
+    fun taskIsEnabled() = enableTask.toBoolean()
 }
 
 
