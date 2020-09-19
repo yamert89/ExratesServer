@@ -85,6 +85,7 @@ abstract class RestExchange : BasicExchange(){
             all[pairName] = count
         }
         topPairs.addAll(all.entries.sortedByDescending { it.value }.map { it.key }.subList(0, topSize))
+        logger.debug("Top pairs in $name : ${topPairs.joinToString()}")
     }
 
     abstract fun initVars()

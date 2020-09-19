@@ -117,8 +117,8 @@ class HuobiExchange: RestExchange() {
     }
 
     override fun <T : Any> Pair<HttpStatus, T>.getError(): Int {
+        if (second is JSONArray) return ClientCodes.SUCCESS
         val resp = second as JSONObject
-
         if (!resp.has("status") || resp.getString("status") == "ok") return ClientCodes.SUCCESS
         val errorCode = resp.getString("err-code") //fixme no value for err-code
         val errorMessage = resp.getString("err-msg")
