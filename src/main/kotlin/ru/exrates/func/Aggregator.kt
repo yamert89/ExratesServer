@@ -57,8 +57,8 @@ class Aggregator(
     init {
         exchangeNames["binance"] = BinanceExchange::class
         exchangeNames["p2pb2b"] = P2pb2bExchange::class
-        //exchangeNames["coinbase"] = CoinBaseExchange::class
-        //exchangeNames["huobi"] = HuobiExchange::class
+        exchangeNames["coinbase"] = CoinBaseExchange::class
+        exchangeNames["huobi"] = HuobiExchange::class
         //exchangeNames["exmoExchange"] = ExmoExchange::class
     }
 
@@ -186,7 +186,6 @@ class Aggregator(
                 )
                 if (it.updateTimes.priceChangeTimeElapsed(timePeriod))
                    awaitTasks({ restExch.updateSinglePriceChange(it, timePeriod)})
-                //exch.priceChange(it, timePeriod, true) //todo needs try catch?
             }
 
         }
@@ -367,7 +366,7 @@ class Aggregator(
         exchanges.forEach { (_, exch) -> exchangeService.update(exch) }
     }
 
-    private fun calculatePairsSize(exchange: BasicExchange): Int{ //todo check for seconds limit
+    private fun calculatePairsSize(exchange: BasicExchange): Int{
         var counter = 0
         val tLimits = LinkedList<Int>()
         if(props.isPersistenceStrategy()) return  props.maxSize()

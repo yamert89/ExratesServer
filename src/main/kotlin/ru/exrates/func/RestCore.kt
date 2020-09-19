@@ -34,14 +34,6 @@ class RestCore() {
     @Autowired
     protected lateinit var logger: Logger
 
-   /* private fun <T: Any> monoRequest(uri: String, clazz: KClass<T>) : Mono<T> {
-        logger.trace("Try request to : $uri")
-        val resp = webClient.get().uri(uri).retrieve()
-            .onStatus(HttpStatus::is4xxClientError) { errorHandler(it) }
-            .bodyToMono(clazz.java) //todo 1 - null compile notif? // 2 - FIXMe operate exception !!!
-        return resp
-    }*/
-
     private fun <T: Any> monoRequest(uri: String, clazz: KClass<T>, headers: HttpHeaders) : Pair<Mono<ClientResponse>, Mono<T>> {
         logger.trace("Try request to : $uri with headers: $headers")
         val resp = webClient.get().uri(uri).headers{h-> h.addAll(headers)}.exchange()

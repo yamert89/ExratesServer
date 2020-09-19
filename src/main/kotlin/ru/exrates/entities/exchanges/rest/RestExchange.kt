@@ -65,9 +65,6 @@ abstract class RestExchange : BasicExchange(){
         fillTop()
         logger.debug("exchange " + name + " initialized with " + pairs.size + " pairs")
         super.init()
-
-        //todo needs exceptions?
-
     }
 
 
@@ -183,8 +180,11 @@ abstract class RestExchange : BasicExchange(){
         val entity = restCore.blockingStringRequest(ob.uri, ob.jsonType)
         if (failHandle(entity, pair)) return
         val oldVal = ob.price(entity.second)
-        if (oldVal == Double.MAX_VALUE) return
-        val changeVol = if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1 //fixme full logging
+        if (oldVal == Double.MAX_VALUE) {
+            //pair.putInPriceChange(period, Double.MAX_VALUE) //todo needs?
+            return
+        }
+        val changeVol = if (pair.price > oldVal) ((pair.price - oldVal) * 100) / pair.price else (((oldVal - pair.price) * 100) / oldVal) * -1
         logger.trace("single price change calculating: price: ${pair.price}, period: ${period.name}, oldVal: $oldVal, changeVol: $changeVol")
         pair.putInPriceChange(period, BigDecimal(changeVol, MathContext(2)).toDouble())
         logger.trace("Change period updated on ${pair.symbol} pair $name exch, interval = ${period.name} | change = $changeVol")

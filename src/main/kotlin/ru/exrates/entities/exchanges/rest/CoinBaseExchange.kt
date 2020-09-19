@@ -152,8 +152,8 @@ class CoinBaseExchange: RestExchange() {
             HttpStatus.OK -> ClientCodes.SUCCESS
             HttpStatus.INTERNAL_SERVER_ERROR -> ClientCodes.EXCHANGE_NOT_ACCESSIBLE
             HttpStatus.BAD_REQUEST -> {
-                logger.error("Bad Request")
-                ClientCodes.SUCCESS//fixme
+                logger.error("Coinbase Bad Request")
+                ClientCodes.TEMPORARY_UNAVAILABLE
             }
             HttpStatus.NOT_FOUND -> ClientCodes.EXCHANGE_NOT_FOUND
             HttpStatus.TOO_MANY_REQUESTS -> ClientCodes.TEMPORARY_UNAVAILABLE

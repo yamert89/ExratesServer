@@ -107,9 +107,13 @@ class HuobiExchange: RestExchange() {
         ExRJsonObject::class
     ){jsonUnit ->
         jsonUnit as ExRJsonObject
-        val data = jsonUnit.getJSONArray("data").getJSONObject(0) //fixme JSONException: Index 0 out of range [0..0)
-        //{"id":1598803200,"open":11615.88,"close":11740.01,"low":11570.34,"high":11776.53,"amount":35795.05511616849,"vol":4.1770683711697394E8,"count":370484}
-        (data.getDouble("low") + data.getDouble("high")) / 2
+        val arr = jsonUnit.getJSONArray("data")
+        if (arr.length() == 0) Double.MAX_VALUE
+        else{
+            val data = arr.getJSONObject(0)
+            //{"id":1598803200,"open":11615.88,"close":11740.01,"low":11570.34,"high":11776.53,"amount":35795.05511616849,"vol":4.1770683711697394E8,"count":370484}
+            (data.getDouble("low") + data.getDouble("high")) / 2
+        }
     }
 
     override fun <T : Any> Pair<HttpStatus, T>.getError(): Int {
