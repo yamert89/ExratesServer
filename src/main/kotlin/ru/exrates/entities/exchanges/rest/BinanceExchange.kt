@@ -41,7 +41,7 @@ class BinanceExchange(): RestExchange() {
         TOP_SYMBOL_FIELD = "symbol"
         limitCode = 429
         banCode = 418
-        taskTimeOut = TimePeriod(Duration.ofMinutes(3), "binanceTaskTimeout")
+        taskTimeOut = TimePeriod(Duration.ofMinutes(3), "3m")
         name = "binance"
         changePeriods.addAll(listOf(
             TimePeriod(Duration.ofMinutes(3), "3m"),

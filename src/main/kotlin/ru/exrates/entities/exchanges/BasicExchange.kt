@@ -21,7 +21,6 @@ import ru.exrates.entities.exchanges.secondary.Limit
 import ru.exrates.entities.exchanges.secondary.LimitExceededException
 import ru.exrates.func.EndpointStateChecker
 import ru.exrates.func.TaskHandler
-import ru.exrates.repos.TimePeriodConverter
 import ru.exrates.utils.ClientCodes
 import ru.exrates.utils.TimePeriodListSerializer
 import java.net.ConnectException
@@ -80,8 +79,8 @@ abstract class BasicExchange() : Exchange, Cloneable{
     @OneToMany(orphanRemoval = true, cascade = [CascadeType.PERSIST], fetch = FetchType.EAGER)
     val limits: MutableSet<Limit> = HashSet()
 
-    @Convert(converter = TimePeriodConverter::class)
-    var taskTimeOut: TimePeriod = TimePeriod(Duration.ofMillis(90000), "BaseTaskTimeOut")
+    @OneToOne(cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH])
+    var taskTimeOut: TimePeriod = TimePeriod(Duration.ofMillis(90000), "1.5m")
 
     @ElementCollection(fetch = FetchType.EAGER)
     @Fetch(FetchMode.SELECT)

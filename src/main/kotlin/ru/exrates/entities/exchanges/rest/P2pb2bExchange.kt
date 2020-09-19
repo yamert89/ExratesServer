@@ -43,7 +43,7 @@ class P2pb2bExchange: RestExchange() {
         TOP_SYMBOL_FIELD = ""
         limitCode = 0
         banCode = 0
-        taskTimeOut = TimePeriod(Duration.ofMinutes(1), "p2pTaskTimeout")
+        taskTimeOut = TimePeriod(Duration.ofMinutes(1), "1m")
         name = "p2pb2b"
         changePeriods.addAll(listOf(
             TimePeriod(Duration.ofMinutes(1), "1m"),

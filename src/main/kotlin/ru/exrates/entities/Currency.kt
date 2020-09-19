@@ -92,6 +92,11 @@ class CurrencyPair() : Comparable<CurrencyPair>{
         status = errorCode
     }
 
+    @PostLoad
+    fun postLoad(){
+        updateTimes.taskTimeout = exchange.taskTimeOut
+    }
+
     @JsonIgnore
     fun getUnmodPriceChange(): Map<TimePeriod, Double> {
         lastUse = Instant.now()
@@ -100,6 +105,7 @@ class CurrencyPair() : Comparable<CurrencyPair>{
 
     fun putInPriceChange(period: TimePeriod, value: Double){
         updateTimes.priceChangeTimes[period.name] = Instant.now().toEpochMilli()
+        println("PriceCHangeUpdateTimes: ex ${exchange.name} per $period time ${updateTimes.priceChangeTimes[period.name]}")
         priceChange[period] = value
     }
 

@@ -3,6 +3,7 @@ package ru.exrates.func
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.config.BeanDefinition
@@ -56,8 +57,8 @@ class Aggregator(
     init {
         exchangeNames["binance"] = BinanceExchange::class
         exchangeNames["p2pb2b"] = P2pb2bExchange::class
-        exchangeNames["coinbase"] = CoinBaseExchange::class
-        exchangeNames["huobi"] = HuobiExchange::class
+        //exchangeNames["coinbase"] = CoinBaseExchange::class
+        //exchangeNames["huobi"] = HuobiExchange::class
         //exchangeNames["exmoExchange"] = ExmoExchange::class
     }
 
@@ -204,32 +205,40 @@ class Aggregator(
         logger.debug("exchanges: ${exchanges.values}")
         val curs = mutableListOf<CurrencyPair>()
         val start = System.currentTimeMillis()
-        exchanges.forEach {
-            val exchange = it.value
-            var p = exchange.getPair(c1, c2)
-            if(p == null) {
-                p = exchangeService.findPair(c1, c2, exchange)
-                if (p != null) exchange.insertPair(p)
-            }
-            if (p != null){
-                p.exchange = exchange
-                // p = exchange.getPair(pair.symbol)!!
-                with(taskHandler){
-                    awaitTasks(exchange.castToRestExchange().requestDelay(), //todo replace tasks out loop, add second loop
-                        { exchange.currentPrice(p, exchange.taskTimeOut) },
-                        { exchange.priceChange(p, exchange.taskTimeOut) },
-                        { exchange.priceHistory(p, historyInterval ?:
-                        exchange.historyPeriods.find { per -> per == "1h" } ?: exchange.historyPeriods[1], limit) }
-                    )
-                }
+        runBlocking {
+            exchanges.forEach {
+                launch {
+                    //logger.trace("!!!!LAUNCH ${it.value.name}")
+                    val exchange = it.value
+                    var p = exchange.getPair(c1, c2)
+                    if(p == null) {
+                        p = exchangeService.findPair(c1, c2, exchange)
+                        if (p != null) exchange.insertPair(p)
+                    }
+                    if (p != null){
+                        p.exchange = exchange
+                        // p = exchange.getPair(pair.symbol)!!
+                        with(taskHandler){
+                            awaitTasks(exchange.castToRestExchange().requestDelay(),
+                                { exchange.currentPrice(p, exchange.taskTimeOut) },
+                                { exchange.priceChange(p, exchange.taskTimeOut) },
+                                { exchange.priceHistory(p, historyInterval ?:
+                                exchange.historyPeriods.find { per -> per == "1h" } ?: exchange.historyPeriods[1], limit) }
+                            )
+                        }
 
-                if (p.status == ClientCodes.SUCCESS) {
-                    p.historyPeriods = exchange.historyPeriods
-                    curs += p
+                        if (p.status == ClientCodes.SUCCESS) {
+                            p.historyPeriods = exchange.historyPeriods
+                            curs += p
+                        }
+                        //logger.trace("!!!!DONEEEEE  ${it.value.name} ${System.currentTimeMillis() - start}")
+
+                    }
                 }
 
             }
         }
+
         logger.debug("CurStatTime: ${System.currentTimeMillis() - start}")
         return curs
     }

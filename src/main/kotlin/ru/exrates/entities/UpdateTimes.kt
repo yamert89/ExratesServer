@@ -1,20 +1,20 @@
 package ru.exrates.entities
 
-import ru.exrates.repos.TimePeriodConverter
 import java.time.Duration
 import java.time.Instant
-import javax.persistence.Convert
 import javax.persistence.ElementCollection
 import javax.persistence.Embeddable
 import javax.persistence.FetchType
+import javax.persistence.Transient
 
 @Embeddable
 class UpdateTimes(){
     var priceTime: Long = 0
     @ElementCollection(fetch = FetchType.EAGER)
     val priceChangeTimes: MutableMap<String, Long> = HashMap()
-    @Convert(converter = TimePeriodConverter::class)
-    private lateinit var taskTimeout : TimePeriod
+
+    @Transient
+    lateinit var taskTimeout : TimePeriod
 
     constructor(taskTimeout: TimePeriod) : this(){
         this.taskTimeout = taskTimeout

@@ -35,7 +35,7 @@ class HuobiExchange: RestExchange() {
         URL_TOP_STATISTIC = "/market/tickers"
         TOP_SYMBOL_FIELD = "symbol"
         TOP_COUNT_FIELD = "count"
-        taskTimeOut = TimePeriod(Duration.ofMinutes(1), "huobitaskTimeout")
+        taskTimeOut = TimePeriod(Duration.ofMinutes(1), "1m")
 
         /*
         * 1min, 5min, 15min, 30min, 60min, 4hour, 1day, 1mon, 1week, 1year*/
@@ -107,7 +107,7 @@ class HuobiExchange: RestExchange() {
         ExRJsonObject::class
     ){jsonUnit ->
         jsonUnit as ExRJsonObject
-        val data = jsonUnit.getJSONArray("data").getJSONObject(0)
+        val data = jsonUnit.getJSONArray("data").getJSONObject(0) //fixme JSONException: Index 0 out of range [0..0)
         //{"id":1598803200,"open":11615.88,"close":11740.01,"low":11570.34,"high":11776.53,"amount":35795.05511616849,"vol":4.1770683711697394E8,"count":370484}
         (data.getDouble("low") + data.getDouble("high")) / 2
     }

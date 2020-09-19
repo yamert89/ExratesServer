@@ -128,7 +128,7 @@ abstract class RestExchange : BasicExchange(){
 
     final override fun currentPrice(pair: CurrencyPair, period: TimePeriod){
         if(!pair.updateTimes.priceTimeElapsed()){
-            logger.trace("current price $pair.symbol req skipped")
+            logger.debug("current price $pair.symbol req skipped")
             return
         }
         val ob = pair.currentPriceExt()
@@ -148,7 +148,7 @@ abstract class RestExchange : BasicExchange(){
 
     override fun priceChange(pair: CurrencyPair, interval: TimePeriod){
         if(!pair.updateTimes.priceChangeTimeElapsed(interval)) {
-            logger.trace("price change $pair req skipped")
+            logger.debug("price change $pair req skipped")
             return
         }
         val debMills = System.currentTimeMillis()
