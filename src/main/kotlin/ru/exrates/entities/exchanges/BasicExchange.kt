@@ -201,11 +201,6 @@ class ExchangeDTO(exchange: BasicExchange?, exName: String = "", stat: Int = Cli
     var status: Int = stat
     init {
        if(exchange == null) this.status = ClientCodes.EXCHANGE_NOT_FOUND
-        if (exchange is HuobiExchange) changePeriods.forEach {
-            val regex = "(\\d{1,3})(\\D{1,5})".toRegex()
-            val match = regex.matchEntire(it.name)!!
-            it.name = match.groups[1]!!.value + match.groups[2]!!.value.substring(0, 1)
-        }
     }
 
     override fun toString(): String {
